@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { CSS, IMG, IMG3 } from './portfolio'
 import { useScreenInit } from './useScreenInit.js'
 import { KimButton, VoiceAssistant } from './KimLLM'
@@ -7,16 +7,18 @@ import { KimButton, VoiceAssistant } from './KimLLM'
 // hero → three projects, one per block (title, line, media), laid out like rox.com's "Applied AI research" section
 // on white → CTA → footer.
 // Removed at Harbor's request: the designer-skills strip under the hero, the info rows + note box in each project block,
-// and the separate Projects page (#/projects). The header's "Projects" is now Portfolio_1's dropdown (ProjectsMenu).
+// and the separate Projects page (#/projects).
 // Header: left = Projects · About me; right = LinkedIn · CV · [✦ Kim LLM]. Book a call was taken out of the header at
 // Harbor's request (it stays in the hero, the closing CTA and the footer).
+// "Projects" opens a mega menu in rox.com's style (Harbor's reference; the old dark rounded dropdown didn't match the site):
+// square, light, full container width, three columns — a dark media panel with the project's video/image, its name and a
+// "View project" button | the project list (pointing at one switches the menu to it) | an off-white "At a glance" column
+// with the project's line and key facts — and a bottom row of links. The trigger gets a grey background and a dash
+// instead of the chevron while open, like rox.
 // Kim LLM (header button + panel) lives in KimLLM.tsx and is shared with the About and case-study pages.
 // Project blocks: each whole block (title + image) is one link; pointing anywhere on it turns the cursor into a solid
-// square "View project" button (cursor.tsx, data-cursor + data-cursor-variant="button") — black on the white title
-// area, white over the image.
-// UTrada has its own case page (#/utrada, UTrada.tsx, a skeleton Harbor is filling in).
-// Hero background: Harbor's 8-second typing video (made from the hero photo), muted and looping, in place of the still
-// photo. The first frame is the poster, so the hero looks the same while the video loads. Reduced motion: poster only.
+// square "View project" button (cursor.tsx, data-cursor + data-cursor-variant="button").
+// Hero background: Harbor's 8-second typing video, muted and looping. Reduced motion: poster only.
 
 export { VoiceAssistant, useVoice } from './KimLLM'
 
@@ -82,12 +84,58 @@ export const PAGE_CSS = `
 /* header: CV sits on the right with LinkedIn (no CV link yet, so it is plain text) */
 .hb .nav-right .cv { opacity: .8; }
 
-/* Projects dropdown in the header (from Portfolio_1's HomeDock) */
+/* ---------- Projects mega menu (rox.com style) ---------- */
 .hb .pj-menu { position: relative; display: flex; align-items: center; }
-.hb .pj-trigger { display: flex; align-items: center; gap: 6px; padding: 0; background: none; border: 0; cursor: pointer; font-size: 16px; white-space: nowrap; opacity: .8; transition: opacity .2s; }
+.hb .pj-trigger { display: inline-flex; align-items: center; gap: 10px; padding: 6px 10px; margin: -6px -10px; background: transparent; border: 0; border-radius: 0;
+  cursor: pointer; font-size: 16px; white-space: nowrap; opacity: .8; transition: opacity .2s, background-color .2s; }
 .hb .pj-trigger:hover, .hb .pj-trigger.on { opacity: 1; }
-.hb .pj-panel { position: absolute; top: 100%; left: -12px; padding-top: 12px; width: min(560px, calc(100vw - 32px)); transform-origin: 0 0; }
+.hb .pj-trigger.on { background: rgba(255,255,255,.16); }
+.hb .site.scrolled .pj-trigger.on { background: rgba(15,15,15,.07); }
+.hb .pj-trigger svg { display: block; width: 14px; height: 14px; }
 .hb .pj-menu span { opacity: 1; }
+.hb .pj-panel a, .hb .pj-panel span { opacity: 1; } /* the header's dimmed-link style doesn't apply inside the menu */
+
+.hb .pj-panel { position: absolute; top: 100%; padding-top: 16px; z-index: 55; color: #0F0F0F;
+  opacity: 0; visibility: hidden; transform: translateY(-6px); pointer-events: none;
+  transition: opacity .18s ease, transform .25s cubic-bezier(.22,1,.36,1), visibility 0s .25s; }
+.hb .pj-panel.open { opacity: 1; visibility: visible; transform: none; pointer-events: auto; transition: opacity .22s ease, transform .35s cubic-bezier(.22,1,.36,1), visibility 0s; }
+.hb .pj-box { display: grid; grid-template-columns: 260px 280px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; min-height: 500px;
+  background: #fff; border: 1px solid #DBDBD9; box-shadow: 0 24px 60px rgba(0,0,0,.10); }
+
+/* left: dark media panel */
+.hb .pj-media { grid-row: 1 / span 2; position: relative; display: flex; flex-direction: column; justify-content: space-between; padding: 32px; overflow: hidden;
+  background: #0F0F0F; color: #fff; text-decoration: none; }
+.hb .pj-media .layer { position: absolute; inset: 0; transition: opacity .45s ease, transform .7s cubic-bezier(.22,1,.36,1); }
+.hb .pj-media .layer video, .hb .pj-media .layer img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.hb .pj-media::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(0,0,0,.62) 0%, rgba(0,0,0,.18) 45%, rgba(0,0,0,.65) 100%); }
+.hb .pj-media .ttl { position: relative; z-index: 1; font-size: 32px; font-weight: 300; line-height: 1.12; letter-spacing: -0.02em; }
+.hb .pj-media .ttl small { display: block; margin-top: 10px; font-size: 16px; font-weight: 400; letter-spacing: 0; color: rgba(255,255,255,.75); }
+.hb .pj-media .cta { position: relative; z-index: 1; align-self: flex-start; padding: 12px 20px; background: #fff; color: #0F0F0F; font-size: 16px; font-weight: 500; transition: background-color .2s; }
+.hb .pj-media:hover .cta { background: #EDEDEB; }
+
+/* middle: project list */
+.hb .pj-cats { padding: 32px 0 24px; }
+.hb .pj-k { font-size: 16px; color: #8C8C8A; }
+.hb .pj-cats .pj-k { padding: 0 32px; margin-bottom: 16px; }
+.hb .pj-cats ul { list-style: none; margin: 0; padding: 0; }
+.hb .pj-cats a { display: block; padding: 12px 32px; font-size: 16px; color: #0F0F0F; text-decoration: none; transition: background-color .15s; }
+.hb .pj-cats a.on { background: #F2F2EF; }
+.hb .pj-cats a:focus-visible { outline: 2px solid #2563EB; outline-offset: -2px; }
+
+/* right: at a glance (off-white) */
+.hb .pj-feat { padding: 32px; background: #F5F5F2; }
+.hb .pj-feat .about { margin: 16px 0 0; font-size: 20px; font-weight: 300; line-height: 1.35; letter-spacing: -0.01em; color: #0F0F0F; }
+.hb .pj-feat ul { list-style: none; margin: 24px 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; }
+.hb .pj-feat li { font-size: 16px; line-height: 1.4; color: #6B6B69; }
+.hb .pj-feat li.lead { display: flex; gap: 8px; color: #0F0F0F; }
+.hb .pj-feat li.lead::before { content: ""; flex: none; margin-top: 6px; border-left: 6px solid currentColor; border-top: 4px solid transparent; border-bottom: 4px solid transparent; height: 0; }
+
+/* bottom row */
+.hb .pj-foot { grid-column: 2 / span 2; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 22px 32px; border-top: 1px solid #E6E6E3; }
+.hb .pj-foot a { display: inline-flex; align-items: center; gap: 4px; font-size: 16px; color: #0F0F0F; text-decoration: none; }
+.hb .pj-foot a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.hb .pj-foot svg { width: 12px; height: 12px; }
 
 @media (max-width: 900px) {
   .hb .nav-right .cv { display: none; }
@@ -110,98 +158,83 @@ function useTyped(text: string, key: string | number, speed = 32, delay = 0) {
   return text.slice(0, n)
 }
 
-/* ---------- Projects dropdown (copied from Portfolio_1's HomeDock) ---------- */
-// Hovering "Projects" opens a dark panel. Left: the three case studies (name + one line). Right: the case's hero video,
-// muted and looping; pointing at another case cross-fades to its video. Click a name or the video to open that case.
-// UTrada has no video yet, so it shows its icon; it opens the UTrada case page (#/utrada).
-// Closes on Esc, a click outside, scrolling, a route change, or moving the pointer away.
+/* ---------- Projects mega menu ---------- */
+// Facts come from the case-study pages already on the site (Trust Bank hero details, GameCove ad, UTrada skeleton).
 
 const RAW = 'https://raw.githubusercontent.com/Harbor-K/'
-const UTRADA_SVG = `<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="4" fill="url(#ut)"/><path d="M20.8137 12L20.7642 12.2773L19.0159 22.2134C18.4395 25.4849 15.3129 28.1484 12.0457 28.1484C10.4635 28.1484 9.07577 27.5308 8.13822 26.4127C7.17956 25.2689 6.80943 23.747 7.09286 22.1315L8.87681 12H9.07354C9.73433 12 10.3156 12.2606 10.7074 12.7278C11.1081 13.2073 11.2626 13.841 11.1454 14.5153L9.79101 22.2134C9.63596 23.0871 9.83325 23.9046 10.344 24.5149C10.843 25.1118 11.5861 25.4382 12.4391 25.4382C14.2581 25.4382 15.9993 23.9564 16.3205 22.1315L17.6754 14.4329C17.9099 13.092 19.1943 12 20.5347 12H20.8137Z" fill="white"/><path d="M32.6067 12L32.131 14.7102H27.9095L25.5448 28.1484H22.8328L25.198 14.7102H20.9766L21.4551 12H32.6067Z" fill="white"/><defs><linearGradient id="ut" x1="40" y1="20" x2="0" y2="20" gradientUnits="userSpaceOnUse"><stop stop-color="#872ADF"/><stop offset="1" stop-color="#38029D"/></linearGradient></defs></svg>`
-const UTRADA_ICON = `data:image/svg+xml;utf8,${encodeURIComponent(UTRADA_SVG)}`
 const WORK_LIST = [
   {
     name: 'Trust Bank',
     sub: 'Rewards UX revamp',
     href: '#/trust-bank',
-    icon: '',
     video: `${RAW}harbor-pf/main/assets/trust-bank/hero-sfx-v2.mp4`,
     poster: `${RAW}harbor-pf/main/assets/trust-bank/hero-sfx-v2-poster.jpg`,
+    img: '',
+    about: 'Turning hidden rewards into everyday loyalty.',
+    facts: [
+      { t: 'Rewards UX revamp', lead: true },
+      { t: 'Digital banking, mobile app', lead: true },
+      { t: '8 weeks, June – August 2026' },
+      { t: '2 designers' },
+      { t: 'I led planning, UI design and usability tests' },
+      { t: 'Singapore' },
+    ],
   },
   {
     name: 'GameCove',
     sub: 'AI analytics dashboard',
     href: '#/gamecove',
-    icon: '',
     video: `${RAW}landing_page/main/gamecove/assets/v4/hero-ad.mp4`,
     poster: `${RAW}landing_page/main/gamecove/assets/v4/hero-ad-poster.jpg`,
+    img: '',
+    about: 'An AI game-analytics dashboard.',
+    facts: [
+      { t: 'AI analytics dashboard', lead: true },
+      { t: 'Team project', lead: true },
+      { t: 'Overview' },
+      { t: 'AI mapping' },
+      { t: 'Retention' },
+      { t: 'AI agent' },
+    ],
   },
-  { name: 'UTrada', sub: 'Trading platform design system', href: '#/utrada', icon: UTRADA_ICON, video: '', poster: '' },
+  {
+    name: 'UTrada',
+    sub: 'Trading platform design system',
+    href: '#/utrada',
+    video: '',
+    poster: '',
+    img: IMG3 + 'utrada-screens.webp',
+    about: 'Product design for a trading platform.',
+    facts: [
+      { t: 'Trading platform', lead: true },
+      { t: 'Design system', lead: true },
+      { t: '2024 – 2026' },
+      { t: 'Website: home, features, forex table, join flow' },
+    ],
+  },
 ]
-const LIST_W = 200
-const PREVIEW_W = 560 - LIST_W - 6 * 3 // 342
-const EASE = 'cubic-bezier(.22,1,.36,1)'
 
-/** the right-hand pane: each case's main video (muted, looping); only the shown one plays */
-function ProjectPreview({ open, active }: { open: boolean; active: number }) {
-  const vids = useRef<(HTMLVideoElement | null)[]>([])
-  useEffect(() => {
-    vids.current.forEach((v, i) => {
-      if (!v) return
-      if (open && i === active) { v.muted = true; v.play().catch(() => {}) } else v.pause()
-    })
-  }, [open, active])
-  return (
-    <a
-      href={WORK_LIST[active].href}
-      tabIndex={-1}
-      aria-hidden
-      className="relative block shrink-0 self-stretch overflow-hidden rounded-[10px]"
-      style={{ width: PREVIEW_W, minHeight: 200, background: '#18181B' }}
-    >
-      {WORK_LIST.map((p, i) => {
-        const on = i === active
-        return (
-          <div
-            key={p.name}
-            className="absolute inset-0"
-            style={{
-              opacity: on ? 1 : 0,
-              transform: on ? 'scale(1)' : 'scale(1.04)',
-              filter: on ? 'blur(0px)' : 'blur(6px)',
-              transition: `opacity .45s ease, transform .6s ${EASE}, filter .45s ease`,
-            }}
-          >
-            {p.video ? (
-              <video
-                ref={el => { vids.current[i] = el }}
-                src={p.video}
-                poster={p.poster}
-                muted
-                loop
-                playsInline
-                preload={i === 0 ? 'auto' : 'metadata'}
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-            ) : (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-[10px]">
-                <img src={p.icon} alt="" className="h-12 w-12 rounded-[8px]" />
-                <span className="text-[16px] font-bold text-white/70">{p.name}</span>
-              </div>
-            )}
-          </div>
-        )
-      })}
-    </a>
-  )
-}
+const ArrowUpRight = () => (
+  <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M3 9l6-6M4 3h5v5" /></svg>
+)
 
 function ProjectsMenu() {
   const [open, setOpen] = useState(false)
   const [everOpen, setEverOpen] = useState(false) // the videos load on the first open and stay
-  const [hot, setHot] = useState(0) // which project the preview shows
+  const [hot, setHot] = useState(0) // which project the menu shows
+  const [box, setBox] = useState({ left: 0, width: 960 })
   const ref = useRef<HTMLDivElement>(null)
+  const vids = useRef<(HTMLVideoElement | null)[]>([])
   const closeTimer = useRef(0)
+
+  // the panel spans the header's container (from the logo to the right edge), like rox
+  const place = () => {
+    const m = ref.current, w = m?.closest('.nav') as HTMLElement | null
+    if (!m || !w) return
+    const mr = m.getBoundingClientRect(), wr = w.getBoundingClientRect()
+    setBox({ left: Math.round(wr.left - mr.left), width: Math.round(Math.min(wr.width, 1180)) })
+  }
+  useLayoutEffect(() => { if (open) place() }, [open])
 
   useEffect(() => {
     if (!open) return
@@ -212,83 +245,82 @@ function ProjectsMenu() {
     addEventListener('pointerdown', onDown)
     addEventListener('scroll', close, { passive: true })
     addEventListener('hashchange', close)
+    addEventListener('resize', place)
     return () => {
       removeEventListener('keydown', onKey)
       removeEventListener('pointerdown', onDown)
       removeEventListener('scroll', close)
       removeEventListener('hashchange', close)
+      removeEventListener('resize', place)
     }
   }, [open])
 
+  // only the shown project's video plays
+  useEffect(() => {
+    vids.current.forEach((v, i) => {
+      if (!v) return
+      if (open && i === hot) { v.muted = true; v.play().catch(() => {}) } else v.pause()
+    })
+  }, [open, hot, everOpen])
+
   const openNow = () => { window.clearTimeout(closeTimer.current); setEverOpen(true); setOpen(true) }
   const closeSoon = () => { window.clearTimeout(closeTimer.current); closeTimer.current = window.setTimeout(() => setOpen(false), 180) }
+  const p = WORK_LIST[hot]
 
   return (
     <div ref={ref} className="pj-menu" onMouseEnter={openNow} onMouseLeave={closeSoon}>
-      <button
-        type="button"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        onClick={() => (open ? setOpen(false) : openNow())}
-        onFocus={openNow}
-        className={'pj-trigger' + (open ? ' on' : '')}
-      >
+      <button type="button" aria-haspopup="true" aria-expanded={open} onClick={() => (open ? setOpen(false) : openNow())} onFocus={openNow}
+        className={'pj-trigger' + (open ? ' on' : '')}>
         Projects
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden
-          style={{ transform: open ? 'rotate(180deg)' : 'none', transition: `transform .25s ${EASE}` }}>
-          <path d="M3 5.25L7 9.25L11 5.25" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+        {open
+          ? <svg viewBox="0 0 14 14" fill="none" aria-hidden><path d="M2.5 7h9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
+          : <svg viewBox="0 0 14 14" fill="none" aria-hidden><path d="M3 5.25L7 9.25L11 5.25" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>}
       </button>
 
-      {/* the panel: its top padding bridges the hover gap under the trigger */}
-      <div
-        className="pj-panel"
-        style={{
-          transform: `translateY(${open ? 0 : -8}px) scale(${open ? 1 : 0.985})`,
-          opacity: open ? 1 : 0,
-          visibility: open ? 'visible' : 'hidden',
-          pointerEvents: open ? 'auto' : 'none',
-          transition: open
-            ? `opacity .22s ease, transform .35s ${EASE}, visibility 0s`
-            : `opacity .18s ease, transform .25s ${EASE}, visibility 0s .25s`,
-        }}
-      >
-        <div
-          className="flex gap-[6px] overflow-hidden rounded-[14px] p-[6px]"
-          style={{ background: '#111113', boxShadow: '0 0 0 1px rgba(255,255,255,0.08), 0 20px 48px rgba(0,0,0,0.35)' }}
-        >
-          <ul role="menu" aria-label="Projects" className="flex shrink-0 flex-col gap-[2px]" style={{ width: LIST_W }}>
-            {WORK_LIST.map((p, i) => {
-              const on = hot === i
-              return (
-                <li key={p.name} role="none">
-                  <a
-                    role="menuitem"
-                    href={p.href}
-                    onMouseEnter={() => setHot(i)}
-                    onFocus={() => setHot(i)}
-                    onClick={() => setOpen(false)}
-                    tabIndex={open ? 0 : -1}
-                    className="block rounded-[8px] px-[12px] py-[10px] focus-visible:outline-none"
-                    style={{
-                      background: on ? 'rgba(255,255,255,0.07)' : 'transparent',
-                      opacity: open ? 1 : 0,
-                      transform: open ? 'none' : 'translateY(-4px)',
-                      transition: `background-color .2s ease, opacity .3s ease ${open ? 0.05 + 0.04 * i : 0}s, transform .35s ${EASE} ${open ? 0.05 + 0.04 * i : 0}s`,
-                    }}
-                  >
-                    <span className="block text-[16px] font-bold leading-[20px]" style={{ color: on ? '#FFFFFF' : 'rgba(255,255,255,0.86)', transition: 'color .2s ease' }}>
-                      {p.name}
-                    </span>
-                    <span className="mt-[2px] block text-[16px] leading-[20px]" style={{ color: on ? '#A1A1AA' : '#71717A', transition: 'color .2s ease' }}>
-                      {p.sub}
-                    </span>
-                  </a>
+      <div className={'pj-panel' + (open ? ' open' : '')} style={{ left: box.left, width: box.width }} aria-hidden={!open}>
+        <div className="pj-box">
+          {/* left: the project's video / image, name and button */}
+          <a className="pj-media" href={p.href} tabIndex={open ? 0 : -1} onClick={() => setOpen(false)} aria-label={`View project: ${p.name}`}>
+            {everOpen && WORK_LIST.map((w, i) => (
+              <div key={w.name} className="layer" style={{ opacity: i === hot ? 1 : 0, transform: i === hot ? 'scale(1)' : 'scale(1.04)' }} aria-hidden="true">
+                {w.video
+                  ? <video ref={el => { vids.current[i] = el }} src={w.video} poster={w.poster} muted loop playsInline preload={i === 0 ? 'auto' : 'metadata'} />
+                  : <img src={w.img} alt="" />}
+              </div>
+            ))}
+            <span className="ttl">{p.name}<small>{p.sub}</small></span>
+            <span className="cta">View project</span>
+          </a>
+
+          {/* middle: the list */}
+          <div className="pj-cats">
+            <div className="pj-k">Projects</div>
+            <ul>
+              {WORK_LIST.map((w, i) => (
+                <li key={w.name}>
+                  <a href={w.href} className={i === hot ? 'on' : undefined} tabIndex={open ? 0 : -1}
+                    onMouseEnter={() => setHot(i)} onFocus={() => setHot(i)} onClick={() => setOpen(false)}>{w.name}</a>
                 </li>
-              )
-            })}
-          </ul>
-          {everOpen && <ProjectPreview open={open} active={hot} />}
+              ))}
+            </ul>
+          </div>
+
+          {/* right: at a glance */}
+          <div className="pj-feat">
+            <div className="pj-k">At a glance</div>
+            <p className="about">{p.about}</p>
+            <ul>
+              {p.facts.map(f => <li key={f.t} className={f.lead ? 'lead' : undefined}>{f.t}</li>)}
+            </ul>
+          </div>
+
+          {/* bottom row */}
+          <div className="pj-foot">
+            <span className="pj-k">More:</span>
+            <a href="#/about" tabIndex={open ? 0 : -1} onClick={() => setOpen(false)}>About me</a>
+            <a href={LINKS.linkedin} target="_blank" rel="noreferrer" tabIndex={open ? 0 : -1}>LinkedIn <ArrowUpRight /></a>
+            <a href={LINKS.cal} target="_blank" rel="noreferrer" tabIndex={open ? 0 : -1}>Book a call <ArrowUpRight /></a>
+          </div>
         </div>
       </div>
     </div>

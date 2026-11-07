@@ -6,11 +6,12 @@ export const manifest = {
     scr_abpage: { name: "About me", route: "/", state: {"page":"about"}, position: {"x":160,"y":1600} },
     scr_tbcase: { name: "Trust Bank case study", route: "/", state: {"page":"trust-bank"}, position: {"x":160,"y":2980} },
     scr_gccase: { name: "GameCove case study", route: "/", state: {"page":"gamecove"}, position: {"x":1560,"y":2980} },
+    scr_utcase: { name: "UTrada case study", route: "/", state: {"page":"utrada"}, position: {"x":2960,"y":2980} },
   },
   sections: {
     sec_dbckwq: { name: "Main page", x: 0, y: 0, width: 4320, height: 1180 },
     sec_landng: { name: "Landing pages", x: 0, y: 1380, width: 1520, height: 1180 },
-    sec_tbcase: { name: "Case studies", x: 0, y: 2760, width: 2920, height: 1180 },
+    sec_tbcase: { name: "Case studies", x: 0, y: 2760, width: 4320, height: 1180 },
   },
   layers: [
     { kind: "section", id: "sec_dbckwq", children: [
@@ -24,6 +25,7 @@ export const manifest = {
     { kind: "section", id: "sec_tbcase", children: [
       { kind: "screen", id: "scr_tbcase" },
       { kind: "screen", id: "scr_gccase" },
+      { kind: "screen", id: "scr_utcase" },
     ] },
   ],
 }

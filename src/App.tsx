@@ -4,10 +4,15 @@ import { useScreenInit } from './useScreenInit.js'
 
 // Harbor — portfolio main page v4, from Figma "44기 김지현 4차 PF" (node 260:282) and Harbor's review notes:
 // hero → three projects, one per block (title, line, media), laid out like rox.com's "Applied AI research" section
-// on white → CTA → footer, with an aurora voice assistant in the corner.
+// on white → CTA → footer, with the Kim LLM voice assistant in the bottom-right corner.
 // Removed at Harbor's request: the designer-skills strip under the hero, the info rows + note box in each project block,
 // and the separate Projects page (#/projects). The header's "Projects" is now Portfolio_1's dropdown (ProjectsMenu).
 // Header: left = Projects · About me; right = LinkedIn · CV · Book a call (Instagram taken out of the header; it stays in the footer).
+// Voice assistant button: a white pill with the aurora orb and the words "Kim LLM" (Harbor's reference), bottom right.
+// Project blocks: the "View project →" links are gone. Each whole block (title + image) is one link, and pointing
+// anywhere on it turns the cursor into a bracketed label like the case pages' [SCROLL]: [ VIEW TRUST BANK PROJECT ]
+// (cursor.tsx, data-cursor).
+// UTrada now has its own case page (#/utrada, UTrada.tsx, a skeleton Harbor is filling in).
 
 export const LINKS = {
   cal: 'https://cal.com/harbor-kim-wqsmkt/30min',
@@ -25,20 +30,20 @@ export const TB = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/ass
 const GC = 'https://raw.githubusercontent.com/Harbor-K/landing_page/main/gamecove/assets/v4/'
 
 type Project = {
-  title: string; sub: string; href?: string
+  title: string; short: string; sub: string; href?: string
   video?: string; poster?: string; img?: string; alt?: string; ratio?: string
 }
 const PROJECTS: Project[] = [
   {
-    title: 'Trust Bank Singapore', sub: 'Turning hidden rewards into everyday loyalty.', href: '#/trust-bank',
+    title: 'Trust Bank Singapore', short: 'Trust Bank', sub: 'Turning hidden rewards into everyday loyalty.', href: '#/trust-bank',
     img: IMG3 + 'trust-bank-thumb.webp', alt: 'Trust Bank rewards screen in front of the trust wordmark', ratio: '2 / 1',
   },
   {
-    title: 'GameCove', sub: 'An AI game-analytics dashboard.', href: '#/gamecove',
+    title: 'GameCove', short: 'GameCove', sub: 'An AI game-analytics dashboard.', href: '#/gamecove',
     video: GC + 'hero-ad.mp4', poster: GC + 'hero-ad-poster.jpg', alt: 'GameCove ad: Overview, AI mapping, Retention and the AI agent', ratio: '2 / 1',
   },
   {
-    title: 'UTrada', sub: 'Product design for a trading platform.',
+    title: 'UTrada', short: 'UTrada', sub: 'Product design for a trading platform.', href: '#/utrada',
     img: IMG3 + 'utrada-screens.webp', alt: 'UTrada website screens: home, features, forex table and join flow',
   },
 ]
@@ -51,6 +56,8 @@ export const PAGE_CSS = `
 
 .projects-sec { background: #fff; }
 .proj + .proj { margin-top: 160px; }
+.hb a.proj { display: block; color: inherit; text-decoration: none; }
+.hb a.proj:focus-visible { outline: 2px solid #2563EB; outline-offset: 8px; }
 .proj-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 40px; margin-bottom: 40px; }
 .proj-head h3 { margin: 0; font-size: 44px; font-weight: 400; line-height: 1.15; letter-spacing: -0.02em; }
 .proj-head h3 .sub { display: block; color: #8C8C8A; font-weight: 300; }
@@ -58,10 +65,7 @@ export const PAGE_CSS = `
 .proj-media { display: block; padding: 0; overflow: hidden; }
 .proj-media .shot { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: #E9E9E6; }
 .proj-media video, .proj-media img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 1.2s var(--ease); }
-.proj-media:hover video, .proj-media:hover img { transform: scale(1.03); }
-.proj-media .view { position: absolute; left: 20px; bottom: 20px; padding: 10px 16px; background: #fff; color: var(--ink); font-size: 16px; font-weight: 500;
-  opacity: 0; transform: translateY(8px); transition: opacity .3s, transform .3s var(--ease); }
-.proj-media:hover .view { opacity: 1; transform: none; }
+.proj:hover .proj-media video, .proj:hover .proj-media img { transform: scale(1.03); }
 
 /* header: CV sits on the right with LinkedIn (no CV link yet, so it is plain text) */
 .hb .nav-right .cv { opacity: .8; }
@@ -73,7 +77,7 @@ export const PAGE_CSS = `
 .hb .pj-panel { position: absolute; top: 100%; left: -12px; padding-top: 12px; width: min(560px, calc(100vw - 32px)); transform-origin: 0 0; }
 .hb .pj-menu span { opacity: 1; }
 
-/* Aurora voice assistant — ChatGPT-voice-style orb */
+/* Aurora orb (Kim LLM) — ChatGPT-voice-style */
 @property --rot { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
 .orb { position: relative; border-radius: 50%; overflow: hidden; isolation: isolate;
   background: radial-gradient(circle at 50% 120%, #1D4ED8 0%, #3B82F6 35%, #93C5FD 65%, #E0F2FE 100%); }
@@ -88,15 +92,22 @@ export const PAGE_CSS = `
 @keyframes orb-pulse { 50% { transform: scale(1.06); } }
 @keyframes orb-talk { 0% { transform: scale(.97); } 100% { transform: scale(1.08); } }
 
-.voice-fab { position: fixed; right: 24px; bottom: 24px; z-index: 60; width: 64px; height: 64px; padding: 0; border: 3px solid #fff; border-radius: 50%; cursor: pointer; background: none;
-  box-shadow: 0 10px 30px rgba(37,99,235,.45), 0 0 0 1px rgba(0,0,0,.06); transform: scale(0); transition: transform .5s var(--ease); }
-.voice-fab.show { transform: scale(1); }
-.voice-fab:hover { transform: scale(1.08); }
-.voice-fab .orb { display: block; width: 100%; height: 100%; }
-.voice-pop { position: fixed; right: 24px; bottom: 104px; z-index: 60; width: 360px; padding: 28px 24px 24px; background: #fff; color: var(--ink); border: 1px solid var(--line);
+/* Kim LLM button: white pill, orb on the left, label on the right (Harbor's reference) */
+.hb .voice-fab { position: fixed; right: 24px; bottom: 24px; z-index: 60; display: inline-flex; align-items: center; gap: 12px; height: 56px; padding: 0 24px 0 8px;
+  border: 0; border-radius: 999px; background: #fff; color: var(--ink); font-size: 18px; font-weight: 400; letter-spacing: -0.01em; line-height: 1; cursor: pointer;
+  box-shadow: 0 10px 30px rgba(0,0,0,.10), 0 1px 3px rgba(0,0,0,.06), 0 0 0 1px rgba(0,0,0,.04);
+  opacity: 0; transform: translateY(16px) scale(.94); transition: transform .5s var(--ease), opacity .4s, box-shadow .3s; }
+.hb .voice-fab.show { opacity: 1; transform: none; }
+.hb .voice-fab.show:hover { transform: translateY(-2px); box-shadow: 0 14px 36px rgba(0,0,0,.14), 0 1px 3px rgba(0,0,0,.06), 0 0 0 1px rgba(0,0,0,.04); }
+.hb .voice-fab:focus-visible { outline: 2px solid #2563EB; outline-offset: 3px; }
+.hb .voice-fab .orb { display: block; flex: none; width: 40px; height: 40px; }
+.hb .voice-fab .lab { white-space: nowrap; }
+
+.voice-pop { position: fixed; right: 24px; bottom: 96px; z-index: 60; width: 360px; padding: 28px 24px 24px; background: #fff; color: var(--ink); border: 1px solid var(--line);
   border-radius: 24px; box-shadow: 0 24px 60px rgba(0,0,0,.18); transform-origin: bottom right; text-align: center;
   transform: translateY(12px) scale(.96); opacity: 0; pointer-events: none; transition: transform .35s var(--ease), opacity .25s; }
 .voice-pop.open { transform: none; opacity: 1; pointer-events: auto; }
+.voice-pop .ttl { font-size: 16px; font-weight: 500; letter-spacing: .02em; color: var(--mute); margin-bottom: 18px; }
 .voice-pop .big { width: 150px; height: 150px; margin: 0 auto; }
 .voice-status { margin-top: 18px; font-size: 16px; color: var(--mute); }
 .voice-q { margin-top: 10px; font-size: 16px; font-weight: 500; min-height: 22px; }
@@ -116,6 +127,7 @@ export const PAGE_CSS = `
   .proj-head { flex-direction: column; align-items: flex-start; }
   .proj-head h3 { font-size: 32px; }
   .voice-pop { left: 16px; right: 16px; width: auto; }
+  .hb .voice-fab { right: 16px; bottom: 16px; }
 }
 `
 
@@ -195,7 +207,7 @@ export function useVoice() {
 /* ---------- Projects dropdown (copied from Portfolio_1's HomeDock) ---------- */
 // Hovering "Projects" opens a dark panel. Left: the three case studies (name + one line). Right: the case's hero video,
 // muted and looping; pointing at another case cross-fades to its video. Click a name or the video to open that case.
-// UTrada has no video or case page here yet, so it shows its icon and links to the UTrada block on the main page.
+// UTrada has no video yet, so it shows its icon; it opens the UTrada case page (#/utrada).
 // Closes on Esc, a click outside, scrolling, a route change, or moving the pointer away.
 
 const RAW = 'https://raw.githubusercontent.com/Harbor-K/'
@@ -218,7 +230,7 @@ const WORK_LIST = [
     video: `${RAW}landing_page/main/gamecove/assets/v4/hero-ad.mp4`,
     poster: `${RAW}landing_page/main/gamecove/assets/v4/hero-ad-poster.jpg`,
   },
-  { name: 'UTrada', sub: 'Trading platform design system', href: '#projects', icon: UTRADA_ICON, video: '', poster: '' },
+  { name: 'UTrada', sub: 'Trading platform design system', href: '#/utrada', icon: UTRADA_ICON, video: '', poster: '' },
 ]
 const LIST_W = 200
 const PREVIEW_W = 560 - LIST_W - 6 * 3 // 342
@@ -468,7 +480,7 @@ export function useReveal(dep?: unknown) {
   }, [dep])
 }
 
-// Aurora voice assistant (fixed bottom-right), shared by every page.
+// Kim LLM voice assistant (fixed bottom-right), shared by the main and About pages.
 export function VoiceAssistant() {
   const [fab, setFab] = useState(false)
   const [chat, setChat] = useState(false)
@@ -482,7 +494,8 @@ export function VoiceAssistant() {
   }, [chat])
   return (
     <>
-      <div className={'voice-pop' + (chat ? ' open' : '')} role="dialog" aria-label="Ask about Harbor" aria-hidden={!chat}>
+      <div className={'voice-pop' + (chat ? ' open' : '')} role="dialog" aria-label="Kim LLM: ask about Harbor" aria-hidden={!chat}>
+        <div className="ttl">Kim LLM</div>
         <div className={'orb big' + (voice.mode === 'listening' ? ' live' : voice.mode === 'speaking' ? ' talk' : '')} aria-hidden="true" />
         <div className="voice-status" aria-live="polite">
           {voice.mode === 'listening' ? 'Listening…' : voice.mode === 'speaking' ? 'Speaking…' : voice.canListen ? 'Tap the mic and ask about Harbor' : 'Pick a question'}
@@ -503,31 +516,33 @@ export function VoiceAssistant() {
           </button>
         </div>
       </div>
-      <button className={'voice-fab' + (fab ? ' show' : '')} aria-label={chat ? 'Close voice assistant' : 'Ask about Harbor'} aria-expanded={chat}
+      <button type="button" className={'voice-fab' + (fab ? ' show' : '')} aria-label={chat ? 'Close Kim LLM' : 'Open Kim LLM, ask about Harbor'} aria-expanded={chat}
         onClick={() => { if (chat) voice.stop(); setChat(v => !v) }}>
-        <span className={'orb' + (voice.mode !== 'idle' ? ' live' : '')} />
+        <span className={'orb' + (voice.mode !== 'idle' ? ' live' : '')} aria-hidden="true" />
+        <span className="lab">Kim LLM</span>
       </button>
     </>
   )
 }
 
+// One project = one link. Pointing anywhere on it shows the cursor label "View <name> project"
+// (dark on the white title area, white over the image).
 function ProjectBlock({ p }: { p: Project }) {
   const href = p.href ?? '#projects'
+  const label = `View ${p.short} project`
   return (
-    <article className="proj" data-reveal>
+    <a className="proj" href={href} data-reveal data-cursor={label} aria-label={`${label}: ${p.title}, ${p.sub}`}>
       <div className="proj-head">
         <h3><span>{p.title}</span><span className="sub">{p.sub}</span></h3>
-        <a className="link" href={href}>View project <span className="go">→</span></a>
       </div>
-      <a className="proj-frame proj-media" href={href} aria-label={`View ${p.title}`}>
+      <div className="proj-frame proj-media" data-cursor-light>
         <div className="shot" style={p.ratio ? { aspectRatio: p.ratio } : undefined}>
           {p.video
-            ? <video src={p.video} poster={p.poster} autoPlay muted loop playsInline preload="metadata" aria-label={p.alt} />
-            : <img src={p.img} alt={p.alt ?? ''} loading="lazy" />}
-          <span className="view">View project →</span>
+            ? <video src={p.video} poster={p.poster} autoPlay muted loop playsInline preload="metadata" aria-hidden="true" />
+            : <img src={p.img} alt="" loading="lazy" />}
         </div>
-      </a>
-    </article>
+      </div>
+    </a>
   )
 }
 

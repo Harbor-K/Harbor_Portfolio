@@ -7,6 +7,7 @@ import { useScreenInit } from './useScreenInit.js'
 // on white → CTA → footer, with an aurora voice assistant in the corner.
 // Removed at Harbor's request: the designer-skills strip under the hero, the info rows + note box in each project block,
 // and the separate Projects page (#/projects). The header's "Projects" is now Portfolio_1's dropdown (ProjectsMenu).
+// Header: left = Projects · About me; right = LinkedIn · CV · Book a call (Instagram taken out of the header; it stays in the footer).
 
 export const LINKS = {
   cal: 'https://cal.com/harbor-kim-wqsmkt/30min',
@@ -62,6 +63,9 @@ export const PAGE_CSS = `
   opacity: 0; transform: translateY(8px); transition: opacity .3s, transform .3s var(--ease); }
 .proj-media:hover .view { opacity: 1; transform: none; }
 
+/* header: CV sits on the right with LinkedIn (no CV link yet, so it is plain text) */
+.hb .nav-right .cv { opacity: .8; }
+
 /* Projects dropdown in the header (from Portfolio_1's HomeDock) */
 .hb .pj-menu { position: relative; display: flex; align-items: center; }
 .hb .pj-trigger { display: flex; align-items: center; gap: 6px; padding: 0; background: none; border: 0; cursor: pointer; font-size: 16px; white-space: nowrap; opacity: .8; transition: opacity .2s; }
@@ -108,6 +112,7 @@ export const PAGE_CSS = `
 .voice-ctrl svg { width: 22px; height: 22px; display: block; }
 
 @media (max-width: 900px) {
+  .hb .nav-right .cv { display: none; }
   .proj-head { flex-direction: column; align-items: flex-start; }
   .proj-head h3 { font-size: 32px; }
   .voice-pop { left: 16px; right: 16px; width: auto; }
@@ -394,12 +399,11 @@ export function SiteHeader({ current, solid = false }: { current?: NavKey; solid
             <nav className="nav-links" aria-label="Main">
               <ProjectsMenu />
               <a href="#/about" className={current === 'about' ? 'current' : undefined} aria-current={current === 'about' ? 'page' : undefined}>About me</a>
-              <span>CV</span>
             </nav>
           </div>
           <div className="nav-right">
             <a href={LINKS.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>
-            <a href={LINKS.instagram} target="_blank" rel="noreferrer">Instagram</a>
+            <span className="cv">CV</span>
             <a className="btn-sm" href={LINKS.cal} target="_blank" rel="noreferrer">Book a call</a>
           </div>
         </div>

@@ -1,10 +1,11 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { ScrollHint, setHint } from './IntroHint';
 
 /**
  * Trust Bank hero with a full-screen intro (Harbor's request, this site only).
- * The page opens with the hero video filling the whole screen and a "Scroll" sign at the bottom.
- * Scrolling one screen-height shrinks the video back into its own place under the headline (2:1, 20px corners)
- * while the hero stays pinned; after that the page scrolls on as normal.
+ * The page opens with the hero video filling the whole screen and a round "Scroll" sign (IntroHint) at the bottom;
+ * the site header is hidden meanwhile (TrustBank.tsx). Scrolling one screen-height shrinks the video back into its
+ * own place under the headline (2:1, 20px corners) while the hero stays pinned; after that the page scrolls on as normal.
  * How: the hero section is sticky for one extra screen of scroll (a spacer below it). The video box is absolutely
  * positioned inside its 2:1 slot, and each frame its left/top/width/height are blended between the full screen
  * and the slot. object-fit: cover keeps the video undistorted at every size.
@@ -182,20 +183,11 @@ function SoundMotion({ src, poster, label }: { src: string; poster: string; labe
   );
 }
 
-const HINT_CSS = `
-.tb-hint { position: absolute; left: 50%; bottom: 112px; transform: translateX(-50%); z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 12px;
-  color: #fff; font-size: 16px; letter-spacing: .08em; text-transform: uppercase; pointer-events: none; text-shadow: 0 1px 10px rgba(0,0,0,.25); }
-.tb-hint i { position: relative; display: block; width: 2px; height: 48px; overflow: hidden; background: rgba(255,255,255,.35); border-radius: 2px; }
-.tb-hint i::after { content: ""; position: absolute; left: 0; top: -50%; width: 100%; height: 50%; background: #fff; animation: tb-hint 1.6s cubic-bezier(.65,0,.35,1) infinite; }
-@keyframes tb-hint { from { top: -50%; } to { top: 100%; } }
-@media (prefers-reduced-motion: reduce) { .tb-hint i::after { animation: none; top: 0; } }
-`;
-
 export function HeroSection() {
   const outer = useRef<HTMLDivElement>(null);
   const slot = useRef<HTMLDivElement>(null);
   const box = useRef<HTMLDivElement>(null);
-  const hint = useRef<HTMLDivElement>(null);
+  const hint = useRef<HTMLButtonElement>(null);
   const spacer = useRef<HTMLDivElement>(null);
   const [intro] = useState(() => !reducedMotion());
 
@@ -221,7 +213,7 @@ export function HeroSection() {
       b.style.width = `${(vw + (r.width - vw) * e).toFixed(2)}px`;
       b.style.height = `${(vh + (r.height - vh) * e).toFixed(2)}px`;
       b.style.borderRadius = `${(RADIUS * e).toFixed(2)}px`;
-      if (hint.current) hint.current.style.opacity = clamp(1 - p * 5).toFixed(3);
+      setHint(hint.current, p);
     };
     const on = () => {
       if (!raf) raf = requestAnimationFrame(draw);
@@ -241,7 +233,7 @@ export function HeroSection() {
 
   return (
     <div ref={outer} className="relative" data-chapter="Trust Bank">
-      <style>{HINT_CSS}</style>
+      {intro && <ScrollHint hintRef={hint} />}
       <section className={`${intro ? 'sticky top-0' : ''} bg-white pt-28 md:pt-[120px] pb-20`}>
         <div className="relative mx-auto w-full max-w-[1440px] px-6 min-[1488px]:px-0">
           <img src={HERO.logo} alt="trust" className="h-[29px] w-auto" />
@@ -271,12 +263,6 @@ export function HeroSection() {
                 poster={HERO.poster}
                 label="Trust Bank rewards: linking FairPrice in one tap and watching every payment fill the Linkpoints bar"
               />
-              {intro && (
-                <div ref={hint} className="tb-hint" aria-hidden="true">
-                  <span>Scroll</span>
-                  <i />
-                </div>
-              )}
             </div>
           </div>
 

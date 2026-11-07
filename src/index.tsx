@@ -5,12 +5,14 @@ import { App } from "./App";
 import { TrustBank } from "./TrustBank";
 import { GameCove } from "./GameCove";
 import { AboutPage } from "./Pages";
+import { CursorTrail } from "./cursor";
 import { useScreenInit } from "./useScreenInit.js";
 
 // Hash routes: "#/about" is the About page, "#/trust-bank" and "#/gamecove" open the case studies;
 // any other hash (#projects, #contact…) is a section of the main page.
 // The separate Projects page was removed (the header's Projects dropdown replaces it): an old "#/projects" link
 // lands on the Selected work section of the main page.
+// The line cursor (cursor.tsx) runs on every page; on the case studies it starts as a [SCROLL] label.
 const fixOld = () => {
   if (window.location.hash === "#/projects") {
     history.replaceState(null, "", "#projects");
@@ -54,10 +56,18 @@ function Root() {
     return () => cancelAnimationFrame(raf);
   }, [page, hash]);
 
-  if (page === "tb") return <TrustBank key="tb" />;
-  if (page === "gc") return <GameCove key="gc" />;
-  if (page === "ab") return <AboutPage key="ab" />;
-  return <App key="main" />;
+  let view: React.ReactNode;
+  if (page === "tb") view = <TrustBank key="tb" />;
+  else if (page === "gc") view = <GameCove key="gc" />;
+  else if (page === "ab") view = <AboutPage key="ab" />;
+  else view = <App key="main" />;
+
+  return (
+    <>
+      <CursorTrail scrollLabel={page === "tb" || page === "gc"} />
+      {view}
+    </>
+  );
 }
 
 const rootEl = document.getElementById("root");

@@ -1,13 +1,15 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { CSS, IMG3 } from './portfolio'
+import { ChapterMeter } from './ChapterMeter'
 
 // UTrada case study: a rough skeleton for Harbor to fill in herself.
 // Everything to edit is in UT below. Text starting with "TBD" is a placeholder and shows in grey italics; replace it.
 // Each `shots` number is how many image placeholder boxes that section shows. Swap a box for a real image by giving
 // the section `images: [{ src, alt }]` instead.
 // Only facts already on this site are filled in: UTrada, a trading platform, 2024 – 2026, and the screens image.
-// Chrome matches the other case pages: header (harbor → main page · chapter · Next · Trust Bank · Book a call,
-// reading bar), the "Next case study" card and the footer. Type is Helvetica Neue, nothing under 16px.
+// Chrome matches the other case pages: header (harbor → main page · chapter meter · Next · Trust Bank · Book a call),
+// the "Next case study" card and the footer. The chapter meter is ChapterMeter.tsx (same as Trust Bank); no reading-progress line.
+// Type is Helvetica Neue, nothing under 16px.
 
 const LINKS = {
   cal: 'https://cal.com/harbor-kim-wqsmkt/30min',
@@ -84,23 +86,17 @@ const goHome = (e: React.MouseEvent) => { e.preventDefault(); window.location.ha
 export function UTrada() {
   const [chapter, setChapter] = useState('UTrada')
   const [scrolled, setScrolled] = useState(false)
-  const bar = useRef<HTMLDivElement>(null)
 
   useEffect(() => { scrollTo(0, 0) }, [])
 
-  // reading progress + light glass header after scrolling
+  // light glass header after scrolling
   useEffect(() => {
     let raf = 0
-    const run = () => {
-      raf = 0
-      const y = scrollY, max = document.documentElement.scrollHeight - innerHeight
-      if (bar.current) bar.current.style.transform = `scaleX(${max > 0 ? y / max : 0})`
-      setScrolled(y > 40)
-    }
+    const run = () => { raf = 0; setScrolled(scrollY > 40) }
     const on = () => { if (!raf) raf = requestAnimationFrame(run) }
     run()
-    addEventListener('scroll', on, { passive: true }); addEventListener('resize', on)
-    return () => { if (raf) cancelAnimationFrame(raf); removeEventListener('scroll', on); removeEventListener('resize', on) }
+    addEventListener('scroll', on, { passive: true })
+    return () => { if (raf) cancelAnimationFrame(raf); removeEventListener('scroll', on) }
   }, [])
 
   // current chapter name in the header
@@ -121,7 +117,6 @@ export function UTrada() {
   }, [])
 
   const toNext = (e: React.MouseEvent) => { e.preventDefault(); document.getElementById('next')?.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth' }) }
-  const idx = CHAPTERS.indexOf(chapter)
 
   return (
     <div className="hb ut">
@@ -130,13 +125,12 @@ export function UTrada() {
       <header className={'ut-head' + (scrolled ? ' scrolled' : '')}>
         <div className="wrap ut-nav">
           <div className="nav-left"><a className="logo" href="#" aria-label="harbor, main page" onClick={goHome}>harbor</a></div>
-          <div className="chapter" aria-live="polite"><span key={chapter}>{idx >= 0 ? `0${idx + 1} · ` : ''}{chapter}</span></div>
+          <ChapterMeter chapters={CHAPTERS} chapter={chapter} scope=".ut" />
           <div className="nav-right">
             <a className="next-link" href="#next" onClick={toNext}>Next · {NEXT.name} →</a>
             <a className="btn-sm" href={LINKS.cal} target="_blank" rel="noreferrer">Book a call</a>
           </div>
         </div>
-        <div className="read" aria-hidden="true"><i ref={bar} /></div>
       </header>
 
       <main id="top">
@@ -215,11 +209,7 @@ const UT_CSS = `
 .ut-nav .nav-right { justify-content: flex-end; }
 .ut .next-link { font-size: 16px; opacity: .8; transition: opacity .2s; }
 .ut .next-link:hover { opacity: 1; }
-.ut .chapter { font-size: 16px; opacity: .7; min-width: 180px; text-align: center; overflow: hidden; }
-.ut .chapter span { display: inline-block; animation: rise .45s var(--ease) both; }
 .ut .ut-head .btn-sm { background: var(--ink); color: #fff; }
-.ut .read { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; }
-.ut .read i { display: block; height: 100%; background: currentColor; transform: scaleX(0); transform-origin: 0 50%; }
 
 /* placeholders: grey italics until Harbor fills them in */
 .ut .tbd { color: #9A9A97; font-style: italic; }
@@ -256,7 +246,7 @@ const UT_CSS = `
 .ut .next-card:hover .next-name { transform: translateX(8px); }
 
 @media (max-width: 900px) {
-  .ut-nav { grid-template-columns: 1fr auto; } .ut .chapter, .ut .next-link { display: none; }
+  .ut-nav { grid-template-columns: 1fr auto; } .ut .next-link { display: none; }
   .ut-hero { padding-top: 136px; }
   .ut-line { font-size: 22px; }
   .ut-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }

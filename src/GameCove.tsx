@@ -1,13 +1,15 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { CSS } from './portfolio'
 import { GameCoveV4Body, GC4_CHAPTERS } from './GameCoveV4'
+import { ChapterMeter } from './ChapterMeter'
 
 // GameCove case study page for this site. The body (hero → reflection) is GameCoveV4.tsx (the same file Portfolio_1 uses),
 // built from Figma "GameCove_v.4 · GameCove colors" in GameCove's own dark palette.
 // Full-screen intro (same as the Trust Bank page): the page opens with the hero ad video filling the screen; the scroll cue is
 // the [SCROLL] cursor (cursor.tsx). Scrolling one screen shrinks the video back into its place under the headline while the
 // hero stays put, then the page scrolls on as normal. The header is hidden during the intro, then fixed at the top.
-// Header: harbor → main page · chapter · Next · Trust Bank · Book a call. The line cursor comes from index.tsx for every page.
+// Header: harbor → main page · chapter meter · Next · Trust Bank · Book a call. Same header bar as Trust Bank: the chapter
+// meter (ChapterMeter.tsx, dark contents panel here) and no reading-progress line. The line cursor comes from index.tsx.
 // GameCoveV4.tsx is left untouched: the intro is applied here to its hero (.g-hero) and video (.g-video) by style only —
 //  - the hero is held in place by moving it down as far as the page has scrolled (up to one screen), with one screen of
 //    space added under it;
@@ -115,15 +117,13 @@ export function GameCove() {
   const [scrolled, setScrolled] = useState(false)
   const [introOn] = useState(() => !reducedMotion())
   const [intro, setIntro] = useState(introOn)
-  const bar = useRef<HTMLDivElement>(null)
 
   useEffect(() => { scrollTo(0, 0) }, [])
   useHeroIntro(introOn)
 
-  // reading progress, dark glass after scrolling, and no header at all while the full-screen intro plays
+  // dark glass after scrolling, and no header at all while the full-screen intro plays
   useOnScroll(() => {
-    const y = scrollY, max = document.documentElement.scrollHeight - innerHeight
-    if (bar.current) bar.current.style.transform = `scaleX(${max > 0 ? y / max : 0})`
+    const y = scrollY
     setScrolled(y > 40)
     setIntro(introOn && y < innerHeight - 2)
   })
@@ -137,7 +137,6 @@ export function GameCove() {
   }, [])
 
   const toNext = (e: React.MouseEvent) => { e.preventDefault(); document.getElementById('next')?.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth' }) }
-  const idx = CHAPTERS.indexOf(chapter)
 
   return (
     <div className="hb gc">
@@ -148,13 +147,12 @@ export function GameCove() {
           <div className="nav-left">
             <a className="logo" href="#" aria-label="harbor, main page" tabIndex={intro ? -1 : undefined} onClick={goHome}>harbor</a>
           </div>
-          <div className="chapter" aria-live="polite"><span key={chapter}>{idx >= 0 ? `${String(idx + 1).padStart(2, '0')} · ` : ''}{chapter}</span></div>
+          <ChapterMeter chapters={CHAPTERS} chapter={chapter} intro={intro} scope=".gc" dark />
           <div className="nav-right">
             <a className="next-link" href="#next" tabIndex={intro ? -1 : undefined} onClick={toNext}>Next · Trust Bank →</a>
             <a className="btn-sm" href={LINKS.cal} target="_blank" rel="noreferrer" tabIndex={intro ? -1 : undefined}>Book a call</a>
           </div>
         </div>
-        <div className="read" aria-hidden="true"><i ref={bar} /></div>
       </header>
 
       <main>
@@ -197,11 +195,7 @@ const GC_CSS = `
 .gc-nav .nav-right { justify-content: flex-end; }
 .gc .next-link { font-size: 16px; opacity: .8; transition: opacity .2s; }
 .gc .next-link:hover { opacity: 1; }
-.gc .chapter { font-size: 16px; opacity: .7; min-width: 180px; text-align: center; overflow: hidden; }
-.gc .chapter span { display: inline-block; animation: rise .45s var(--ease) both; }
 .gc .gc-head .btn-sm { background: #F2F0EC; color: #111114; }
-.gc .read { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; }
-.gc .read i { display: block; height: 100%; background: #B3D1FF; transform: scaleX(0); transform-origin: 0 50%; }
 
 /* the pinned Final design showcase sits below the fixed header */
 .gc .gc4 .g-show { padding-top: 96px; }
@@ -214,6 +208,6 @@ const GC_CSS = `
 .gc .next-card:hover .next-name { transform: translateX(8px); }
 
 @media (max-width: 900px) {
-  .gc-nav { grid-template-columns: 1fr auto; } .gc .chapter, .gc .next-link { display: none; }
+  .gc-nav { grid-template-columns: 1fr auto; } .gc .next-link { display: none; }
 }
 `

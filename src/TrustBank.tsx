@@ -1,13 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { CSS } from './portfolio'
 import { TrustBankBody } from './p1/TrustBankBody'
+import { ChapterMeter } from './ChapterMeter'
 
 // Trust Bank case study page for this site.
 // Body (hero → reflection) = Portfolio_1's Trust Bank page (p1/TrustBankBody.tsx): its copy, colours, type, rounded corners and interactions.
 // The hero opens full-screen and shrinks into place on scroll (p1/TrustHero.tsx); the scroll cue is the [SCROLL] cursor (cursor.tsx).
-// This file keeps this site's chrome: the header (harbor → main page · chapter · Next · GameCove · Book a call, reading bar),
+// This file keeps this site's chrome: the header (harbor → main page · chapter meter · Next · GameCove · Book a call),
 // the "Next case study" card and the footer. The line cursor now comes from index.tsx for every page.
 // Header: hidden while the full-screen intro plays (first screen of scroll), then fixed at the top for the rest of the page.
+// Chapter meter (header centre): ChapterMeter.tsx, shared with GameCove and UTrada. The reading-progress line under the
+// header was removed at Harbor's request (the meter's tick wave shows where you are).
 
 const NEXT_URL = 'https://project-harbor-kim-portfolio-114.magicpatterns.app/#/gamecove'
 const LINKS = {
@@ -41,14 +44,12 @@ export function TrustBank() {
   const [chapter, setChapter] = useState('Trust Bank')
   const [scrolled, setScrolled] = useState(false)
   const [intro, setIntro] = useState(() => !reducedMotion())
-  const bar = useRef<HTMLDivElement>(null)
 
   useEffect(() => { scrollTo(0, 0) }, [])
 
-  // reading progress, light glass after scrolling, and no header at all while the full-screen intro plays
+  // light glass after scrolling, and no header at all while the full-screen intro plays
   useOnScroll(() => {
-    const y = scrollY, max = document.documentElement.scrollHeight - innerHeight
-    if (bar.current) bar.current.style.transform = `scaleX(${max > 0 ? y / max : 0})`
+    const y = scrollY
     setScrolled(y > 40)
     setIntro(!reducedMotion() && y < innerHeight - 2)
   })
@@ -62,7 +63,6 @@ export function TrustBank() {
   }, [])
 
   const toNext = (e: React.MouseEvent) => { e.preventDefault(); document.getElementById('next')?.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth' }) }
-  const idx = CHAPTERS.indexOf(chapter)
 
   return (
     <div className="hb tb">
@@ -75,13 +75,12 @@ export function TrustBank() {
           <div className="nav-left">
             <a className="logo" href="#" aria-label="harbor, main page" tabIndex={intro ? -1 : undefined} onClick={goHome}>harbor</a>
           </div>
-          <div className="chapter" aria-live="polite"><span key={chapter}>{idx >= 0 ? `0${idx + 1} · ` : ''}{chapter}</span></div>
+          <ChapterMeter chapters={CHAPTERS} chapter={chapter} intro={intro} scope=".tb" />
           <div className="nav-right">
             <a className="next-link" href="#next" tabIndex={intro ? -1 : undefined} onClick={toNext}>Next · GameCove →</a>
             <a className="btn-sm" href={LINKS.cal} target="_blank" rel="noreferrer" tabIndex={intro ? -1 : undefined}>Book a call</a>
           </div>
         </div>
-        <div className="read" aria-hidden="true"><i ref={bar} /></div>
       </header>
 
       <main id="top">
@@ -123,11 +122,7 @@ const TB_CSS = `
 .tb-nav .nav-right { justify-content: flex-end; }
 .tb .next-link { font-size: 16px; opacity: .8; transition: opacity .2s; }
 .tb .next-link:hover { opacity: 1; }
-.tb .chapter { font-size: 16px; opacity: .7; min-width: 180px; text-align: center; overflow: hidden; }
-.tb .chapter span { display: inline-block; animation: rise .45s var(--ease) both; }
 .tb .tb-head .btn-sm { background: var(--ink); color: #fff; }
-.tb .read { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; }
-.tb .read i { display: block; height: 100%; background: currentColor; transform: scaleX(0); transform-origin: 0 50%; }
 
 /* the pinned Deliver showcase sits below the fixed header */
 @media (min-width: 1024px) { .tb .p1tb .lg\\:sticky { top: max(92px, calc(50vh - 400px)) !important; } }
@@ -139,6 +134,6 @@ const TB_CSS = `
 .tb .next-card:hover .next-name { transform: translateX(8px); }
 
 @media (max-width: 900px) {
-  .tb-nav { grid-template-columns: 1fr auto; } .tb .chapter, .tb .next-link { display: none; }
+  .tb-nav { grid-template-columns: 1fr auto; } .tb .next-link { display: none; }
 }
 `

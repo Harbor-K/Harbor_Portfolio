@@ -1,25 +1,27 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { CSS } from './portfolio'
 import { TrustBankBody } from './p1/TrustBankBody'
-import { ChapterMeter } from './ChapterMeter'
+import { KimButton, VoiceAssistant } from './KimLLM'
+import { SideToc, useHeadroom } from './CaseNav'
 
 // Trust Bank case study page for this site.
 // Body (hero → reflection) = Portfolio_1's Trust Bank page (p1/TrustBankBody.tsx): its copy, colours, type, rounded corners and interactions.
-// The hero opens on the full-screen video, which moves into its place on its own after a few seconds (p1/TrustHero.tsx).
-// This file keeps this site's chrome: the header (harbor → main page · chapter meter · Next · GameCove),
-// the "Next case study" card and the footer. The line cursor comes from index.tsx for every page.
-// Header: hidden while the full-screen intro plays (until the hero sends 'caseintro' false), then fixed at the top.
-// Book a call was taken out of the header at Harbor's request (it stays in the footer).
-// Chapter meter (header centre): ChapterMeter.tsx, shared with GameCove and UTrada.
+// The hero opens on the full-screen video, which moves into its place on its own after 2.5 seconds (p1/TrustHero.tsx).
+// This file keeps this site's chrome: the header (harbor → main page on the left; Next · GameCove and the ✦ Kim LLM button
+// on the right), the process contents on the left side (CaseNav.tsx, Notion-style), the "Next case study" card,
+// the footer and the Kim LLM panel (KimLLM.tsx).
+// "Next · GameCove" in the header and the big card at the bottom both open the GameCove page directly (#/gamecove).
+// Header: hidden while the full-screen intro plays (until the hero sends 'caseintro' false); after that it slides away
+// while scrolling down and comes back on scrolling up (useHeadroom).
+// The line cursor comes from index.tsx for every page.
 
-const NEXT_URL = 'https://project-harbor-kim-portfolio-114.magicpatterns.app/#/gamecove'
+const NEXT = { name: 'GameCove', href: '#/gamecove' }
 const LINKS = {
   cal: 'https://cal.com/harbor-kim-wqsmkt/30min',
   linkedin: 'https://www.linkedin.com/in/harborkim/',
   instagram: 'https://instagram.com/harbor_0328',
   email: 'mailto:harborkim0328@gmail.com',
 }
-
 const CHAPTERS = ['Overview', 'Process', 'Discover', 'Define', 'Develop', 'Deliver', 'Test', 'Reflection']
 
 const reducedMotion = () => typeof window !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -41,11 +43,11 @@ function useOnScroll(fn: () => void) {
 const goHome = (e: React.MouseEvent) => { e.preventDefault(); window.location.hash = '' }
 
 export function TrustBank() {
-  const [chapter, setChapter] = useState('Trust Bank')
   const [scrolled, setScrolled] = useState(false)
   const [intro, setIntro] = useState(() => !reducedMotion())
+  const away = useHeadroom()
 
-  useEffect(() => { scrollTo(0, 0) }, [])
+  useEffect(() => { scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior }) }, [])
 
   // the header appears when the hero's intro has finished (with a safety timeout)
   useEffect(() => {
@@ -58,41 +60,33 @@ export function TrustBank() {
   // light glass after scrolling
   useOnScroll(() => setScrolled(scrollY > 40))
 
-  // current chapter name in the header
-  useEffect(() => {
-    if (!('IntersectionObserver' in window)) return
-    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) setChapter((e.target as HTMLElement).dataset.chapter || '') }), { rootMargin: '-45% 0px -54% 0px' })
-    document.querySelectorAll('.tb [data-chapter]').forEach(s => io.observe(s))
-    return () => io.disconnect()
-  }, [])
-
-  const toNext = (e: React.MouseEvent) => { e.preventDefault(); document.getElementById('next')?.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth' }) }
-
   return (
     <div className="hb tb">
       <style>{CSS + TB_CSS}</style>
       {/* handwriting on the Define whiteboard only */}
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500&family=Kalam:wght@400&display=swap" />
 
-      <header className={'tb-head' + (scrolled ? ' scrolled' : '') + (intro ? ' intro' : '')} aria-hidden={intro || undefined}>
+      <header className={'tb-head' + (scrolled ? ' scrolled' : '') + (intro ? ' intro' : '') + (away && !intro ? ' away' : '')} aria-hidden={intro || undefined}>
         <div className="wrap tb-nav">
           <div className="nav-left">
             <a className="logo" href="#" aria-label="harbor, main page" tabIndex={intro ? -1 : undefined} onClick={goHome}>harbor</a>
           </div>
-          <ChapterMeter chapters={CHAPTERS} chapter={chapter} intro={intro} scope=".tb" />
           <div className="nav-right">
-            <a className="next-link" href="#next" tabIndex={intro ? -1 : undefined} onClick={toNext}>Next · GameCove →</a>
+            <a className="next-link" href={NEXT.href} tabIndex={intro ? -1 : undefined}>Next · {NEXT.name} →</a>
+            <KimButton tabIndex={intro ? -1 : undefined} />
           </div>
         </div>
       </header>
+
+      <SideToc chapters={CHAPTERS} scope=".tb" hidden={intro} />
 
       <main id="top">
         <TrustBankBody />
 
         <section className="next" id="next">
-          <a className="wrap next-card" href={NEXT_URL}>
+          <a className="wrap next-card" href={NEXT.href}>
             <span className="eyebrow">Next case study</span>
-            <span className="next-name">GameCove <span className="go">→</span></span>
+            <span className="next-name">{NEXT.name} <span className="go">→</span></span>
           </a>
         </section>
       </main>
@@ -110,19 +104,22 @@ export function TrustBank() {
         </div>
         <div className="wordmark" aria-hidden="true">harbor</div>
       </footer>
+
+      <VoiceAssistant />
     </div>
   )
 }
 
 // Site chrome only (header, next case card). The body brings its own styles (p1/TrustBankBody.tsx).
 const TB_CSS = `
-/* header: hidden during the full-screen intro, then fixed at the top; light glass after scrolling */
+/* header: hidden during the full-screen intro; slides away on scroll down, back on scroll up; light glass after scrolling */
 .tb-head { position: fixed; inset: 0 0 auto 0; z-index: 50; color: var(--ink); border-bottom: 1px solid transparent;
   transition: background-color .35s, color .35s, border-color .35s, transform .45s cubic-bezier(.22,1,.36,1), opacity .3s; }
 .tb-head.scrolled { background: rgba(245,245,242,.9); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); color: var(--ink); border-bottom-color: var(--line); }
+.tb-head.away { transform: translateY(calc(-100% - 4px)); }
 .tb-head.intro { transform: translateY(calc(-100% - 4px)); opacity: 0; pointer-events: none; }
-.tb-nav { height: 72px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; }
-.tb-nav .nav-right { justify-content: flex-end; }
+.tb-nav { height: 72px; display: flex; justify-content: space-between; align-items: center; }
+.tb-nav .nav-right { gap: 24px; }
 .tb .next-link { font-size: 16px; opacity: .8; transition: opacity .2s; }
 .tb .next-link:hover { opacity: 1; }
 
@@ -136,6 +133,6 @@ const TB_CSS = `
 .tb .next-card:hover .next-name { transform: translateX(8px); }
 
 @media (max-width: 900px) {
-  .tb-nav { grid-template-columns: 1fr auto; } .tb .next-link { display: none; }
+  .tb .next-link { display: none; }
 }
 `

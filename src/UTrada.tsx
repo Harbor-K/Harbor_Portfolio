@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from 'react'
 import { CSS, IMG3 } from './portfolio'
-import { ChapterMeter } from './ChapterMeter'
+import { KimButton, VoiceAssistant } from './KimLLM'
+import { SideToc, useHeadroom } from './CaseNav'
 
 // UTrada case study: a rough skeleton for Harbor to fill in herself.
 // Everything to edit is in UT below. Text starting with "TBD" is a placeholder and shows in grey italics; replace it.
 // Each `shots` number is how many image placeholder boxes that section shows. Swap a box for a real image by giving
 // the section `images: [{ src, alt }]` instead.
 // Only facts already on this site are filled in: UTrada, a trading platform, 2024 – 2026, and the screens image.
-// Chrome matches the other case pages: header (harbor → main page · chapter meter · Next · Trust Bank),
-// the "Next case study" card and the footer. Book a call was taken out of the header (it stays in the footer).
+// Chrome matches the other case pages: header (harbor → main page on the left; Next · Trust Bank — opens that page
+// directly — and ✦ Kim LLM on the right) that slides away on scroll down and back on scroll up, the process contents on
+// the left side (CaseNav.tsx), the "Next case study" card, the footer and the Kim LLM panel (KimLLM.tsx).
 // Type is Helvetica Neue, nothing under 16px.
 
 const LINKS = {
@@ -80,14 +82,13 @@ const UTRADA_SVG = `<svg width="40" height="40" viewBox="0 0 40 40" fill="none" 
 const UTRADA_ICON = `data:image/svg+xml;utf8,${encodeURIComponent(UTRADA_SVG)}`
 
 const tbd = (t: string) => (t.startsWith('TBD') ? 'tbd' : undefined)
-const reducedMotion = () => typeof window !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches
 const goHome = (e: React.MouseEvent) => { e.preventDefault(); window.location.hash = '' }
 
 export function UTrada() {
-  const [chapter, setChapter] = useState('UTrada')
   const [scrolled, setScrolled] = useState(false)
+  const away = useHeadroom()
 
-  useEffect(() => { scrollTo(0, 0) }, [])
+  useEffect(() => { scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior }) }, [])
 
   // light glass header after scrolling
   useEffect(() => {
@@ -99,14 +100,6 @@ export function UTrada() {
     return () => { if (raf) cancelAnimationFrame(raf); removeEventListener('scroll', on) }
   }, [])
 
-  // current chapter name in the header
-  useEffect(() => {
-    if (!('IntersectionObserver' in window)) return
-    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) setChapter((e.target as HTMLElement).dataset.chapter || 'UTrada') }), { rootMargin: '-45% 0px -54% 0px' })
-    document.querySelectorAll('.ut [data-chapter]').forEach(s => io.observe(s))
-    return () => io.disconnect()
-  }, [])
-
   // scroll reveals
   useEffect(() => {
     const els = Array.from(document.querySelectorAll<HTMLElement>('.ut [data-reveal]'))
@@ -116,21 +109,21 @@ export function UTrada() {
     return () => io.disconnect()
   }, [])
 
-  const toNext = (e: React.MouseEvent) => { e.preventDefault(); document.getElementById('next')?.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth' }) }
-
   return (
     <div className="hb ut">
       <style>{CSS + UT_CSS}</style>
 
-      <header className={'ut-head' + (scrolled ? ' scrolled' : '')}>
+      <header className={'ut-head' + (scrolled ? ' scrolled' : '') + (away ? ' away' : '')}>
         <div className="wrap ut-nav">
           <div className="nav-left"><a className="logo" href="#" aria-label="harbor, main page" onClick={goHome}>harbor</a></div>
-          <ChapterMeter chapters={CHAPTERS} chapter={chapter} scope=".ut" />
           <div className="nav-right">
-            <a className="next-link" href="#next" onClick={toNext}>Next · {NEXT.name} →</a>
+            <a className="next-link" href={NEXT.href}>Next · {NEXT.name} →</a>
+            <KimButton />
           </div>
         </div>
       </header>
+
+      <SideToc chapters={CHAPTERS} scope=".ut" />
 
       <main id="top">
         <section className="ut-hero" aria-label="UTrada">
@@ -194,6 +187,8 @@ export function UTrada() {
         </div>
         <div className="wordmark" aria-hidden="true">harbor</div>
       </footer>
+
+      <VoiceAssistant />
     </div>
   )
 }
@@ -201,11 +196,13 @@ export function UTrada() {
 const UT_CSS = `
 .ut { background: #fff; }
 
-/* header: fixed, light glass after scrolling (same as the other case pages) */
-.ut-head { position: fixed; inset: 0 0 auto 0; z-index: 50; color: var(--ink); border-bottom: 1px solid transparent; transition: background-color .35s, border-color .35s; }
+/* header: fixed; slides away on scroll down, back on scroll up; light glass after scrolling */
+.ut-head { position: fixed; inset: 0 0 auto 0; z-index: 50; color: var(--ink); border-bottom: 1px solid transparent;
+  transition: background-color .35s, border-color .35s, transform .45s cubic-bezier(.22,1,.36,1); }
 .ut-head.scrolled { background: rgba(245,245,242,.9); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border-bottom-color: var(--line); }
-.ut-nav { height: 72px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; }
-.ut-nav .nav-right { justify-content: flex-end; }
+.ut-head.away { transform: translateY(calc(-100% - 4px)); }
+.ut-nav { height: 72px; display: flex; justify-content: space-between; align-items: center; }
+.ut-nav .nav-right { gap: 24px; }
 .ut .next-link { font-size: 16px; opacity: .8; transition: opacity .2s; }
 .ut .next-link:hover { opacity: 1; }
 
@@ -244,7 +241,7 @@ const UT_CSS = `
 .ut .next-card:hover .next-name { transform: translateX(8px); }
 
 @media (max-width: 900px) {
-  .ut-nav { grid-template-columns: 1fr auto; } .ut .next-link { display: none; }
+  .ut .next-link { display: none; }
   .ut-hero { padding-top: 136px; }
   .ut-line { font-size: 22px; }
   .ut-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }

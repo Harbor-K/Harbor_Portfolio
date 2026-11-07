@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { CSS, IMG, IMG3 } from './portfolio'
 import { useScreenInit } from './useScreenInit.js'
+import { KimButton, VoiceAssistant } from './KimLLM'
 
 // Harbor — portfolio main page v4, from Figma "44기 김지현 4차 PF" (node 260:282) and Harbor's review notes:
 // hero → three projects, one per block (title, line, media), laid out like rox.com's "Applied AI research" section
@@ -9,14 +10,15 @@ import { useScreenInit } from './useScreenInit.js'
 // and the separate Projects page (#/projects). The header's "Projects" is now Portfolio_1's dropdown (ProjectsMenu).
 // Header: left = Projects · About me; right = LinkedIn · CV · [✦ Kim LLM]. Book a call was taken out of the header at
 // Harbor's request (it stays in the hero, the closing CTA and the footer).
-// Kim LLM: a square outlined header button with a sparkle icon (no rounded corners), in place of the old floating pill.
-// It opens the Kim LLM panel under the header, top right.
+// Kim LLM (header button + panel) lives in KimLLM.tsx and is shared with the About and case-study pages.
 // Project blocks: each whole block (title + image) is one link; pointing anywhere on it turns the cursor into a solid
 // square "View project" button (cursor.tsx, data-cursor + data-cursor-variant="button") — black on the white title
 // area, white over the image.
 // UTrada has its own case page (#/utrada, UTrada.tsx, a skeleton Harbor is filling in).
 // Hero background: Harbor's 8-second typing video (made from the hero photo), muted and looping, in place of the still
 // photo. The first frame is the poster, so the hero looks the same while the video loads. Reduced motion: poster only.
+
+export { VoiceAssistant, useVoice } from './KimLLM'
 
 export const LINKS = {
   cal: 'https://cal.com/harbor-kim-wqsmkt/30min',
@@ -80,15 +82,6 @@ export const PAGE_CSS = `
 /* header: CV sits on the right with LinkedIn (no CV link yet, so it is plain text) */
 .hb .nav-right .cv { opacity: .8; }
 
-/* Kim LLM header button: square outline, sparkle icon in front (no rounded corners) */
-.hb .kim-btn { display: inline-flex; align-items: center; gap: 8px; margin: 0; padding: 9px 15px; border: 1px solid currentColor; border-radius: 0;
-  background: transparent; font-size: 16px; font-weight: 500; line-height: 1.2; white-space: nowrap; cursor: pointer; transition: background-color .25s, color .25s; }
-.hb .kim-btn:hover, .hb .kim-btn[aria-expanded="true"] { background: rgba(255,255,255,.14); }
-.hb .site.scrolled .kim-btn:hover, .hb .site.scrolled .kim-btn[aria-expanded="true"] { background: rgba(15,15,15,.06); }
-.hb .kim-btn:focus-visible { outline: 2px solid #2563EB; outline-offset: 3px; }
-.hb .kim-btn svg { display: block; width: 16px; height: 16px; flex: none; animation: kim-twinkle 2.6s ease-in-out infinite; }
-@keyframes kim-twinkle { 0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; } 50% { transform: scale(.82) rotate(12deg); opacity: .75; } }
-
 /* Projects dropdown in the header (from Portfolio_1's HomeDock) */
 .hb .pj-menu { position: relative; display: flex; align-items: center; }
 .hb .pj-trigger { display: flex; align-items: center; gap: 6px; padding: 0; background: none; border: 0; cursor: pointer; font-size: 16px; white-space: nowrap; opacity: .8; transition: opacity .2s; }
@@ -96,59 +89,12 @@ export const PAGE_CSS = `
 .hb .pj-panel { position: absolute; top: 100%; left: -12px; padding-top: 12px; width: min(560px, calc(100vw - 32px)); transform-origin: 0 0; }
 .hb .pj-menu span { opacity: 1; }
 
-/* Aurora orb (Kim LLM panel) — ChatGPT-voice-style */
-@property --rot { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
-.orb { position: relative; border-radius: 50%; overflow: hidden; isolation: isolate;
-  background: radial-gradient(circle at 50% 120%, #1D4ED8 0%, #3B82F6 35%, #93C5FD 65%, #E0F2FE 100%); }
-.orb::before, .orb::after { content: ""; position: absolute; inset: -25%; border-radius: 50%; filter: blur(14px); }
-.orb::before { background: conic-gradient(from var(--rot), #E0F2FE, #60A5FA, #FFFFFF, #38BDF8, #BFDBFE, #2563EB, #E0F2FE); opacity: .85; animation: orb-spin 7s linear infinite; mix-blend-mode: soft-light; }
-.orb::after { background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.95), rgba(255,255,255,0) 45%), radial-gradient(circle at 70% 75%, rgba(147,197,253,.9), rgba(147,197,253,0) 50%);
-  animation: orb-drift 5s ease-in-out infinite alternate; }
-@keyframes orb-spin { to { --rot: 360deg; } }
-@keyframes orb-drift { 0% { transform: translate(-6%, -4%) scale(1); } 100% { transform: translate(6%, 5%) scale(1.12); } }
-.orb.live { animation: orb-pulse 1.1s ease-in-out infinite; }
-.orb.talk { animation: orb-talk .5s ease-in-out infinite alternate; }
-@keyframes orb-pulse { 50% { transform: scale(1.06); } }
-@keyframes orb-talk { 0% { transform: scale(.97); } 100% { transform: scale(1.08); } }
-
-/* Kim LLM panel: opens under the header, top right; square corners like the rest of the site */
-.voice-pop { position: fixed; right: 24px; top: 84px; z-index: 60; width: 360px; padding: 28px 24px 24px; background: #fff; color: var(--ink); border: 1px solid var(--line);
-  border-radius: 0; box-shadow: 0 24px 60px rgba(0,0,0,.18); transform-origin: top right; text-align: center;
-  transform: translateY(-8px) scale(.97); opacity: 0; pointer-events: none; transition: transform .35s var(--ease), opacity .25s; }
-.voice-pop.open { transform: none; opacity: 1; pointer-events: auto; }
-.voice-pop .ttl { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 16px; font-weight: 500; letter-spacing: .02em; color: var(--mute); margin-bottom: 18px; }
-.voice-pop .ttl svg { width: 16px; height: 16px; }
-.voice-pop .big { width: 150px; height: 150px; margin: 0 auto; }
-.voice-status { margin-top: 18px; font-size: 16px; color: var(--mute); }
-.voice-q { margin-top: 10px; font-size: 16px; font-weight: 500; min-height: 22px; }
-.voice-a { margin-top: 8px; font-size: 16px; line-height: 1.5; color: #333; min-height: 48px; }
-.voice-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 18px; }
-.voice-chips button { padding: 8px 14px; border: 1px solid var(--line); border-radius: 0; background: #fff; font-size: 16px; cursor: pointer; color: var(--ink); }
-.voice-chips button:hover { background: var(--off); }
-.voice-ctrl { display: flex; justify-content: center; gap: 12px; margin-top: 20px; }
-.voice-ctrl button { width: 52px; height: 52px; border-radius: 50%; border: 0; cursor: pointer; display: grid; place-items: center; }
-.voice-ctrl .mic { background: var(--ink); color: #fff; }
-.voice-ctrl .mic.on { background: #2563EB; }
-.voice-ctrl .end { background: var(--off); color: var(--ink); }
-.voice-ctrl svg { width: 22px; height: 22px; display: block; }
-
 @media (max-width: 900px) {
   .hb .nav-right .cv { display: none; }
   .proj-head { flex-direction: column; align-items: flex-start; }
   .proj-head h3 { font-size: 32px; }
-  .voice-pop { left: 16px; right: 16px; top: 76px; width: auto; }
 }
 `
-
-/** four-point sparkle with a small companion star; uses the text colour */
-function Sparkle() {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M10 2.5c.5 3.9 2.6 6 6.5 6.5-3.9.5-6 2.6-6.5 6.5-.5-3.9-2.6-6-6.5-6.5 3.9-.5 6-2.6 6.5-6.5Z" />
-      <path d="M18 14c.27 2.1 1.4 3.23 3.5 3.5-2.1.27-3.23 1.4-3.5 3.5-.27-2.1-1.4-3.23-3.5-3.5 2.1-.27 3.23-1.4 3.5-3.5Z" />
-    </svg>
-  )
-}
 
 function useTyped(text: string, key: string | number, speed = 32, delay = 0) {
   const [n, setN] = useState(0)
@@ -162,65 +108,6 @@ function useTyped(text: string, key: string | number, speed = 32, delay = 0) {
     return () => { clearTimeout(start); clearInterval(t) }
   }, [text, key])
   return text.slice(0, n)
-}
-
-// Voice assistant: scripted answers about Harbor (no AI backend). Uses the browser's speech
-// recognition where available (Chrome/Edge/Safari) and speaks replies with speech synthesis.
-const CHIPS = ['Who is Harbor?', 'Show me projects', 'Trust Bank', 'How to contact']
-const ANSWERS: { k: RegExp; a: string }[] = [
-  { k: /trust|bank|reward/i, a: 'Trust Bank Singapore was an eight-week project. Harbor led planning, UI design and usability tests, and the redesign scored 85 on ease of use.' },
-  { k: /game|cove|dashboard/i, a: 'GameCove is an AI game-analytics dashboard Harbor designed as a team project.' },
-  { k: /utrada|trading/i, a: 'At UTrada, Harbor worked on product design for a trading platform from 2024 to 2026.' },
-  { k: /project|work|portfolio|case/i, a: 'Three featured projects: Trust Bank Singapore, GameCove and UTrada. Scroll to Selected work to see each one.' },
-  { k: /contact|email|call|hire|book|reach/i, a: 'You can book a 30-minute call, or email harborkim0328@gmail.com.' },
-  { k: /who|about|harbor|background|yourself/i, a: 'Harbor is a product designer with over three years in fintech and e-learning. She started in Fine Art, and now designs end to end, from research to UI.' },
-]
-const FALLBACK = 'I can tell you about Harbor, her projects, or how to get in touch.'
-const answerFor = (q: string) => (ANSWERS.find(x => x.k.test(q))?.a ?? FALLBACK)
-
-export function useVoice() {
-  const [mode, setMode] = useState<'idle' | 'listening' | 'speaking'>('idle')
-  const [q, setQ] = useState('')
-  const [a, setA] = useState('')
-  const rec = useRef<any>(null)
-  const SR = typeof window !== 'undefined' ? ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition) : null
-  const canListen = !!SR
-
-  const speak = (text: string) => {
-    setA(text)
-    const synth = window.speechSynthesis
-    if (!synth) { setMode('idle'); return }
-    synth.cancel()
-    const u = new SpeechSynthesisUtterance(text)
-    u.lang = 'en-US'; u.rate = 1.02
-    u.onstart = () => setMode('speaking')
-    u.onend = () => setMode('idle')
-    u.onerror = () => setMode('idle')
-    synth.speak(u)
-  }
-  const ask = (text: string) => { rec.current?.abort?.(); setQ(text); speak(answerFor(text)) }
-  const stop = () => { rec.current?.abort?.(); window.speechSynthesis?.cancel(); setMode('idle') }
-  const listen = () => {
-    if (!SR) return
-    if (mode === 'listening') { rec.current?.stop(); return }
-    window.speechSynthesis?.cancel()
-    const r = new SR()
-    r.lang = 'en-US'; r.interimResults = true; r.maxAlternatives = 1
-    let finalText = ''
-    r.onresult = (e: any) => {
-      const t = Array.from(e.results).map((x: any) => x[0].transcript).join('')
-      setQ(t)
-      if (e.results[e.results.length - 1].isFinal) finalText = t
-    }
-    r.onerror = (e: any) => { setMode('idle'); if (e.error === 'not-allowed') setA('Microphone access is blocked here. Pick a question below instead.') }
-    r.onend = () => { if (finalText) speak(answerFor(finalText)); else setMode(m => (m === 'listening' ? 'idle' : m)) }
-    rec.current = r
-    setA('')
-    setMode('listening')
-    try { r.start() } catch { setMode('idle') }
-  }
-  useEffect(() => () => { rec.current?.abort?.(); window.speechSynthesis?.cancel() }, [])
-  return { mode, q, a, canListen, ask, stop, listen }
 }
 
 /* ---------- Projects dropdown (copied from Portfolio_1's HomeDock) ---------- */
@@ -408,22 +295,6 @@ function ProjectsMenu() {
   )
 }
 
-/** header button that opens / closes the Kim LLM panel (the panel itself is VoiceAssistant, below) */
-function KimButton() {
-  const [open, setOpen] = useState(false)
-  useEffect(() => {
-    const on = (e: Event) => setOpen(!!(e as CustomEvent).detail)
-    addEventListener('kimllm:state', on)
-    return () => removeEventListener('kimllm:state', on)
-  }, [])
-  return (
-    <button type="button" className="kim-btn" aria-expanded={open} aria-label={open ? 'Close Kim LLM' : 'Open Kim LLM, ask about Harbor'}
-      onClick={() => dispatchEvent(new CustomEvent('kimllm:toggle'))}>
-      <Sparkle />Kim LLM
-    </button>
-  )
-}
-
 export type NavKey = 'about' | undefined
 
 // Shared site header. On the main page it starts transparent over the hero and turns light on scroll;
@@ -513,55 +384,6 @@ export function useReveal(dep?: unknown) {
     els.forEach(e => io.observe(e))
     return () => io.disconnect()
   }, [dep])
-}
-
-// Kim LLM panel, shared by the main and About pages. Opened and closed by the header's Kim LLM button
-// (window events 'kimllm:toggle' in, 'kimllm:state' out). Closes on Esc or a click outside.
-export function VoiceAssistant() {
-  const [chat, setChat] = useState(false)
-  const voice = useVoice()
-  const pop = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    const t = () => setChat(v => !v)
-    addEventListener('kimllm:toggle', t)
-    return () => removeEventListener('kimllm:toggle', t)
-  }, [])
-  useEffect(() => {
-    dispatchEvent(new CustomEvent('kimllm:state', { detail: chat }))
-    if (!chat) { voice.stop(); return }
-    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') setChat(false) }
-    const d = (e: PointerEvent) => {
-      const el = e.target as Element
-      if (pop.current?.contains(el) || el.closest?.('.kim-btn')) return
-      setChat(false)
-    }
-    addEventListener('keydown', k); addEventListener('pointerdown', d)
-    return () => { removeEventListener('keydown', k); removeEventListener('pointerdown', d) }
-  }, [chat])
-  return (
-    <div ref={pop} className={'voice-pop' + (chat ? ' open' : '')} role="dialog" aria-label="Kim LLM: ask about Harbor" aria-hidden={!chat}>
-      <div className="ttl"><Sparkle />Kim LLM</div>
-      <div className={'orb big' + (voice.mode === 'listening' ? ' live' : voice.mode === 'speaking' ? ' talk' : '')} aria-hidden="true" />
-      <div className="voice-status" aria-live="polite">
-        {voice.mode === 'listening' ? 'Listening…' : voice.mode === 'speaking' ? 'Speaking…' : voice.canListen ? 'Tap the mic and ask about Harbor' : 'Pick a question'}
-      </div>
-      <div className="voice-q">{voice.q}</div>
-      <div className="voice-a">{voice.a}</div>
-      <div className="voice-chips">
-        {CHIPS.map(c => <button key={c} tabIndex={chat ? 0 : -1} onClick={() => voice.ask(c)}>{c}</button>)}
-      </div>
-      <div className="voice-ctrl">
-        {voice.canListen && (
-          <button className={'mic' + (voice.mode === 'listening' ? ' on' : '')} tabIndex={chat ? 0 : -1} aria-label={voice.mode === 'listening' ? 'Stop listening' : 'Start talking'} onClick={voice.listen}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="1.8" strokeLinecap="round" width="22" height="22"><rect x="9" y="3" width="6" height="12" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>
-          </button>
-        )}
-        <button className="end" tabIndex={chat ? 0 : -1} aria-label="Close" onClick={() => setChat(false)}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="#0F0F0F" strokeWidth="2" strokeLinecap="round" width="22" height="22"><path d="M6 6l12 12M18 6L6 18" /></svg>
-        </button>
-      </div>
-    </div>
-  )
 }
 
 // One project = one link. Pointing anywhere on it turns the cursor into a solid "View project" button

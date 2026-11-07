@@ -5,14 +5,14 @@ import React, { useEffect, useRef } from 'react'
  * It draws with mix-blend-mode: difference, so it reads white on dark areas and black on light ones,
  * and grows a little (and turns teal) over links and buttons.
  *
- * Bracketed label mode (after superevilgeniuscorp.com): the dot turns into a label like [ SCROLL ] and the normal
- * mouse pointer is hidden.
- * - `scrollLabel` (case-study pages): while the page is at the very top — the full-screen hero video — the label reads
- *   SCROLL. As soon as the page scrolls it fades out and the line cursor takes over; back at the top it returns.
- *   Before the mouse has moved, it waits in the middle of the screen.
- * - Any element with `data-cursor="…"` (the project blocks on the main page): while the pointer is anywhere over it,
- *   the label shows that text, e.g. [ VIEW TRUST BANK PROJECT ]. It is dark ink on the white page and turns white
- *   over anything marked `data-cursor-light` (the project image / video).
+ * Label mode: the dot turns into a label that follows the mouse, and the normal mouse pointer is hidden.
+ * - `scrollLabel` (case-study pages, after superevilgeniuscorp.com): while the page is at the very top — the full-screen
+ *   hero video — the label is a bracketed [ SCROLL ]. As soon as the page scrolls it fades out and the line cursor takes
+ *   over; back at the top it returns. Before the mouse has moved, it waits in the middle of the screen.
+ * - Any element with `data-cursor="…"`: while the pointer is anywhere over it, the label shows that text.
+ *   With `data-cursor-variant="button"` (the main page's project blocks: "View project") it is a solid square button so
+ *   it stands out: black with white text over the white title area, white with black text over anything marked
+ *   `data-cursor-light` (the project image / video). Without the variant it is the bracketed text style.
  * Touch screens: no custom cursor. Reduced motion: no trail, the dot and label sit exactly on the pointer.
  */
 
@@ -21,16 +21,22 @@ html.cur-scroll, html.cur-scroll * { cursor: none !important; }
 .cur-label { position: fixed; left: 0; top: 0; z-index: 2147483001; pointer-events: none; display: flex; align-items: center; gap: 8px; white-space: nowrap;
   color: #fff; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 500; line-height: 1;
   letter-spacing: .18em; text-transform: uppercase; text-shadow: 0 1px 10px rgba(0,0,0,.35); opacity: 0; will-change: transform, opacity;
-  transition: color .25s, text-shadow .25s; }
+  transition: color .25s, background-color .25s, text-shadow .25s; }
 .cur-label i { display: block; width: 7px; height: 26px; border: 1.5px solid currentColor; filter: drop-shadow(0 1px 6px rgba(0,0,0,.3)); }
 .cur-label i.l { border-right: 0; }
 .cur-label i.r { border-left: 0; }
 .cur-label span { padding-left: .18em; }
 .cur-label.ink { color: #0F0F0F; text-shadow: none; }
 .cur-label.ink i { filter: none; }
+/* solid button variant ("View project") */
+.cur-label.btn { gap: 0; padding: 14px 20px; background: #fff; color: #0F0F0F; text-shadow: none; letter-spacing: 0; text-transform: none; font-size: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.22); }
+.cur-label.btn i { display: none; }
+.cur-label.btn span { padding-left: 0; }
+.cur-label.btn.ink { background: #0F0F0F; color: #fff; box-shadow: 0 8px 24px rgba(0,0,0,.18); }
 `
 
-type Hover = { text: string; light: boolean } | null
+type Hover = { text: string; light: boolean; btn: boolean } | null
 
 export function CursorTrail({ scrollLabel = false }: { scrollLabel?: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null)
@@ -56,7 +62,7 @@ export function CursorTrail({ scrollLabel = false }: { scrollLabel?: boolean }) 
       if (!el || !(el instanceof Element)) return null
       const z = el.closest('[data-cursor]')
       if (!z) return null
-      return { text: z.getAttribute('data-cursor') || '', light: !!el.closest('[data-cursor-light]') }
+      return { text: z.getAttribute('data-cursor') || '', light: !!el.closest('[data-cursor-light]'), btn: z.getAttribute('data-cursor-variant') === 'button' }
     }
     const size = () => {
       const dpr = Math.min(2, devicePixelRatio || 1)
@@ -68,7 +74,7 @@ export function CursorTrail({ scrollLabel = false }: { scrollLabel?: boolean }) 
     const mouse = { x: -100, y: -100 }, dot = { x: -100, y: -100, vx: 0, vy: 0 }
     const tail: { x: number; y: number; t: number }[] = []
     let visible = 0, present = false, first = true, accent = false, grow = 0, raf = 0
-    let lab = 0, hideNative = false, hover: Hover = null, shownText = 'Scroll', ink = false
+    let lab = 0, hideNative = false, hover: Hover = null, shownText = 'Scroll', ink = false, btn = false
     const onPoint = (e: MouseEvent) => {
       if ((e as PointerEvent).pointerType === 'touch') { present = false; return }
       if (!Number.isFinite(e.clientX) || (e.clientX === 0 && e.clientY === 0 && e.type === 'wheel')) { present = true; return }
@@ -104,8 +110,12 @@ export function CursorTrail({ scrollLabel = false }: { scrollLabel?: boolean }) 
       const el = labelRef.current
       if (el) {
         if (text && text !== shownText && textRef.current) { shownText = text; textRef.current.textContent = text } // keep the old text while fading out
-        const wantInk = hovering && !hover!.light
-        if (text && wantInk !== ink) { ink = wantInk; el.classList.toggle('ink', ink) }
+        if (text) {
+          const wantInk = hovering && !hover!.light
+          const wantBtn = hovering && hover!.btn
+          if (wantInk !== ink) { ink = wantInk; el.classList.toggle('ink', ink) }
+          if (wantBtn !== btn) { btn = wantBtn; el.classList.toggle('btn', btn) }
+        }
         const waiting = first // mouse hasn't moved yet: wait in the middle of the screen
         const lx = waiting ? innerWidth / 2 : dot.x, ly = waiting ? innerHeight / 2 : dot.y
         const shown = lab * (waiting ? 1 : visible)

@@ -5,12 +5,12 @@ import { ChapterMeter } from './ChapterMeter'
 
 // Trust Bank case study page for this site.
 // Body (hero → reflection) = Portfolio_1's Trust Bank page (p1/TrustBankBody.tsx): its copy, colours, type, rounded corners and interactions.
-// The hero opens full-screen and shrinks into place on scroll (p1/TrustHero.tsx); the scroll cue is the [SCROLL] cursor (cursor.tsx).
-// This file keeps this site's chrome: the header (harbor → main page · chapter meter · Next · GameCove · Book a call),
-// the "Next case study" card and the footer. The line cursor now comes from index.tsx for every page.
-// Header: hidden while the full-screen intro plays (first screen of scroll), then fixed at the top for the rest of the page.
-// Chapter meter (header centre): ChapterMeter.tsx, shared with GameCove and UTrada. The reading-progress line under the
-// header was removed at Harbor's request (the meter's tick wave shows where you are).
+// The hero opens on the full-screen video, which moves into its place on its own after a few seconds (p1/TrustHero.tsx).
+// This file keeps this site's chrome: the header (harbor → main page · chapter meter · Next · GameCove),
+// the "Next case study" card and the footer. The line cursor comes from index.tsx for every page.
+// Header: hidden while the full-screen intro plays (until the hero sends 'caseintro' false), then fixed at the top.
+// Book a call was taken out of the header at Harbor's request (it stays in the footer).
+// Chapter meter (header centre): ChapterMeter.tsx, shared with GameCove and UTrada.
 
 const NEXT_URL = 'https://project-harbor-kim-portfolio-114.magicpatterns.app/#/gamecove'
 const LINKS = {
@@ -47,12 +47,16 @@ export function TrustBank() {
 
   useEffect(() => { scrollTo(0, 0) }, [])
 
-  // light glass after scrolling, and no header at all while the full-screen intro plays
-  useOnScroll(() => {
-    const y = scrollY
-    setScrolled(y > 40)
-    setIntro(!reducedMotion() && y < innerHeight - 2)
-  })
+  // the header appears when the hero's intro has finished (with a safety timeout)
+  useEffect(() => {
+    const on = (e: Event) => setIntro(!!(e as CustomEvent).detail)
+    addEventListener('caseintro', on)
+    const t = window.setTimeout(() => setIntro(false), 8000)
+    return () => { removeEventListener('caseintro', on); window.clearTimeout(t) }
+  }, [])
+
+  // light glass after scrolling
+  useOnScroll(() => setScrolled(scrollY > 40))
 
   // current chapter name in the header
   useEffect(() => {
@@ -78,7 +82,6 @@ export function TrustBank() {
           <ChapterMeter chapters={CHAPTERS} chapter={chapter} intro={intro} scope=".tb" />
           <div className="nav-right">
             <a className="next-link" href="#next" tabIndex={intro ? -1 : undefined} onClick={toNext}>Next · GameCove →</a>
-            <a className="btn-sm" href={LINKS.cal} target="_blank" rel="noreferrer" tabIndex={intro ? -1 : undefined}>Book a call</a>
           </div>
         </div>
       </header>
@@ -122,7 +125,6 @@ const TB_CSS = `
 .tb-nav .nav-right { justify-content: flex-end; }
 .tb .next-link { font-size: 16px; opacity: .8; transition: opacity .2s; }
 .tb .next-link:hover { opacity: 1; }
-.tb .tb-head .btn-sm { background: var(--ink); color: #fff; }
 
 /* the pinned Deliver showcase sits below the fixed header */
 @media (min-width: 1024px) { .tb .p1tb .lg\\:sticky { top: max(92px, calc(50vh - 400px)) !important; } }

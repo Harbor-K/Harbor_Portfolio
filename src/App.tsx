@@ -4,15 +4,19 @@ import { useScreenInit } from './useScreenInit.js'
 
 // Harbor — portfolio main page v4, from Figma "44기 김지현 4차 PF" (node 260:282) and Harbor's review notes:
 // hero → three projects, one per block (title, line, media), laid out like rox.com's "Applied AI research" section
-// on white → CTA → footer, with the Kim LLM voice assistant in the bottom-right corner.
+// on white → CTA → footer.
 // Removed at Harbor's request: the designer-skills strip under the hero, the info rows + note box in each project block,
 // and the separate Projects page (#/projects). The header's "Projects" is now Portfolio_1's dropdown (ProjectsMenu).
-// Header: left = Projects · About me; right = LinkedIn · CV · Book a call (Instagram taken out of the header; it stays in the footer).
-// Voice assistant button: a white pill with the aurora orb and the words "Kim LLM" (Harbor's reference), bottom right.
-// Project blocks: the "View project →" links are gone. Each whole block (title + image) is one link, and pointing
-// anywhere on it turns the cursor into a bracketed label like the case pages' [SCROLL]: [ VIEW TRUST BANK PROJECT ]
-// (cursor.tsx, data-cursor).
-// UTrada now has its own case page (#/utrada, UTrada.tsx, a skeleton Harbor is filling in).
+// Header: left = Projects · About me; right = LinkedIn · CV · [✦ Kim LLM]. Book a call was taken out of the header at
+// Harbor's request (it stays in the hero, the closing CTA and the footer).
+// Kim LLM: a square outlined header button with a sparkle icon (no rounded corners), in place of the old floating pill.
+// It opens the Kim LLM panel under the header, top right.
+// Project blocks: each whole block (title + image) is one link; pointing anywhere on it turns the cursor into a solid
+// square "View project" button (cursor.tsx, data-cursor + data-cursor-variant="button") — black on the white title
+// area, white over the image.
+// UTrada has its own case page (#/utrada, UTrada.tsx, a skeleton Harbor is filling in).
+// Hero background: Harbor's 8-second typing video (made from the hero photo), muted and looping, in place of the still
+// photo. The first frame is the poster, so the hero looks the same while the video loads. Reduced motion: poster only.
 
 export const LINKS = {
   cal: 'https://cal.com/harbor-kim-wqsmkt/30min',
@@ -25,25 +29,28 @@ export const LINKS = {
 const QUOTES = ['“I started in Fine Art, drawing what I saw.”']
 const QUOTE_MS = 5000
 
+const HERO_VIDEO = IMG3 + 'hero-typing.mp4'
+const HERO_POSTER = IMG3 + 'hero-typing-poster.jpg'
+
 export const TB = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/trust-bank/'
 // GameCove 15s ad (same file as the GameCove case-study hero); plays muted on loop here.
 const GC = 'https://raw.githubusercontent.com/Harbor-K/landing_page/main/gamecove/assets/v4/'
 
 type Project = {
-  title: string; short: string; sub: string; href?: string
+  title: string; sub: string; href?: string
   video?: string; poster?: string; img?: string; alt?: string; ratio?: string
 }
 const PROJECTS: Project[] = [
   {
-    title: 'Trust Bank Singapore', short: 'Trust Bank', sub: 'Turning hidden rewards into everyday loyalty.', href: '#/trust-bank',
+    title: 'Trust Bank Singapore', sub: 'Turning hidden rewards into everyday loyalty.', href: '#/trust-bank',
     img: IMG3 + 'trust-bank-thumb.webp', alt: 'Trust Bank rewards screen in front of the trust wordmark', ratio: '2 / 1',
   },
   {
-    title: 'GameCove', short: 'GameCove', sub: 'An AI game-analytics dashboard.', href: '#/gamecove',
+    title: 'GameCove', sub: 'An AI game-analytics dashboard.', href: '#/gamecove',
     video: GC + 'hero-ad.mp4', poster: GC + 'hero-ad-poster.jpg', alt: 'GameCove ad: Overview, AI mapping, Retention and the AI agent', ratio: '2 / 1',
   },
   {
-    title: 'UTrada', short: 'UTrada', sub: 'Product design for a trading platform.', href: '#/utrada',
+    title: 'UTrada', sub: 'Product design for a trading platform.', href: '#/utrada',
     img: IMG3 + 'utrada-screens.webp', alt: 'UTrada website screens: home, features, forex table and join flow',
   },
 ]
@@ -53,6 +60,9 @@ const SECTION_IDS: Record<string, string> = { work: 'projects', contact: 'contac
 
 export const PAGE_CSS = `
 .hb .foot { padding-bottom: 40px; }
+
+/* hero background video (fills the hero like the photo did) */
+.hb .hero-vid { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 40%; }
 
 .projects-sec { background: #fff; }
 .proj + .proj { margin-top: 160px; }
@@ -70,6 +80,15 @@ export const PAGE_CSS = `
 /* header: CV sits on the right with LinkedIn (no CV link yet, so it is plain text) */
 .hb .nav-right .cv { opacity: .8; }
 
+/* Kim LLM header button: square outline, sparkle icon in front (no rounded corners) */
+.hb .kim-btn { display: inline-flex; align-items: center; gap: 8px; margin: 0; padding: 9px 15px; border: 1px solid currentColor; border-radius: 0;
+  background: transparent; font-size: 16px; font-weight: 500; line-height: 1.2; white-space: nowrap; cursor: pointer; transition: background-color .25s, color .25s; }
+.hb .kim-btn:hover, .hb .kim-btn[aria-expanded="true"] { background: rgba(255,255,255,.14); }
+.hb .site.scrolled .kim-btn:hover, .hb .site.scrolled .kim-btn[aria-expanded="true"] { background: rgba(15,15,15,.06); }
+.hb .kim-btn:focus-visible { outline: 2px solid #2563EB; outline-offset: 3px; }
+.hb .kim-btn svg { display: block; width: 16px; height: 16px; flex: none; animation: kim-twinkle 2.6s ease-in-out infinite; }
+@keyframes kim-twinkle { 0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; } 50% { transform: scale(.82) rotate(12deg); opacity: .75; } }
+
 /* Projects dropdown in the header (from Portfolio_1's HomeDock) */
 .hb .pj-menu { position: relative; display: flex; align-items: center; }
 .hb .pj-trigger { display: flex; align-items: center; gap: 6px; padding: 0; background: none; border: 0; cursor: pointer; font-size: 16px; white-space: nowrap; opacity: .8; transition: opacity .2s; }
@@ -77,7 +96,7 @@ export const PAGE_CSS = `
 .hb .pj-panel { position: absolute; top: 100%; left: -12px; padding-top: 12px; width: min(560px, calc(100vw - 32px)); transform-origin: 0 0; }
 .hb .pj-menu span { opacity: 1; }
 
-/* Aurora orb (Kim LLM) — ChatGPT-voice-style */
+/* Aurora orb (Kim LLM panel) — ChatGPT-voice-style */
 @property --rot { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
 .orb { position: relative; border-radius: 50%; overflow: hidden; isolation: isolate;
   background: radial-gradient(circle at 50% 120%, #1D4ED8 0%, #3B82F6 35%, #93C5FD 65%, #E0F2FE 100%); }
@@ -92,28 +111,19 @@ export const PAGE_CSS = `
 @keyframes orb-pulse { 50% { transform: scale(1.06); } }
 @keyframes orb-talk { 0% { transform: scale(.97); } 100% { transform: scale(1.08); } }
 
-/* Kim LLM button: white pill, orb on the left, label on the right (Harbor's reference) */
-.hb .voice-fab { position: fixed; right: 24px; bottom: 24px; z-index: 60; display: inline-flex; align-items: center; gap: 12px; height: 56px; padding: 0 24px 0 8px;
-  border: 0; border-radius: 999px; background: #fff; color: var(--ink); font-size: 18px; font-weight: 400; letter-spacing: -0.01em; line-height: 1; cursor: pointer;
-  box-shadow: 0 10px 30px rgba(0,0,0,.10), 0 1px 3px rgba(0,0,0,.06), 0 0 0 1px rgba(0,0,0,.04);
-  opacity: 0; transform: translateY(16px) scale(.94); transition: transform .5s var(--ease), opacity .4s, box-shadow .3s; }
-.hb .voice-fab.show { opacity: 1; transform: none; }
-.hb .voice-fab.show:hover { transform: translateY(-2px); box-shadow: 0 14px 36px rgba(0,0,0,.14), 0 1px 3px rgba(0,0,0,.06), 0 0 0 1px rgba(0,0,0,.04); }
-.hb .voice-fab:focus-visible { outline: 2px solid #2563EB; outline-offset: 3px; }
-.hb .voice-fab .orb { display: block; flex: none; width: 40px; height: 40px; }
-.hb .voice-fab .lab { white-space: nowrap; }
-
-.voice-pop { position: fixed; right: 24px; bottom: 96px; z-index: 60; width: 360px; padding: 28px 24px 24px; background: #fff; color: var(--ink); border: 1px solid var(--line);
-  border-radius: 24px; box-shadow: 0 24px 60px rgba(0,0,0,.18); transform-origin: bottom right; text-align: center;
-  transform: translateY(12px) scale(.96); opacity: 0; pointer-events: none; transition: transform .35s var(--ease), opacity .25s; }
+/* Kim LLM panel: opens under the header, top right; square corners like the rest of the site */
+.voice-pop { position: fixed; right: 24px; top: 84px; z-index: 60; width: 360px; padding: 28px 24px 24px; background: #fff; color: var(--ink); border: 1px solid var(--line);
+  border-radius: 0; box-shadow: 0 24px 60px rgba(0,0,0,.18); transform-origin: top right; text-align: center;
+  transform: translateY(-8px) scale(.97); opacity: 0; pointer-events: none; transition: transform .35s var(--ease), opacity .25s; }
 .voice-pop.open { transform: none; opacity: 1; pointer-events: auto; }
-.voice-pop .ttl { font-size: 16px; font-weight: 500; letter-spacing: .02em; color: var(--mute); margin-bottom: 18px; }
+.voice-pop .ttl { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 16px; font-weight: 500; letter-spacing: .02em; color: var(--mute); margin-bottom: 18px; }
+.voice-pop .ttl svg { width: 16px; height: 16px; }
 .voice-pop .big { width: 150px; height: 150px; margin: 0 auto; }
 .voice-status { margin-top: 18px; font-size: 16px; color: var(--mute); }
 .voice-q { margin-top: 10px; font-size: 16px; font-weight: 500; min-height: 22px; }
 .voice-a { margin-top: 8px; font-size: 16px; line-height: 1.5; color: #333; min-height: 48px; }
 .voice-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 18px; }
-.voice-chips button { padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px; background: #fff; font-size: 16px; cursor: pointer; color: var(--ink); }
+.voice-chips button { padding: 8px 14px; border: 1px solid var(--line); border-radius: 0; background: #fff; font-size: 16px; cursor: pointer; color: var(--ink); }
 .voice-chips button:hover { background: var(--off); }
 .voice-ctrl { display: flex; justify-content: center; gap: 12px; margin-top: 20px; }
 .voice-ctrl button { width: 52px; height: 52px; border-radius: 50%; border: 0; cursor: pointer; display: grid; place-items: center; }
@@ -126,10 +136,19 @@ export const PAGE_CSS = `
   .hb .nav-right .cv { display: none; }
   .proj-head { flex-direction: column; align-items: flex-start; }
   .proj-head h3 { font-size: 32px; }
-  .voice-pop { left: 16px; right: 16px; width: auto; }
-  .hb .voice-fab { right: 16px; bottom: 16px; }
+  .voice-pop { left: 16px; right: 16px; top: 76px; width: auto; }
 }
 `
+
+/** four-point sparkle with a small companion star; uses the text colour */
+function Sparkle() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M10 2.5c.5 3.9 2.6 6 6.5 6.5-3.9.5-6 2.6-6.5 6.5-.5-3.9-2.6-6-6.5-6.5 3.9-.5 6-2.6 6.5-6.5Z" />
+      <path d="M18 14c.27 2.1 1.4 3.23 3.5 3.5-2.1.27-3.23 1.4-3.5 3.5-.27-2.1-1.4-3.23-3.5-3.5 2.1-.27 3.23-1.4 3.5-3.5Z" />
+    </svg>
+  )
+}
 
 function useTyped(text: string, key: string | number, speed = 32, delay = 0) {
   const [n, setN] = useState(0)
@@ -389,9 +408,25 @@ function ProjectsMenu() {
   )
 }
 
+/** header button that opens / closes the Kim LLM panel (the panel itself is VoiceAssistant, below) */
+function KimButton() {
+  const [open, setOpen] = useState(false)
+  useEffect(() => {
+    const on = (e: Event) => setOpen(!!(e as CustomEvent).detail)
+    addEventListener('kimllm:state', on)
+    return () => removeEventListener('kimllm:state', on)
+  }, [])
+  return (
+    <button type="button" className="kim-btn" aria-expanded={open} aria-label={open ? 'Close Kim LLM' : 'Open Kim LLM, ask about Harbor'}
+      onClick={() => dispatchEvent(new CustomEvent('kimllm:toggle'))}>
+      <Sparkle />Kim LLM
+    </button>
+  )
+}
+
 export type NavKey = 'about' | undefined
 
-// Shared site header. On the main page it starts transparent over the photo and turns light on scroll;
+// Shared site header. On the main page it starts transparent over the hero and turns light on scroll;
 // on the About page it is always light (`solid`).
 export function SiteHeader({ current, solid = false }: { current?: NavKey; solid?: boolean }) {
   const [scrolled, setScrolled] = useState(solid)
@@ -416,7 +451,7 @@ export function SiteHeader({ current, solid = false }: { current?: NavKey; solid
           <div className="nav-right">
             <a href={LINKS.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>
             <span className="cv">CV</span>
-            <a className="btn-sm" href={LINKS.cal} target="_blank" rel="noreferrer">Book a call</a>
+            <KimButton />
           </div>
         </div>
       </div>
@@ -480,58 +515,61 @@ export function useReveal(dep?: unknown) {
   }, [dep])
 }
 
-// Kim LLM voice assistant (fixed bottom-right), shared by the main and About pages.
+// Kim LLM panel, shared by the main and About pages. Opened and closed by the header's Kim LLM button
+// (window events 'kimllm:toggle' in, 'kimllm:state' out). Closes on Esc or a click outside.
 export function VoiceAssistant() {
-  const [fab, setFab] = useState(false)
   const [chat, setChat] = useState(false)
   const voice = useVoice()
-  useEffect(() => { const c = window.setTimeout(() => setFab(true), 1200); return () => clearTimeout(c) }, [])
+  const pop = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    if (!chat) return
-    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') { setChat(false); voice.stop() } }
-    addEventListener('keydown', k)
-    return () => removeEventListener('keydown', k)
+    const t = () => setChat(v => !v)
+    addEventListener('kimllm:toggle', t)
+    return () => removeEventListener('kimllm:toggle', t)
+  }, [])
+  useEffect(() => {
+    dispatchEvent(new CustomEvent('kimllm:state', { detail: chat }))
+    if (!chat) { voice.stop(); return }
+    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') setChat(false) }
+    const d = (e: PointerEvent) => {
+      const el = e.target as Element
+      if (pop.current?.contains(el) || el.closest?.('.kim-btn')) return
+      setChat(false)
+    }
+    addEventListener('keydown', k); addEventListener('pointerdown', d)
+    return () => { removeEventListener('keydown', k); removeEventListener('pointerdown', d) }
   }, [chat])
   return (
-    <>
-      <div className={'voice-pop' + (chat ? ' open' : '')} role="dialog" aria-label="Kim LLM: ask about Harbor" aria-hidden={!chat}>
-        <div className="ttl">Kim LLM</div>
-        <div className={'orb big' + (voice.mode === 'listening' ? ' live' : voice.mode === 'speaking' ? ' talk' : '')} aria-hidden="true" />
-        <div className="voice-status" aria-live="polite">
-          {voice.mode === 'listening' ? 'Listening…' : voice.mode === 'speaking' ? 'Speaking…' : voice.canListen ? 'Tap the mic and ask about Harbor' : 'Pick a question'}
-        </div>
-        <div className="voice-q">{voice.q}</div>
-        <div className="voice-a">{voice.a}</div>
-        <div className="voice-chips">
-          {CHIPS.map(c => <button key={c} tabIndex={chat ? 0 : -1} onClick={() => voice.ask(c)}>{c}</button>)}
-        </div>
-        <div className="voice-ctrl">
-          {voice.canListen && (
-            <button className={'mic' + (voice.mode === 'listening' ? ' on' : '')} tabIndex={chat ? 0 : -1} aria-label={voice.mode === 'listening' ? 'Stop listening' : 'Start talking'} onClick={voice.listen}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="1.8" strokeLinecap="round" width="22" height="22"><rect x="9" y="3" width="6" height="12" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>
-            </button>
-          )}
-          <button className="end" tabIndex={chat ? 0 : -1} aria-label="Close" onClick={() => { voice.stop(); setChat(false) }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="#0F0F0F" strokeWidth="2" strokeLinecap="round" width="22" height="22"><path d="M6 6l12 12M18 6L6 18" /></svg>
-          </button>
-        </div>
+    <div ref={pop} className={'voice-pop' + (chat ? ' open' : '')} role="dialog" aria-label="Kim LLM: ask about Harbor" aria-hidden={!chat}>
+      <div className="ttl"><Sparkle />Kim LLM</div>
+      <div className={'orb big' + (voice.mode === 'listening' ? ' live' : voice.mode === 'speaking' ? ' talk' : '')} aria-hidden="true" />
+      <div className="voice-status" aria-live="polite">
+        {voice.mode === 'listening' ? 'Listening…' : voice.mode === 'speaking' ? 'Speaking…' : voice.canListen ? 'Tap the mic and ask about Harbor' : 'Pick a question'}
       </div>
-      <button type="button" className={'voice-fab' + (fab ? ' show' : '')} aria-label={chat ? 'Close Kim LLM' : 'Open Kim LLM, ask about Harbor'} aria-expanded={chat}
-        onClick={() => { if (chat) voice.stop(); setChat(v => !v) }}>
-        <span className={'orb' + (voice.mode !== 'idle' ? ' live' : '')} aria-hidden="true" />
-        <span className="lab">Kim LLM</span>
-      </button>
-    </>
+      <div className="voice-q">{voice.q}</div>
+      <div className="voice-a">{voice.a}</div>
+      <div className="voice-chips">
+        {CHIPS.map(c => <button key={c} tabIndex={chat ? 0 : -1} onClick={() => voice.ask(c)}>{c}</button>)}
+      </div>
+      <div className="voice-ctrl">
+        {voice.canListen && (
+          <button className={'mic' + (voice.mode === 'listening' ? ' on' : '')} tabIndex={chat ? 0 : -1} aria-label={voice.mode === 'listening' ? 'Stop listening' : 'Start talking'} onClick={voice.listen}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="1.8" strokeLinecap="round" width="22" height="22"><rect x="9" y="3" width="6" height="12" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>
+          </button>
+        )}
+        <button className="end" tabIndex={chat ? 0 : -1} aria-label="Close" onClick={() => setChat(false)}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#0F0F0F" strokeWidth="2" strokeLinecap="round" width="22" height="22"><path d="M6 6l12 12M18 6L6 18" /></svg>
+        </button>
+      </div>
+    </div>
   )
 }
 
-// One project = one link. Pointing anywhere on it shows the cursor label "View <name> project"
-// (dark on the white title area, white over the image).
+// One project = one link. Pointing anywhere on it turns the cursor into a solid "View project" button
+// (black over the white title area, white over the image).
 function ProjectBlock({ p }: { p: Project }) {
   const href = p.href ?? '#projects'
-  const label = `View ${p.short} project`
   return (
-    <a className="proj" href={href} data-reveal data-cursor={label} aria-label={`${label}: ${p.title}, ${p.sub}`}>
+    <a className="proj" href={href} data-reveal data-cursor="View project" data-cursor-variant="button" aria-label={`View project: ${p.title}, ${p.sub}`}>
       <div className="proj-head">
         <h3><span>{p.title}</span><span className="sub">{p.sub}</span></h3>
       </div>
@@ -543,6 +581,21 @@ function ProjectBlock({ p }: { p: Project }) {
         </div>
       </div>
     </a>
+  )
+}
+
+/** the hero's background video: muted, looping, plays inline; reduced motion keeps the poster still */
+function HeroVideo() {
+  const v = useRef<HTMLVideoElement>(null)
+  useEffect(() => {
+    const el = v.current; if (!el) return
+    el.muted = true
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { el.pause(); return }
+    el.play().catch(() => {})
+  }, [])
+  return (
+    <video ref={v} className="hero-img hero-vid" src={HERO_VIDEO} poster={HERO_POSTER}
+      autoPlay muted loop playsInline preload="auto" aria-hidden="true" />
   )
 }
 
@@ -594,7 +647,7 @@ export function App() {
 
       {/* ===== Hero ===== */}
       <section className="hero" aria-label="Intro">
-        <div className="hero-bg" ref={heroBg}><div className="hero-img" style={{ backgroundImage: `url("${IMG3}hero.jpg")` }} /></div>
+        <div className="hero-bg" ref={heroBg}><HeroVideo /></div>
         <div className="hero-copy">
           <p className="quote" key={q}>{QUOTES[q]}</p>
           <h1 className="h1">

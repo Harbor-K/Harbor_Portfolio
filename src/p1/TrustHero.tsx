@@ -1,14 +1,17 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ScrollHint, setHint } from './IntroHint';
 
 /**
  * Trust Bank hero with a full-screen intro (Harbor's request, this site only).
- * The page opens with the hero video filling the whole screen and a round "Scroll" sign (IntroHint) at the bottom;
- * the site header is hidden meanwhile (TrustBank.tsx). Scrolling one screen-height shrinks the video back into its
- * own place under the headline (2:1, 20px corners) while the hero stays pinned; after that the page scrolls on as normal.
- * How: the hero section is sticky for one extra screen of scroll (a spacer below it). The video box is absolutely
- * positioned inside its 2:1 slot, and each frame its left/top/width/height are blended between the full screen
- * and the slot. object-fit: cover keeps the video undistorted at every size.
+ * The page opens with the hero video filling the whole screen (the site header is hidden meanwhile, TrustBank.tsx).
+ * After 2.5 seconds (HOLD_MS) it moves on its own — no scrolling needed — quickly back into its place under the
+ * headline (2:1, 20px corners) over ANIM_MS, easing in and out so the move starts and lands softly.
+ * Scrolling, swiping or pressing a key during the hold starts the move straight away. The page can't scroll until the
+ * video has settled, so nothing slides underneath it.
+ * During the intro the video's controls (progress bar, play/pause, time, sound) stay hidden; afterwards they show only
+ * when the pointer is over the video (or a control has keyboard focus). The normal line cursor is used (index.tsx).
+ * When the intro ends it sends a 'caseintro' window event (detail: false) so the header can appear.
+ * How: the video box is absolutely positioned inside its 2:1 slot; each frame its left/top/width/height are blended
+ * between the full screen and the slot. object-fit: cover keeps the video undistorted at every size.
  * Reduced motion: no intro, the video simply sits in its place.
  * Copy, colours and the sound controls are the same as Portfolio_1's Trust Bank hero.
  */
@@ -22,10 +25,13 @@ const HERO = {
 const INK = '#000d10';
 const HELV = '"Helvetica Neue", Helvetica, Arial, sans-serif';
 const RADIUS = 20;
+const HOLD_MS = 2500;
+const ANIM_MS = 1000;
 
 const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
-const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+// quart in-out: quick through the middle, soft at both ends
+const ease = (t: number) => (t < 0.5 ? 8 * t * t * t * t : 1 - Math.pow(-2 * t + 2, 4) / 2);
 
 const fmt = (t: number) => {
   if (!isFinite(t)) return '0:00';
@@ -36,19 +42,19 @@ const fmt = (t: number) => {
 
 /**
  * Hero motion with its sound effects (fills its box). Always starts muted; the speaker button turns sound on at 50%.
- * Controls (play/pause, progress bar, volume) show for the first 3 seconds, then hide; hovering the video brings them back.
+ * Controls (play/pause, progress bar, time, volume) are hidden while `quiet` (the full-screen intro); after that they
+ * show only on hover or keyboard focus.
  */
-function SoundMotion({ src, poster, label }: { src: string; poster: string; label: string }) {
+function SoundMotion({ src, poster, label, quiet }: { src: string; poster: string; label: string; quiet: boolean }) {
   const ref = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
   const [volume, setVolume] = useState(0.5);
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [intro, setIntro] = useState(true);
   const [hover, setHover] = useState(false);
   const [focus, setFocus] = useState(false);
-  const show = intro || hover || focus;
+  const show = !quiet && (hover || focus);
 
   useEffect(() => {
     const v = ref.current;
@@ -56,8 +62,6 @@ function SoundMotion({ src, poster, label }: { src: string; poster: string; labe
     v.volume = 0.5;
     v.muted = true;
     v.play().catch(() => {});
-    const t = window.setTimeout(() => setIntro(false), 3000);
-    return () => window.clearTimeout(t);
   }, []);
 
   const togglePlay = () => {
@@ -120,6 +124,7 @@ function SoundMotion({ src, poster, label }: { src: string; poster: string; labe
       <div
         className={`absolute inset-x-0 bottom-0 px-5 pb-4 pt-12 transition-opacity duration-300 ${show ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.45) 100%)', fontFamily: HELV }}
+        aria-hidden={quiet || undefined}
       >
         <input
           type="range"
@@ -129,11 +134,12 @@ function SoundMotion({ src, poster, label }: { src: string; poster: string; labe
           value={time}
           onChange={(e) => seek(Number(e.target.value))}
           aria-label="Video progress"
+          tabIndex={quiet ? -1 : undefined}
           className="tb-range block w-full"
           style={{ ['--fill' as string]: `${pct}%` } as React.CSSProperties}
         />
         <div className="mt-3 flex items-center gap-4 text-white">
-          <button type="button" onClick={togglePlay} aria-label={playing ? 'Pause' : 'Play'} className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-white/15">
+          <button type="button" onClick={togglePlay} tabIndex={quiet ? -1 : undefined} aria-label={playing ? 'Pause' : 'Play'} className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-white/15">
             {playing ? (
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
                 <rect x="6" y="5" width="4" height="14" rx="1" />
@@ -149,7 +155,7 @@ function SoundMotion({ src, poster, label }: { src: string; poster: string; labe
             {fmt(time)} / {fmt(duration)}
           </span>
           <div className="ml-auto flex items-center gap-2">
-            <button type="button" onClick={toggleMute} aria-label={muted ? 'Turn sound on' : 'Mute'} className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-white/15">
+            <button type="button" onClick={toggleMute} tabIndex={quiet ? -1 : undefined} aria-label={muted ? 'Turn sound on' : 'Mute'} className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-white/15">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M11 5 6 9H2v6h4l5 4V5z" fill="currentColor" />
                 {shownVolume === 0 ? (
@@ -173,6 +179,7 @@ function SoundMotion({ src, poster, label }: { src: string; poster: string; labe
               value={shownVolume}
               onChange={(e) => changeVolume(Number(e.target.value))}
               aria-label="Volume"
+              tabIndex={quiet ? -1 : undefined}
               className="tb-range w-[100px]"
               style={{ ['--fill' as string]: `${shownVolume * 100}%` } as React.CSSProperties}
             />
@@ -184,57 +191,75 @@ function SoundMotion({ src, poster, label }: { src: string; poster: string; labe
 }
 
 export function HeroSection() {
-  const outer = useRef<HTMLDivElement>(null);
   const slot = useRef<HTMLDivElement>(null);
   const box = useRef<HTMLDivElement>(null);
-  const hint = useRef<HTMLButtonElement>(null);
-  const spacer = useRef<HTMLDivElement>(null);
   const [intro] = useState(() => !reducedMotion());
+  const [running, setRunning] = useState(intro); // true until the video has settled in its place
 
   // set before the first paint, so the page opens on the full-screen video
   useLayoutEffect(() => {
     if (!intro) return;
+    const s = slot.current;
+    const b = box.current;
+    if (!s || !b) return;
+    const root = document.documentElement;
+    const keep = { overflow: root.style.overflow, gutter: root.style.getPropertyValue('scrollbar-gutter') };
+    root.style.overflow = 'hidden'; // no scrolling until the video has settled
+    root.style.setProperty('scrollbar-gutter', 'stable');
+    window.scrollTo(0, 0);
+
+    let animStart = performance.now() + HOLD_MS;
     let raf = 0;
-    const draw = () => {
-      raf = 0;
-      const o = outer.current;
-      const s = slot.current;
-      const b = box.current;
-      const sp = spacer.current;
-      if (!o || !s || !b) return;
+    let finished = false;
+    const apply = (e: number) => {
       const vh = window.innerHeight;
       const vw = document.documentElement.clientWidth;
-      if (sp) sp.style.height = `${vh}px`; // one screen of scroll for the shrink
-      const p = clamp(-o.getBoundingClientRect().top / vh);
-      const e = ease(p);
-      const r = s.getBoundingClientRect(); // the video's own place (constant while the hero is pinned)
+      const r = s.getBoundingClientRect(); // the video's own place
       b.style.left = `${(-r.left * (1 - e)).toFixed(2)}px`;
       b.style.top = `${(-r.top * (1 - e)).toFixed(2)}px`;
       b.style.width = `${(vw + (r.width - vw) * e).toFixed(2)}px`;
       b.style.height = `${(vh + (r.height - vh) * e).toFixed(2)}px`;
       b.style.borderRadius = `${(RADIUS * e).toFixed(2)}px`;
-      setHint(hint.current, p);
     };
-    const on = () => {
-      if (!raf) raf = requestAnimationFrame(draw);
+    const skip = () => {
+      const now = performance.now();
+      if (now < animStart) animStart = now;
     };
-    draw();
-    const ro = new ResizeObserver(on);
-    if (slot.current) ro.observe(slot.current);
-    window.addEventListener('scroll', on, { passive: true });
-    window.addEventListener('resize', on);
+    const unlock = () => {
+      root.style.overflow = keep.overflow;
+      if (keep.gutter) root.style.setProperty('scrollbar-gutter', keep.gutter);
+      else root.style.removeProperty('scrollbar-gutter');
+      removeEventListener('wheel', skip);
+      removeEventListener('touchmove', skip);
+      removeEventListener('keydown', skip);
+    };
+    const finish = () => {
+      finished = true;
+      Object.assign(b.style, { left: '0px', top: '0px', width: '100%', height: '100%', borderRadius: `${RADIUS}px` });
+      unlock();
+      setRunning(false);
+      window.dispatchEvent(new CustomEvent('caseintro', { detail: false }));
+    };
+    const frame = (now: number) => {
+      const p = clamp((now - animStart) / ANIM_MS);
+      apply(ease(p));
+      if (p >= 1) finish();
+      else raf = requestAnimationFrame(frame);
+    };
+    apply(0);
+    raf = requestAnimationFrame(frame);
+    addEventListener('wheel', skip, { passive: true });
+    addEventListener('touchmove', skip, { passive: true });
+    addEventListener('keydown', skip);
     return () => {
-      ro.disconnect();
-      window.removeEventListener('scroll', on);
-      window.removeEventListener('resize', on);
       if (raf) cancelAnimationFrame(raf);
+      if (!finished) unlock();
     };
   }, [intro]);
 
   return (
-    <div ref={outer} className="relative" data-chapter="Trust Bank">
-      {intro && <ScrollHint hintRef={hint} />}
-      <section className={`${intro ? 'sticky top-0' : ''} bg-white pt-28 md:pt-[120px] pb-20`}>
+    <div className="relative" data-chapter="Trust Bank">
+      <section className="bg-white pt-28 md:pt-[120px] pb-20">
         <div className="relative mx-auto w-full max-w-[1440px] px-6 min-[1488px]:px-0">
           <img src={HERO.logo} alt="trust" className="h-[29px] w-auto" />
           <h1
@@ -251,7 +276,7 @@ export function HeroSection() {
             Trust Bank (Singapore) · UX case study
           </p>
 
-          {/* the video's own place (2:1); the box inside starts full-screen and shrinks into it on scroll */}
+          {/* the video's own place (2:1); the box inside starts full-screen and moves into it on its own */}
           <div ref={slot} data-no-reveal className="relative mt-10 md:mt-[30px]" style={{ aspectRatio: '2 / 1' }}>
             <div
               ref={box}
@@ -261,6 +286,7 @@ export function HeroSection() {
               <SoundMotion
                 src={HERO.video}
                 poster={HERO.poster}
+                quiet={running}
                 label="Trust Bank rewards: linking FairPrice in one tap and watching every payment fill the Linkpoints bar"
               />
             </div>
@@ -288,8 +314,6 @@ export function HeroSection() {
           </div>
         </div>
       </section>
-      {/* extra scroll while the hero is pinned and the video shrinks */}
-      {intro && <div ref={spacer} aria-hidden="true" style={{ height: '100vh' }} />}
     </div>
   );
 }

@@ -13,7 +13,8 @@ import { useScreenInit } from "./useScreenInit.js";
 // any other hash (#projects, #contact…) is a section of the main page.
 // The separate Projects page was removed (the header's Projects dropdown replaces it): an old "#/projects" link
 // lands on the Selected work section of the main page.
-// The line cursor (cursor.tsx) runs on every page; on Trust Bank and GameCove (full-screen video intro) it starts as a [SCROLL] label.
+// The line cursor (cursor.tsx) runs on every page. The [SCROLL] cursor on the case-study intros was removed at Harbor's
+// request: their full-screen videos now move into place on their own.
 const fixOld = () => {
   if (window.location.hash === "#/projects") {
     history.replaceState(null, "", "#projects");
@@ -67,7 +68,7 @@ function Root() {
 
   return (
     <>
-      <CursorTrail scrollLabel={page === "tb" || page === "gc"} />
+      <CursorTrail />
       {view}
     </>
   );

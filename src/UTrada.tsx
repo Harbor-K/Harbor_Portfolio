@@ -7,8 +7,8 @@ import { ChapterMeter } from './ChapterMeter'
 // Each `shots` number is how many image placeholder boxes that section shows. Swap a box for a real image by giving
 // the section `images: [{ src, alt }]` instead.
 // Only facts already on this site are filled in: UTrada, a trading platform, 2024 – 2026, and the screens image.
-// Chrome matches the other case pages: header (harbor → main page · chapter meter · Next · Trust Bank · Book a call),
-// the "Next case study" card and the footer. The chapter meter is ChapterMeter.tsx (same as Trust Bank); no reading-progress line.
+// Chrome matches the other case pages: header (harbor → main page · chapter meter · Next · Trust Bank),
+// the "Next case study" card and the footer. Book a call was taken out of the header (it stays in the footer).
 // Type is Helvetica Neue, nothing under 16px.
 
 const LINKS = {
@@ -128,7 +128,6 @@ export function UTrada() {
           <ChapterMeter chapters={CHAPTERS} chapter={chapter} scope=".ut" />
           <div className="nav-right">
             <a className="next-link" href="#next" onClick={toNext}>Next · {NEXT.name} →</a>
-            <a className="btn-sm" href={LINKS.cal} target="_blank" rel="noreferrer">Book a call</a>
           </div>
         </div>
       </header>
@@ -209,7 +208,6 @@ const UT_CSS = `
 .ut-nav .nav-right { justify-content: flex-end; }
 .ut .next-link { font-size: 16px; opacity: .8; transition: opacity .2s; }
 .ut .next-link:hover { opacity: 1; }
-.ut .ut-head .btn-sm { background: var(--ink); color: #fff; }
 
 /* placeholders: grey italics until Harbor fills them in */
 .ut .tbd { color: #9A9A97; font-style: italic; }

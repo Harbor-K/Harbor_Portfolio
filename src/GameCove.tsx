@@ -5,16 +5,18 @@ import { ChapterMeter } from './ChapterMeter'
 
 // GameCove case study page for this site. The body (hero → reflection) is GameCoveV4.tsx (the same file Portfolio_1 uses),
 // built from Figma "GameCove_v.4 · GameCove colors" in GameCove's own dark palette.
-// Full-screen intro (same as the Trust Bank page): the page opens with the hero ad video filling the screen; the scroll cue is
-// the [SCROLL] cursor (cursor.tsx). Scrolling one screen shrinks the video back into its place under the headline while the
-// hero stays put, then the page scrolls on as normal. The header is hidden during the intro, then fixed at the top.
-// Header: harbor → main page · chapter meter · Next · Trust Bank · Book a call. Same header bar as Trust Bank: the chapter
-// meter (ChapterMeter.tsx, dark contents panel here) and no reading-progress line. The line cursor comes from index.tsx.
-// GameCoveV4.tsx is left untouched: the intro is applied here to its hero (.g-hero) and video (.g-video) by style only —
-//  - the hero is held in place by moving it down as far as the page has scrolled (up to one screen), with one screen of
-//    space added under it;
-//  - the video is scaled up from its own centre to cover the screen and clipped to the screen edges, easing back to
-//    its normal size, place and 16px corners.
+// Full-screen intro (like the Trust Bank page): the page opens with the hero ad video filling the screen. After 4 seconds
+// (HOLD_MS, Harbor's call for GameCove; Trust Bank holds 2.5s) it moves on its own — no scrolling needed — quickly back
+// into its place under the headline over ANIM_MS, easing in and out. Scrolling, swiping or a key press during the hold
+// starts the move straight away; the page can't scroll until the video has settled. The normal line cursor from
+// index.tsx is used throughout.
+// While the intro runs the video's controls (progress, play/pause, time, sound) are hidden (.intro-on); afterwards they
+// show on hover as before.
+// Header: hidden during the intro, then fixed at the top: harbor → main page · chapter meter · Next · Trust Bank
+// (Book a call taken out of the header at Harbor's request; it stays in the footer).
+// GameCoveV4.tsx is left untouched: the intro is applied here to its video (.g-video) by style only — the video is scaled
+// up from its own centre to cover the screen and clipped to the screen edges, easing back to its normal size, place and
+// 16px corners.
 // Reduced motion: no intro.
 
 const NEXT_URL = '#/trust-bank'
@@ -26,10 +28,13 @@ const LINKS = {
 }
 const CHAPTERS = GC4_CHAPTERS
 const RADIUS = 16
+const HOLD_MS = 4000
+const ANIM_MS = 1000
 
 const reducedMotion = () => typeof window !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches
 const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v))
-const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
+// quart in-out: quick through the middle, soft at both ends
+const ease = (t: number) => (t < 0.5 ? 8 * t * t * t * t : 1 - Math.pow(-2 * t + 2, 4) / 2)
 
 function useOnScroll(fn: () => void) {
   const f = useRef(fn); f.current = fn
@@ -43,66 +48,87 @@ function useOnScroll(fn: () => void) {
   }, [])
 }
 
-/** full-screen hero intro on GameCoveV4's hero (see the note at the top) */
-function useHeroIntro(on: boolean) {
+/** timed full-screen intro on GameCoveV4's hero video (see the note at the top); calls onDone when it has settled */
+function useHeroIntro(on: boolean, onDone: () => void) {
+  const done = useRef(onDone); done.current = onDone
   useLayoutEffect(() => {
-    if (!on) return
+    if (!on) { done.current(); return }
     const hero = document.querySelector<HTMLElement>('.gc .gc4 .g-hero')
     const vid = hero?.querySelector<HTMLElement>('.g-video') ?? null
-    if (!hero || !vid) return
+    if (!hero || !vid) { done.current(); return }
     const keep = {
-      hero: { position: hero.style.position, zIndex: hero.style.zIndex, transform: hero.style.transform, marginBottom: hero.style.marginBottom },
+      hero: { position: hero.style.position, zIndex: hero.style.zIndex },
       vid: { position: vid.style.position, zIndex: vid.style.zIndex, transition: vid.style.transition, opacity: vid.style.opacity, transform: vid.style.transform, clipPath: vid.style.clipPath, transformOrigin: vid.style.transformOrigin, willChange: vid.style.willChange },
     }
     hero.style.position = 'relative'
     hero.style.zIndex = '2'
     Object.assign(vid.style, { position: 'relative', zIndex: '3', transition: 'none', opacity: '1', transformOrigin: '50% 50%', willChange: 'transform, clip-path' })
 
-    // the video's own place on the page (its rect with no intro styles, in page coordinates)
+    const root = document.documentElement
+    const keepRoot = { overflow: root.style.overflow, gutter: root.style.getPropertyValue('scrollbar-gutter') }
+    root.style.overflow = 'hidden' // no scrolling until the video has settled
+    root.style.setProperty('scrollbar-gutter', 'stable')
+    scrollTo(0, 0)
+
+    // the video's own place (its rect with no intro styles)
     let r0 = { l: 0, t: 0, w: 1, h: 1 }
     const measure = () => {
-      const ht = hero.style.transform, vt = vid.style.transform, vc = vid.style.clipPath
-      hero.style.transform = 'none'; vid.style.transform = 'none'; vid.style.clipPath = 'none'
+      const vt = vid.style.transform, vc = vid.style.clipPath
+      vid.style.transform = 'none'; vid.style.clipPath = 'none'
       const b = vid.getBoundingClientRect()
-      r0 = { l: b.left, t: b.top + scrollY, w: Math.max(1, b.width), h: Math.max(1, b.height) }
-      hero.style.transform = ht; vid.style.transform = vt; vid.style.clipPath = vc
+      r0 = { l: b.left, t: b.top, w: Math.max(1, b.width), h: Math.max(1, b.height) }
+      vid.style.transform = vt; vid.style.clipPath = vc
+    }
+    const apply = (e: number) => {
+      const vh = innerHeight, vw = document.documentElement.clientWidth
+      const { l, t, w, h } = r0
+      const S = Math.max(vw / w, vh / h) // scale that covers the screen
+      const s = S + (1 - S) * e
+      const tx = (vw / 2 - (l + w / 2)) * (1 - e)
+      const ty = (vh / 2 - (t + h / 2)) * (1 - e)
+      const visW = vw + (w - vw) * e, visH = vh + (h - vh) * e
+      const ix = Math.max(0, (w - visW / s) / 2), iy = Math.max(0, (h - visH / s) / 2)
+      vid.style.transform = `translate3d(${tx.toFixed(2)}px, ${ty.toFixed(2)}px, 0) scale(${s.toFixed(4)})`
+      vid.style.clipPath = `inset(${iy.toFixed(2)}px ${ix.toFixed(2)}px round ${((RADIUS * e) / s).toFixed(2)}px)`
     }
 
-    let raf = 0
-    const draw = () => {
-      raf = 0
-      const vh = innerHeight, vw = document.documentElement.clientWidth, y = scrollY
-      hero.style.marginBottom = `${vh}px`
-      hero.style.transform = `translate3d(0, ${Math.min(y, vh)}px, 0)` // holds the hero still for one screen of scroll
-      const p = clamp(y / vh), e = ease(p)
-      const { l, t, w, h } = r0
-      if (e >= 1) {
-        vid.style.transform = ''
-        vid.style.clipPath = ''
-      } else {
-        const S = Math.max(vw / w, vh / h) // scale that covers the screen
-        const s = S + (1 - S) * e
-        const tx = (vw / 2 - (l + w / 2)) * (1 - e)
-        const ty = (vh / 2 - (t + h / 2)) * (1 - e)
-        const visW = vw + (w - vw) * e, visH = vh + (h - vh) * e
-        const ix = Math.max(0, (w - visW / s) / 2), iy = Math.max(0, (h - visH / s) / 2)
-        vid.style.transform = `translate3d(${tx.toFixed(2)}px, ${ty.toFixed(2)}px, 0) scale(${s.toFixed(4)})`
-        vid.style.clipPath = `inset(${iy.toFixed(2)}px ${ix.toFixed(2)}px round ${((RADIUS * e) / s).toFixed(2)}px)`
-      }
-    }
-    const onScroll = () => { if (!raf) raf = requestAnimationFrame(draw) }
-    const onResize = () => { measure(); onScroll() }
-    measure()
-    draw()
-    addEventListener('scroll', onScroll, { passive: true })
-    addEventListener('resize', onResize)
+    let animStart = performance.now() + HOLD_MS
+    let raf = 0, finished = false
+    const skip = () => { const now = performance.now(); if (now < animStart) animStart = now }
+    const onResize = () => measure()
     // fonts / images can move the hero a little after the first paint
-    const t1 = window.setTimeout(onResize, 300), t2 = window.setTimeout(onResize, 1200)
-    return () => {
-      removeEventListener('scroll', onScroll)
+    const t1 = window.setTimeout(measure, 300), t2 = window.setTimeout(measure, 1200)
+    const unlock = () => {
+      root.style.overflow = keepRoot.overflow
+      if (keepRoot.gutter) root.style.setProperty('scrollbar-gutter', keepRoot.gutter)
+      else root.style.removeProperty('scrollbar-gutter')
+      removeEventListener('wheel', skip); removeEventListener('touchmove', skip); removeEventListener('keydown', skip)
       removeEventListener('resize', onResize)
       window.clearTimeout(t1); window.clearTimeout(t2)
+    }
+    const finish = () => {
+      finished = true
+      vid.style.transform = ''
+      vid.style.clipPath = ''
+      unlock()
+      done.current()
+    }
+    const frame = (now: number) => {
+      const p = clamp((now - animStart) / ANIM_MS)
+      apply(ease(p))
+      if (p >= 1) finish()
+      else raf = requestAnimationFrame(frame)
+    }
+    measure()
+    apply(0)
+    raf = requestAnimationFrame(frame)
+    addEventListener('wheel', skip, { passive: true })
+    addEventListener('touchmove', skip, { passive: true })
+    addEventListener('keydown', skip)
+    addEventListener('resize', onResize)
+    return () => {
       if (raf) cancelAnimationFrame(raf)
+      if (!finished) unlock()
       Object.assign(hero.style, keep.hero)
       Object.assign(vid.style, keep.vid)
     }
@@ -119,14 +145,10 @@ export function GameCove() {
   const [intro, setIntro] = useState(introOn)
 
   useEffect(() => { scrollTo(0, 0) }, [])
-  useHeroIntro(introOn)
+  useHeroIntro(introOn, () => setIntro(false))
 
-  // dark glass after scrolling, and no header at all while the full-screen intro plays
-  useOnScroll(() => {
-    const y = scrollY
-    setScrolled(y > 40)
-    setIntro(introOn && y < innerHeight - 2)
-  })
+  // dark glass after scrolling
+  useOnScroll(() => setScrolled(scrollY > 40))
 
   // current chapter name in the header
   useEffect(() => {
@@ -139,7 +161,7 @@ export function GameCove() {
   const toNext = (e: React.MouseEvent) => { e.preventDefault(); document.getElementById('next')?.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth' }) }
 
   return (
-    <div className="hb gc">
+    <div className={'hb gc' + (intro ? ' intro-on' : '')}>
       <style>{CSS + GC_CSS}</style>
 
       <header className={'gc-head' + (scrolled ? ' scrolled' : '') + (intro ? ' intro' : '')} aria-hidden={intro || undefined}>
@@ -150,7 +172,6 @@ export function GameCove() {
           <ChapterMeter chapters={CHAPTERS} chapter={chapter} intro={intro} scope=".gc" dark />
           <div className="nav-right">
             <a className="next-link" href="#next" tabIndex={intro ? -1 : undefined} onClick={toNext}>Next · Trust Bank →</a>
-            <a className="btn-sm" href={LINKS.cal} target="_blank" rel="noreferrer" tabIndex={intro ? -1 : undefined}>Book a call</a>
           </div>
         </div>
       </header>
@@ -195,7 +216,9 @@ const GC_CSS = `
 .gc-nav .nav-right { justify-content: flex-end; }
 .gc .next-link { font-size: 16px; opacity: .8; transition: opacity .2s; }
 .gc .next-link:hover { opacity: 1; }
-.gc .gc-head .btn-sm { background: #F2F0EC; color: #111114; }
+
+/* no video controls (progress, time, sound) while the full-screen intro plays */
+.gc.intro-on .gc4 .hv-controls { opacity: 0 !important; pointer-events: none !important; visibility: hidden; }
 
 /* the pinned Final design showcase sits below the fixed header */
 .gc .gc4 .g-show { padding-top: 96px; }

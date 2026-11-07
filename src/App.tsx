@@ -10,11 +10,11 @@ import { KimButton, VoiceAssistant } from './KimLLM'
 // and the separate Projects page (#/projects).
 // Header: left = Projects · About me; right = LinkedIn · CV · [✦ Kim LLM]. Book a call was taken out of the header at
 // Harbor's request (it stays in the hero, the closing CTA and the footer).
-// "Projects" opens a mega menu in rox.com's style (Harbor's reference; the old dark rounded dropdown didn't match the site):
-// square, light, full container width, three columns — a dark media panel with the project's video/image, its name and a
-// "View project" button | the project list (pointing at one switches the menu to it) | an off-white "At a glance" column
-// with the project's line and key facts — and a bottom row of links. The trigger gets a grey background and a dash
-// instead of the chevron while open, like rox.
+// "Projects" opens a compact rox.com-style menu (Harbor's notes on the first version: about two-thirds the size, no dark
+// media column on the left, no bottom links row, the video on the right at its own 16:9 ratio). Square and light, three
+// columns: the project list | "At a glance" (the project's line and key facts) | the project's video or image at 16:9
+// with "View project →" under it. Pointing at a project in the list switches the menu to it. While open the trigger gets
+// a grey background and a dash instead of the chevron, like rox.
 // Kim LLM (header button + panel) lives in KimLLM.tsx and is shared with the About and case-study pages.
 // Project blocks: each whole block (title + image) is one link; pointing anywhere on it turns the cursor into a solid
 // square "View project" button (cursor.tsx, data-cursor + data-cursor-variant="button").
@@ -84,7 +84,7 @@ export const PAGE_CSS = `
 /* header: CV sits on the right with LinkedIn (no CV link yet, so it is plain text) */
 .hb .nav-right .cv { opacity: .8; }
 
-/* ---------- Projects mega menu (rox.com style) ---------- */
+/* ---------- Projects menu (compact, rox.com style) ---------- */
 .hb .pj-menu { position: relative; display: flex; align-items: center; }
 .hb .pj-trigger { display: inline-flex; align-items: center; gap: 10px; padding: 6px 10px; margin: -6px -10px; background: transparent; border: 0; border-radius: 0;
   cursor: pointer; font-size: 16px; white-space: nowrap; opacity: .8; transition: opacity .2s, background-color .2s; }
@@ -99,43 +99,33 @@ export const PAGE_CSS = `
   opacity: 0; visibility: hidden; transform: translateY(-6px); pointer-events: none;
   transition: opacity .18s ease, transform .25s cubic-bezier(.22,1,.36,1), visibility 0s .25s; }
 .hb .pj-panel.open { opacity: 1; visibility: visible; transform: none; pointer-events: auto; transition: opacity .22s ease, transform .35s cubic-bezier(.22,1,.36,1), visibility 0s; }
-.hb .pj-box { display: grid; grid-template-columns: 260px 280px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; min-height: 500px;
+.hb .pj-box { display: grid; grid-template-columns: 200px minmax(0, 1fr) 320px; min-height: 300px;
   background: #fff; border: 1px solid #DBDBD9; box-shadow: 0 24px 60px rgba(0,0,0,.10); }
-
-/* left: dark media panel */
-.hb .pj-media { grid-row: 1 / span 2; position: relative; display: flex; flex-direction: column; justify-content: space-between; padding: 32px; overflow: hidden;
-  background: #0F0F0F; color: #fff; text-decoration: none; }
-.hb .pj-media .layer { position: absolute; inset: 0; transition: opacity .45s ease, transform .7s cubic-bezier(.22,1,.36,1); }
-.hb .pj-media .layer video, .hb .pj-media .layer img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.hb .pj-media::after { content: ""; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(180deg, rgba(0,0,0,.62) 0%, rgba(0,0,0,.18) 45%, rgba(0,0,0,.65) 100%); }
-.hb .pj-media .ttl { position: relative; z-index: 1; font-size: 32px; font-weight: 300; line-height: 1.12; letter-spacing: -0.02em; }
-.hb .pj-media .ttl small { display: block; margin-top: 10px; font-size: 16px; font-weight: 400; letter-spacing: 0; color: rgba(255,255,255,.75); }
-.hb .pj-media .cta { position: relative; z-index: 1; align-self: flex-start; padding: 12px 20px; background: #fff; color: #0F0F0F; font-size: 16px; font-weight: 500; transition: background-color .2s; }
-.hb .pj-media:hover .cta { background: #EDEDEB; }
-
-/* middle: project list */
-.hb .pj-cats { padding: 32px 0 24px; }
 .hb .pj-k { font-size: 16px; color: #8C8C8A; }
-.hb .pj-cats .pj-k { padding: 0 32px; margin-bottom: 16px; }
+
+/* project list */
+.hb .pj-cats { padding: 24px 0; }
+.hb .pj-cats .pj-k { padding: 0 24px; margin-bottom: 12px; }
 .hb .pj-cats ul { list-style: none; margin: 0; padding: 0; }
-.hb .pj-cats a { display: block; padding: 12px 32px; font-size: 16px; color: #0F0F0F; text-decoration: none; transition: background-color .15s; }
+.hb .pj-cats a { display: block; padding: 10px 24px; font-size: 16px; color: #0F0F0F; text-decoration: none; transition: background-color .15s; }
 .hb .pj-cats a.on { background: #F2F2EF; }
 .hb .pj-cats a:focus-visible { outline: 2px solid #2563EB; outline-offset: -2px; }
 
-/* right: at a glance (off-white) */
-.hb .pj-feat { padding: 32px; background: #F5F5F2; }
-.hb .pj-feat .about { margin: 16px 0 0; font-size: 20px; font-weight: 300; line-height: 1.35; letter-spacing: -0.01em; color: #0F0F0F; }
-.hb .pj-feat ul { list-style: none; margin: 24px 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; }
+/* at a glance + video (off-white) */
+.hb .pj-feat { padding: 24px; background: #F5F5F2; }
+.hb .pj-feat .about { margin: 12px 0 0; font-size: 18px; font-weight: 300; line-height: 1.35; letter-spacing: -0.01em; color: #0F0F0F; }
+.hb .pj-feat ul { list-style: none; margin: 18px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
 .hb .pj-feat li { font-size: 16px; line-height: 1.4; color: #6B6B69; }
 .hb .pj-feat li.lead { display: flex; gap: 8px; color: #0F0F0F; }
 .hb .pj-feat li.lead::before { content: ""; flex: none; margin-top: 6px; border-left: 6px solid currentColor; border-top: 4px solid transparent; border-bottom: 4px solid transparent; height: 0; }
 
-/* bottom row */
-.hb .pj-foot { grid-column: 2 / span 2; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 22px 32px; border-top: 1px solid #E6E6E3; }
-.hb .pj-foot a { display: inline-flex; align-items: center; gap: 4px; font-size: 16px; color: #0F0F0F; text-decoration: none; }
-.hb .pj-foot a:hover { text-decoration: underline; text-underline-offset: 4px; }
-.hb .pj-foot svg { width: 12px; height: 12px; }
+.hb .pj-vid { padding: 24px 24px 24px 0; background: #F5F5F2; display: flex; flex-direction: column; gap: 14px; }
+.hb .pj-shot { position: relative; display: block; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; background: #0F0F0F; }
+.hb .pj-shot .layer { position: absolute; inset: 0; transition: opacity .45s ease, transform .7s cubic-bezier(.22,1,.36,1); }
+.hb .pj-shot .layer video, .hb .pj-shot .layer img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.hb .pj-go { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; font-size: 16px; font-weight: 500; color: #0F0F0F; text-decoration: none; }
+.hb .pj-go .go { transition: transform .25s var(--ease); }
+.hb .pj-go:hover .go { transform: translateX(4px); }
 
 @media (max-width: 900px) {
   .hb .nav-right .cv { display: none; }
@@ -158,14 +148,13 @@ function useTyped(text: string, key: string | number, speed = 32, delay = 0) {
   return text.slice(0, n)
 }
 
-/* ---------- Projects mega menu ---------- */
+/* ---------- Projects menu ---------- */
 // Facts come from the case-study pages already on the site (Trust Bank hero details, GameCove ad, UTrada skeleton).
 
 const RAW = 'https://raw.githubusercontent.com/Harbor-K/'
 const WORK_LIST = [
   {
     name: 'Trust Bank',
-    sub: 'Rewards UX revamp',
     href: '#/trust-bank',
     video: `${RAW}harbor-pf/main/assets/trust-bank/hero-sfx-v2.mp4`,
     poster: `${RAW}harbor-pf/main/assets/trust-bank/hero-sfx-v2-poster.jpg`,
@@ -175,14 +164,11 @@ const WORK_LIST = [
       { t: 'Rewards UX revamp', lead: true },
       { t: 'Digital banking, mobile app', lead: true },
       { t: '8 weeks, June – August 2026' },
-      { t: '2 designers' },
       { t: 'I led planning, UI design and usability tests' },
-      { t: 'Singapore' },
     ],
   },
   {
     name: 'GameCove',
-    sub: 'AI analytics dashboard',
     href: '#/gamecove',
     video: `${RAW}landing_page/main/gamecove/assets/v4/hero-ad.mp4`,
     poster: `${RAW}landing_page/main/gamecove/assets/v4/hero-ad-poster.jpg`,
@@ -191,15 +177,12 @@ const WORK_LIST = [
     facts: [
       { t: 'AI analytics dashboard', lead: true },
       { t: 'Team project', lead: true },
-      { t: 'Overview' },
-      { t: 'AI mapping' },
-      { t: 'Retention' },
+      { t: 'Overview, AI mapping, Retention' },
       { t: 'AI agent' },
     ],
   },
   {
     name: 'UTrada',
-    sub: 'Trading platform design system',
     href: '#/utrada',
     video: '',
     poster: '',
@@ -209,30 +192,27 @@ const WORK_LIST = [
       { t: 'Trading platform', lead: true },
       { t: 'Design system', lead: true },
       { t: '2024 – 2026' },
-      { t: 'Website: home, features, forex table, join flow' },
     ],
   },
 ]
 
-const ArrowUpRight = () => (
-  <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M3 9l6-6M4 3h5v5" /></svg>
-)
+const MENU_W = 800
 
 function ProjectsMenu() {
   const [open, setOpen] = useState(false)
   const [everOpen, setEverOpen] = useState(false) // the videos load on the first open and stay
   const [hot, setHot] = useState(0) // which project the menu shows
-  const [box, setBox] = useState({ left: 0, width: 960 })
+  const [box, setBox] = useState({ left: 0, width: MENU_W })
   const ref = useRef<HTMLDivElement>(null)
   const vids = useRef<(HTMLVideoElement | null)[]>([])
   const closeTimer = useRef(0)
 
-  // the panel spans the header's container (from the logo to the right edge), like rox
+  // the panel starts at the header's left edge (under the logo), like rox; 800px wide, or less on narrow screens
   const place = () => {
     const m = ref.current, w = m?.closest('.nav') as HTMLElement | null
     if (!m || !w) return
     const mr = m.getBoundingClientRect(), wr = w.getBoundingClientRect()
-    setBox({ left: Math.round(wr.left - mr.left), width: Math.round(Math.min(wr.width, 1180)) })
+    setBox({ left: Math.round(wr.left - mr.left), width: Math.round(Math.min(wr.width, MENU_W)) })
   }
   useLayoutEffect(() => { if (open) place() }, [open])
 
@@ -279,20 +259,7 @@ function ProjectsMenu() {
 
       <div className={'pj-panel' + (open ? ' open' : '')} style={{ left: box.left, width: box.width }} aria-hidden={!open}>
         <div className="pj-box">
-          {/* left: the project's video / image, name and button */}
-          <a className="pj-media" href={p.href} tabIndex={open ? 0 : -1} onClick={() => setOpen(false)} aria-label={`View project: ${p.name}`}>
-            {everOpen && WORK_LIST.map((w, i) => (
-              <div key={w.name} className="layer" style={{ opacity: i === hot ? 1 : 0, transform: i === hot ? 'scale(1)' : 'scale(1.04)' }} aria-hidden="true">
-                {w.video
-                  ? <video ref={el => { vids.current[i] = el }} src={w.video} poster={w.poster} muted loop playsInline preload={i === 0 ? 'auto' : 'metadata'} />
-                  : <img src={w.img} alt="" />}
-              </div>
-            ))}
-            <span className="ttl">{p.name}<small>{p.sub}</small></span>
-            <span className="cta">View project</span>
-          </a>
-
-          {/* middle: the list */}
+          {/* the list */}
           <div className="pj-cats">
             <div className="pj-k">Projects</div>
             <ul>
@@ -305,7 +272,7 @@ function ProjectsMenu() {
             </ul>
           </div>
 
-          {/* right: at a glance */}
+          {/* at a glance */}
           <div className="pj-feat">
             <div className="pj-k">At a glance</div>
             <p className="about">{p.about}</p>
@@ -314,12 +281,18 @@ function ProjectsMenu() {
             </ul>
           </div>
 
-          {/* bottom row */}
-          <div className="pj-foot">
-            <span className="pj-k">More:</span>
-            <a href="#/about" tabIndex={open ? 0 : -1} onClick={() => setOpen(false)}>About me</a>
-            <a href={LINKS.linkedin} target="_blank" rel="noreferrer" tabIndex={open ? 0 : -1}>LinkedIn <ArrowUpRight /></a>
-            <a href={LINKS.cal} target="_blank" rel="noreferrer" tabIndex={open ? 0 : -1}>Book a call <ArrowUpRight /></a>
+          {/* the project's video / image at 16:9, and the link */}
+          <div className="pj-vid">
+            <a className="pj-shot" href={p.href} tabIndex={-1} aria-hidden="true" onClick={() => setOpen(false)}>
+              {everOpen && WORK_LIST.map((w, i) => (
+                <div key={w.name} className="layer" style={{ opacity: i === hot ? 1 : 0, transform: i === hot ? 'scale(1)' : 'scale(1.04)' }}>
+                  {w.video
+                    ? <video ref={el => { vids.current[i] = el }} src={w.video} poster={w.poster} muted loop playsInline preload={i === 0 ? 'auto' : 'metadata'} />
+                    : <img src={w.img} alt="" />}
+                </div>
+              ))}
+            </a>
+            <a className="pj-go" href={p.href} tabIndex={open ? 0 : -1} onClick={() => setOpen(false)}>View project <span className="go">→</span></a>
           </div>
         </div>
       </div>

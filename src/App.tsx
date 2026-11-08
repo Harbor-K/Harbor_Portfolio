@@ -4,8 +4,7 @@ import { useScreenInit } from './useScreenInit.js'
 import { KimButton, VoiceAssistant } from './KimLLM'
 
 // Harbor — portfolio main page v4, from Figma "44기 김지현 4차 PF" (node 260:282) and Harbor's review notes:
-// hero → three projects, one per block (title, line, media), laid out like rox.com's "Applied AI research" section
-// on warm white (#FBFAF9) → CTA → footer.
+// hero → Selected work → CTA → footer, on warm white (#FBFAF9). The main page's container is 1440px wide (.hb.home).
 // Removed at Harbor's request: the designer-skills strip under the hero, the info rows + note box in each project block,
 // and the separate Projects page (#/projects).
 // Header: left = Projects · About me; right = LinkedIn · CV · [✦ Kim LLM]. Book a call was taken out of the header at
@@ -16,8 +15,14 @@ import { KimButton, VoiceAssistant } from './KimLLM'
 // with "View project →" under it. Pointing at a project in the list switches the menu to it. While open the trigger gets
 // a grey background and a dash instead of the chevron, like rox.
 // Kim LLM (header button + panel) lives in KimLLM.tsx and is shared with the About and case-study pages.
-// Project blocks: each whole block (title + image) is one link; pointing anywhere on it turns the cursor into a solid
-// square "View project" button (cursor.tsx, data-cursor + data-cursor-variant="button").
+// Selected work, laid out like palantir.com's "Our Software" list (Harbor's reference): a single "Selected work" heading in
+// the hero's type (Tektur Medium, same size as "Who is Harbor?"), then one full-width row per project — the project's
+// line and its number (/0.1) on the left, a faint logo in the middle (all logos shown as the same faint dark silhouette,
+// so the white GameCove logo shows too), the project name very large in Tektur Medium on the right. Pointing at a row
+// (or focusing it) turns the row light grey and brings up the project's video or image where the logo was; the video
+// plays only while pointed at. The whole row is the link. The list ends straight into the dark CTA section (no white gap
+// under the last row). The old solid "View project" cursor button was removed at Harbor's request. Touch screens (no
+// hover) show the media straight away.
 // Hero background: Harbor's 8-second typing video, muted and looping, at 50% opacity in front of a black (#000000)
 // base, with the hero's dark gradient on top (Harbor's Figma layers: black background → video 50% → overlay gradient).
 // Reduced motion: poster only.
@@ -43,53 +48,80 @@ const HERO_POSTER = IMG3 + 'hero-typing-poster.jpg'
 export const TB = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/trust-bank/'
 // GameCove 15s ad (same file as the GameCove case-study hero); plays muted on loop here.
 const GC = 'https://raw.githubusercontent.com/Harbor-K/landing_page/main/gamecove/assets/v4/'
+// UTrada mark (same as the UTrada case page)
+const UTRADA_SVG = `<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="4" fill="#38029D"/><path d="M20.8137 12L20.7642 12.2773L19.0159 22.2134C18.4395 25.4849 15.3129 28.1484 12.0457 28.1484C10.4635 28.1484 9.07577 27.5308 8.13822 26.4127C7.17956 25.2689 6.80943 23.747 7.09286 22.1315L8.87681 12H9.07354C9.73433 12 10.3156 12.2606 10.7074 12.7278C11.1081 13.2073 11.2626 13.841 11.1454 14.5153L9.79101 22.2134C9.63596 23.0871 9.83325 23.9046 10.344 24.5149C10.843 25.1118 11.5861 25.4382 12.4391 25.4382C14.2581 25.4382 15.9993 23.9564 16.3205 22.1315L17.6754 14.4329C17.9099 13.092 19.1943 12 20.5347 12H20.8137Z" fill="white"/><path d="M32.6067 12L32.131 14.7102H27.9095L25.5448 28.1484H22.8328L25.198 14.7102H20.9766L21.4551 12H32.6067Z" fill="white"/></svg>`
 
 type Project = {
-  title: string; sub: string; href?: string
-  video?: string; poster?: string; img?: string; alt?: string; ratio?: string
+  title: string; sub: string; href: string; logo: string; logoSquare?: boolean
+  video?: string; poster?: string; img?: string
 }
 const PROJECTS: Project[] = [
   {
-    title: 'Trust Bank Singapore', sub: 'Turning hidden rewards into everyday loyalty.', href: '#/trust-bank',
-    img: IMG3 + 'trust-bank-thumb.webp', alt: 'Trust Bank rewards screen in front of the trust wordmark', ratio: '2 / 1',
+    title: 'Trust Bank', sub: 'Turning hidden rewards into everyday loyalty.', href: '#/trust-bank',
+    logo: TB + 'logo.svg',
+    video: TB + 'hero-sfx-v2.mp4', poster: TB + 'hero-sfx-v2-poster.jpg',
   },
   {
     title: 'GameCove', sub: 'An AI game-analytics dashboard.', href: '#/gamecove',
-    video: GC + 'hero-ad.mp4', poster: GC + 'hero-ad-poster.jpg', alt: 'GameCove ad: Overview, AI mapping, Retention and the AI agent', ratio: '2 / 1',
+    logo: 'https://raw.githubusercontent.com/Harbor-K/landing_page/main/gamecove/assets/logo.png',
+    video: GC + 'hero-ad.mp4', poster: GC + 'hero-ad-poster.jpg',
   },
   {
     title: 'UTrada', sub: 'Product design for a trading platform.', href: '#/utrada',
-    img: IMG3 + 'utrada-screens.webp', alt: 'UTrada website screens: home, features, forex table and join flow',
+    logo: `data:image/svg+xml;utf8,${encodeURIComponent(UTRADA_SVG)}`, logoSquare: true,
+    img: IMG3 + 'utrada-screens.webp',
   },
 ]
 
 export const BARS = 140
 const SECTION_IDS: Record<string, string> = { work: 'projects', contact: 'contact' }
 
+// Tektur Medium: the hero headline, the Selected work heading and the project names
+const TEKTUR = '"Tektur", "Helvetica Neue", Helvetica, Arial, sans-serif'
+
 export const PAGE_CSS = `
+/* main page container: 1440px wide (Harbor's request) */
+.hb.home { --wrap: min(1440px, calc(100vw - 64px)); }
+
 /* hero: black base, the typing video on top of it at 50% (Harbor's Figma layers), the dark gradient above both */
 .hb .hero, .hb .hero .hero-bg { background: #000000; }
 .hb .hero-vid { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 40%; opacity: .5; }
 
 /* hero headline (Harbor's Figma "Hero 3", node 424:6740): Tektur Medium, 110% line height, -3% tracking, both lines white */
 .hb .hero .h1 .l1, .hb .hero .h1 .sub {
-  font-family: "Tektur", "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+  font-family: ${TEKTUR} !important;
   font-weight: 500; line-height: 1.1; letter-spacing: -0.03em; color: #FFFFFF; }
 .hb .hero .h1 .caret { background: #FFFFFF; }
 .hb .hero .hero-ctas { margin-top: 40px; }
 
-.projects-sec { background: var(--paper); }
-.proj + .proj { margin-top: 160px; }
-.hb a.proj { display: block; color: inherit; text-decoration: none; }
-.hb a.proj:focus-visible { outline: 2px solid #2563EB; outline-offset: 8px; }
-.proj-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 40px; margin-bottom: 40px; }
-.proj-head h3 { margin: 0; font-size: 44px; font-weight: 400; line-height: 1.15; letter-spacing: -0.02em; }
-.proj-head h3 .sub { display: block; color: #8C8C8A; font-weight: 300; }
-.proj-frame { border: 1px solid var(--line); }
-.proj-media { display: block; padding: 0; overflow: hidden; }
-.proj-media .shot { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: #E9E9E6; }
-.proj-media video, .proj-media img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 1.2s var(--ease); }
-.proj:hover .proj-media video, .proj:hover .proj-media img { transform: scale(1.03); }
+/* ---------- Selected work: palantir.com "Our Software"-style list ---------- */
+.pl-sec { background: var(--paper); padding-bottom: 0; }
+.pl-title { margin: 0 0 40px; font-family: ${TEKTUR} !important; font-size: clamp(56px, 4.6vw, 88px); font-weight: 500; line-height: 1.1; letter-spacing: -0.03em; color: var(--ink); }
+.pl-list { list-style: none; margin: 0; padding: 0; }
+.hb a.pl-link { display: block; color: var(--ink); text-decoration: none; transition: background-color .35s ease; }
+.hb a.pl-link:hover, .hb a.pl-link:focus-visible { background: #F0F0EE; }
+.hb a.pl-link:focus-visible { outline: 2px solid #2563EB; outline-offset: -2px; }
+.pl-row { display: grid; grid-template-columns: 220px minmax(0, 360px) minmax(0, 1fr); gap: 48px; align-items: center; min-height: 320px; padding: 48px 0; }
+.pl-item + .pl-item .pl-row { border-top: 1px solid var(--line); }
+.pl-link:hover .pl-row, .pl-link:focus-visible .pl-row, .pl-item:hover + .pl-item .pl-row { border-top-color: transparent; }
+.pl-desc { align-self: stretch; display: flex; flex-direction: column; justify-content: space-between; gap: 24px; }
+.pl-desc p { margin: 0; max-width: 200px; font-size: 18px; line-height: 1.35; }
+.pl-n { font-size: 16px; color: var(--mute); }
+.pl-media { position: relative; aspect-ratio: 16 / 9; }
+/* faint logo: every logo becomes the same light silhouette (the GameCove logo is white, so it is darkened first) */
+.pl-logo { position: absolute; left: 0; top: 50%; height: 44px; width: auto; max-width: 100%; transform: translateY(-50%);
+  filter: grayscale(1) brightness(0); opacity: .1; transition: opacity .3s ease; }
+.pl-logo.sq { height: 96px; filter: grayscale(1); opacity: .1; }
+.pl-shot { position: absolute; inset: 0; overflow: hidden; background: #0F0F0F; opacity: 0; transform: scale(.94);
+  transition: opacity .35s ease, transform .55s var(--ease); }
+.pl-shot video, .pl-shot img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.pl-link:hover .pl-shot, .pl-link:focus-visible .pl-shot { opacity: 1; transform: none; }
+.pl-link:hover .pl-logo, .pl-link:focus-visible .pl-logo { opacity: 0; }
+.pl-name { font-family: ${TEKTUR} !important; font-size: clamp(64px, 6.3vw, 120px); font-weight: 500; line-height: 1; letter-spacing: -0.03em; white-space: nowrap; }
+@media (hover: none) {
+  .pl-shot { opacity: 1; transform: none; }
+  .pl-logo { display: none; }
+}
 
 /* header: CV sits on the right with LinkedIn (no CV link yet, so it is plain text) */
 .hb .nav-right .cv { opacity: .8; }
@@ -137,10 +169,16 @@ export const PAGE_CSS = `
 .hb .pj-go .go { transition: transform .25s var(--ease); }
 .hb .pj-go:hover .go { transform: translateX(4px); }
 
+@media (max-width: 1100px) {
+  .pl-row { grid-template-columns: 180px minmax(0, 280px) minmax(0, 1fr); gap: 32px; }
+}
 @media (max-width: 900px) {
   .hb .nav-right .cv { display: none; }
-  .proj-head { flex-direction: column; align-items: flex-start; }
-  .proj-head h3 { font-size: 32px; }
+  .pl-row { grid-template-columns: minmax(0, 1fr); gap: 20px; min-height: 0; padding: 40px 0; }
+  .pl-name { order: -1; font-size: 56px; white-space: normal; }
+  .pl-desc p { max-width: none; }
+  .pl-shot { opacity: 1; transform: none; }
+  .pl-logo { display: none; }
 }
 `
 
@@ -403,23 +441,32 @@ export function useReveal(dep?: unknown) {
   }, [dep])
 }
 
-// One project = one link. Pointing anywhere on it turns the cursor into a solid "View project" button
-// (black over the white title area, white over the image).
-function ProjectBlock({ p }: { p: Project }) {
-  const href = p.href ?? '#projects'
+// One project = one full-width row (palantir.com "Our Software" style). Pointing at it shows the media and plays the video.
+function ProjectRow({ p, i }: { p: Project; i: number }) {
+  const vid = useRef<HTMLVideoElement>(null)
+  const play = () => { const v = vid.current; if (v) { v.muted = true; v.play().catch(() => {}) } }
+  const stop = () => { const v = vid.current; if (v) v.pause() }
   return (
-    <a className="proj" href={href} data-reveal data-cursor="View project" data-cursor-variant="button" aria-label={`View project: ${p.title}, ${p.sub}`}>
-      <div className="proj-head">
-        <h3><span>{p.title}</span><span className="sub">{p.sub}</span></h3>
-      </div>
-      <div className="proj-frame proj-media" data-cursor-light>
-        <div className="shot" style={p.ratio ? { aspectRatio: p.ratio } : undefined}>
-          {p.video
-            ? <video src={p.video} poster={p.poster} autoPlay muted loop playsInline preload="metadata" aria-hidden="true" />
-            : <img src={p.img} alt="" loading="lazy" />}
+    <li className="pl-item" data-reveal>
+      <a className="pl-link" href={p.href} onMouseEnter={play} onMouseLeave={stop} onFocus={play} onBlur={stop}
+        aria-label={`${p.title}: ${p.sub}`}>
+        <div className="wrap pl-row">
+          <div className="pl-desc">
+            <p>{p.sub}</p>
+            <span className="pl-n">/0.{i + 1}</span>
+          </div>
+          <div className="pl-media" aria-hidden="true">
+            <img className={'pl-logo' + (p.logoSquare ? ' sq' : '')} src={p.logo} alt="" />
+            <div className="pl-shot">
+              {p.video
+                ? <video ref={vid} src={p.video} poster={p.poster} muted loop playsInline preload="metadata" />
+                : <img src={p.img} alt="" loading="lazy" />}
+            </div>
+          </div>
+          <div className="pl-name">{p.title}</div>
         </div>
-      </div>
-    </a>
+      </a>
+    </li>
   )
 }
 
@@ -472,9 +519,9 @@ export function App() {
   }, [screenInit])
 
   return (
-    <div className="hb" id="top">
+    <div className="hb home" id="top">
       <style>{CSS + PAGE_CSS}</style>
-      {/* hero headline font (Harbor's Figma "Hero 3") */}
+      {/* Tektur Medium: hero headline, Selected work heading and project names */}
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tektur:wght@500&display=swap" />
       <SiteHeader />
 
@@ -494,17 +541,14 @@ export function App() {
       </section>
 
       <main>
-        {/* ===== Selected work — one project per block ===== */}
-        <section className="sec projects-sec" id="projects" aria-label="Selected work">
+        {/* ===== Selected work — palantir.com "Our Software"-style list ===== */}
+        <section className="sec pl-sec" id="projects" aria-labelledby="pl-title">
           <div className="wrap">
-            <div className="sec-head" data-reveal>
-              <div>
-                <div className="eyebrow">(01) Selected work</div>
-                <h2 className="h2">Projects, end to end</h2>
-              </div>
-            </div>
-            {PROJECTS.map(p => <ProjectBlock p={p} key={p.title} />)}
+            <h2 className="pl-title" id="pl-title" data-reveal>Selected work</h2>
           </div>
+          <ul className="pl-list">
+            {PROJECTS.map((p, i) => <ProjectRow p={p} i={i} key={p.title} />)}
+          </ul>
         </section>
 
         <ClosingCTA />

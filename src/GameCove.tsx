@@ -19,9 +19,11 @@ import { SideToc, useHeadroom } from './CaseNav'
 // intro, and measures the video's place again right before it moves.
 // While the intro runs the video's controls (progress, play/pause, time, sound) are hidden (.intro-on); afterwards they
 // show on hover as before.
-// Corners: square like the rest of the site — the hero video, process animation, boards, photos, screenshots and the
-// Final design screen are 0px (GC_CSS). The images themselves had rounded corners baked in; those files were squared in
-// Harbor-K/landing_page (gamecove/assets). Cards, pills and buttons keep their radius.
+// Corners: everything in the GameCove body is square (0px), Harbor's call — the hero video, images, boards, cards, panels,
+// pills, buttons, steps, the Final design flip cards, bars and the video slider (GC_CSS). The images themselves had rounded
+// corners baked in; those files were squared in Harbor-K/landing_page (gamecove/assets).
+// One exception: the "Spacing & radius" token samples in the Design system section keep their radius, because they show
+// GameCove's radius tokens (2, 4, 8, 16px, full).
 // Header: hidden during the intro; after that it slides away while scrolling down and comes back on scrolling up
 // (useHeadroom). harbor → main page on the left; Next · UTrada (opens that page directly) and the ✦ Kim LLM button on
 // the right. Project order: Trust Bank → GameCove → UTrada → Trust Bank.
@@ -257,11 +259,13 @@ const GC_CSS = `
 /* no video controls (progress, time, sound) while the full-screen intro plays */
 .gc.intro-on .gc4 .hv-controls { opacity: 0 !important; pointer-events: none !important; visibility: hidden; }
 
-/* square corners on every picture: hero video (dark box, never white), process animation, boards, photos,
-   component sheets, accordion screenshots and the Final design screen. Cards, pills and buttons keep their radius. */
-.gc .gc4 .g-banner { border-radius: 0; background: ${DARK}; }
-.gc .gc4 .g-process, .gc .gc4 .g-board, .gc .gc4 .g-photo, .gc .gc4 .g-comp, .gc .gc4 .g-screen,
-.gc .gc4 .acc-body img, .gc .gc4 .g-show-narrow img { border-radius: 0; }
+/* square corners on everything in the GameCove body (Harbor: 0px everywhere) — hero video (dark box, never white), images,
+   boards, cards, panels, scenario, HMW, notes, feature list, flip cards, pills, steps, buttons, bars and the video slider.
+   Only the "Spacing & radius" token samples (.g-radii i) keep their radius, since they show GameCove's radius tokens. */
+.gc .gc4 .g-banner { background: ${DARK}; }
+.gc .gc4 *:not(.g-radii i), .gc .gc4 *::before, .gc .gc4 *::after { border-radius: 0 !important; }
+.gc .gc4 input[type=range]::-webkit-slider-thumb { border-radius: 0 !important; }
+.gc .gc4 input[type=range]::-moz-range-thumb { border-radius: 0 !important; }
 
 /* the pinned Final design showcase sits below the fixed header */
 .gc .gc4 .g-show { padding-top: 96px; }

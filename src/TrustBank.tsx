@@ -5,17 +5,27 @@ import { KimButton, VoiceAssistant } from './KimLLM'
 import { SideToc, useHeadroom } from './CaseNav'
 
 // Trust Bank case study page for this site.
-// Body (hero → reflection) = Portfolio_1's Trust Bank page (p1/TrustBankBody.tsx): its copy, colours, type, rounded corners and interactions.
+// Body (hero → reflection) = Portfolio_1's Trust Bank page (p1/TrustBankBody.tsx): its copy, colours, type and interactions.
+// Corners: square like the rest of the site and Harbor's Figma image frame ("44기 김지현 4차 랜딩페이지", node 1367:39239) —
+// the hero video, every photo, screenshot and video frame, the Deliver feature cards (and the blue progress line around them),
+// the before/after blocks and the white frame around the affinity whiteboard are all 0px (TB_CSS below).
+// Kept round on purpose: the whiteboard's own pill-shaped glass board inside that frame (Harbor's note), the phone mockups,
+// round number badges and avatars, the toggle pills and the small UI shapes drawn inside the usability-test player.
 // The hero opens on the full-screen video, which moves into its place on its own after 2.5 seconds (p1/TrustHero.tsx).
 // This file keeps this site's chrome: the header (harbor → main page on the left; Next · GameCove and the ✦ Kim LLM button
-// on the right), the process contents on the left side (CaseNav.tsx, Notion-style), the "Next case study" card,
-// the footer and the Kim LLM panel (KimLLM.tsx).
-// "Next · GameCove" in the header and the big card at the bottom both open the GameCove page directly (#/gamecove).
+// on the right), the process contents on the left side (CaseNav.tsx), the "Next case study" card, the footer and the
+// Kim LLM panel (KimLLM.tsx). "Next · GameCove" and the big card at the bottom both open the GameCove page directly.
+// A few seconds after this page opens, GameCove's opening video and poster are fetched in the background (prefetch), so
+// the GameCove page's full-screen intro starts at once instead of flashing while the video loads.
 // Header: hidden while the full-screen intro plays (until the hero sends 'caseintro' false); after that it slides away
 // while scrolling down and comes back on scrolling up (useHeadroom).
-// The line cursor comes from index.tsx for every page.
 
 const NEXT = { name: 'GameCove', href: '#/gamecove' }
+// GameCove's hero video + poster (GameCoveV4.tsx), warmed in the browser cache for a smooth jump to the next page
+const NEXT_PREFETCH = [
+  'https://raw.githubusercontent.com/Harbor-K/landing_page/main/gamecove/assets/v4/hero-ad.mp4',
+  'https://raw.githubusercontent.com/Harbor-K/landing_page/main/gamecove/assets/v4/hero-ad-poster.jpg',
+]
 const LINKS = {
   cal: 'https://cal.com/harbor-kim-wqsmkt/30min',
   linkedin: 'https://www.linkedin.com/in/harborkim/',
@@ -55,6 +65,22 @@ export function TrustBank() {
     addEventListener('caseintro', on)
     const t = window.setTimeout(() => setIntro(false), 8000)
     return () => { removeEventListener('caseintro', on); window.clearTimeout(t) }
+  }, [])
+
+  // fetch the next page's opening video in the background once this page has settled
+  useEffect(() => {
+    const links: HTMLLinkElement[] = []
+    const t = window.setTimeout(() => {
+      NEXT_PREFETCH.forEach((href) => {
+        if (document.querySelector(`link[rel="prefetch"][href="${href}"]`)) return
+        const l = document.createElement('link')
+        l.rel = 'prefetch'
+        l.href = href
+        document.head.appendChild(l)
+        links.push(l)
+      })
+    }, 4000)
+    return () => { window.clearTimeout(t); links.forEach((l) => l.remove()) }
   }, [])
 
   // light glass after scrolling
@@ -110,7 +136,7 @@ export function TrustBank() {
   )
 }
 
-// Site chrome only (header, next case card). The body brings its own styles (p1/TrustBankBody.tsx).
+// Site chrome (header, next case card) + the square-corner pass over the body. The body brings its own styles (p1/TrustBankBody.tsx).
 const TB_CSS = `
 /* header: hidden during the full-screen intro; slides away on scroll down, back on scroll up; light glass after scrolling */
 .tb-head { position: fixed; inset: 0 0 auto 0; z-index: 50; color: var(--ink); border-bottom: 1px solid transparent;
@@ -122,6 +148,16 @@ const TB_CSS = `
 .tb-nav .nav-right { gap: 24px; }
 .tb .next-link { font-size: 16px; opacity: .8; transition: opacity .2s; }
 .tb .next-link:hover { opacity: 1; }
+
+/* square corners (site style, Harbor's Figma frame): photos, screenshots, video frames, cards, before/after blocks,
+   the affinity whiteboard's white frame, and the hero video (its intro animates the radius inline, so !important).
+   Matched with attribute selectors (class*=) so no backslash escapes are needed — escaped selectors were lost in the build.
+   Not touched: the whiteboard's pill-shaped board (inline radius), phone mockups (60px / 48px), rounded-full badges
+   and toggles, and the small UI shapes inside the usability-test player (4–11px). */
+.tb .p1tb [class*="rounded-[20px]"], .tb .p1tb [class*="rounded-[16px]"] { border-radius: 0 !important; }
+.tb .p1tb [data-no-reveal] > div { border-radius: 0 !important; }
+/* the blue progress line drawn around each Deliver card follows the card's square corner */
+.tb .p1tb svg rect[rx="19"] { rx: 0; ry: 0; }
 
 /* the pinned Deliver showcase sits below the fixed header */
 @media (min-width: 1024px) { .tb .p1tb .lg\\:sticky { top: max(92px, calc(50vh - 400px)) !important; } }

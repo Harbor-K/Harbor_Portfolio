@@ -11,17 +11,23 @@ import { SideToc, useHeadroom } from './CaseNav'
 // into its place under the headline over ANIM_MS, easing in and out. Scrolling, swiping or a key press during the hold
 // starts the move straight away; the page can't scroll until the video has settled. The normal line cursor from
 // index.tsx is used throughout.
+// One clean appearance: during the intro the video box is dark (no white box) and the poster is left out, so the screen
+// goes dark → video once instead of white → poster → video. The video fades in when it actually starts playing, and the
+// 5-second hold counts from that moment (fallback 2.5s on a slow connection, then the poster comes back).
+// Trust Bank also warms the browser cache with this video, so arriving from there it starts straight away.
 // The page jumps to the top instantly before measuring the video (not the site's smooth scroll), stays there during the
 // intro, and measures the video's place again right before it moves.
 // While the intro runs the video's controls (progress, play/pause, time, sound) are hidden (.intro-on); afterwards they
 // show on hover as before.
+// Corners: square like the rest of the site — the hero video, process animation, boards, photos, screenshots and the
+// Final design screen are 0px (GC_CSS). The images themselves had rounded corners baked in; those files were squared in
+// Harbor-K/landing_page (gamecove/assets). Cards, pills and buttons keep their radius.
 // Header: hidden during the intro; after that it slides away while scrolling down and comes back on scrolling up
 // (useHeadroom). harbor → main page on the left; Next · UTrada (opens that page directly) and the ✦ Kim LLM button on
 // the right. Project order: Trust Bank → GameCove → UTrada → Trust Bank.
 // Process contents on the left side (CaseNav.tsx, Notion-style, dark variant). Kim LLM panel: KimLLM.tsx.
 // GameCoveV4.tsx is left untouched: the intro is applied here to its video (.g-video) by style only — the video is scaled
-// up from its own centre to cover the screen and clipped to the screen edges, easing back to its normal size, place and
-// 16px corners.
+// up from its own centre to cover the screen and clipped to the screen edges, easing back to its normal size and place.
 // Reduced motion: no intro.
 
 const NEXT = { name: 'UTrada', href: '#/utrada' }
@@ -31,9 +37,11 @@ const LINKS = {
   instagram: 'https://instagram.com/harbor_0328',
   email: 'mailto:harborkim0328@gmail.com',
 }
-const RADIUS = 16
+const RADIUS = 0 // square corners like the rest of the site
 const HOLD_MS = 5000
 const ANIM_MS = 1000
+const WAIT_MS = 2500 // longest wait for the video to start before the hold begins anyway
+const DARK = '#0B0B0D'
 
 const reducedMotion = () => typeof window !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches
 const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v))
@@ -61,13 +69,28 @@ function useHeroIntro(on: boolean, onDone: () => void) {
     const hero = document.querySelector<HTMLElement>('.gc .gc4 .g-hero')
     const vid = hero?.querySelector<HTMLElement>('.g-video') ?? null
     if (!hero || !vid) { done.current(); return }
+    const media = vid.querySelector('video')
+    const keepPoster = media?.getAttribute('poster') ?? null
     const keep = {
       hero: { position: hero.style.position, zIndex: hero.style.zIndex },
-      vid: { position: vid.style.position, zIndex: vid.style.zIndex, transition: vid.style.transition, opacity: vid.style.opacity, transform: vid.style.transform, clipPath: vid.style.clipPath, transformOrigin: vid.style.transformOrigin, willChange: vid.style.willChange },
+      vid: { position: vid.style.position, zIndex: vid.style.zIndex, transition: vid.style.transition, opacity: vid.style.opacity, transform: vid.style.transform, clipPath: vid.style.clipPath, transformOrigin: vid.style.transformOrigin, willChange: vid.style.willChange, background: vid.style.background },
     }
     hero.style.position = 'relative'
     hero.style.zIndex = '2'
-    Object.assign(vid.style, { position: 'relative', zIndex: '3', transition: 'none', opacity: '1', transformOrigin: '50% 50%', willChange: 'transform, clip-path' })
+    Object.assign(vid.style, { position: 'relative', zIndex: '3', transition: 'none', opacity: '1', transformOrigin: '50% 50%', willChange: 'transform, clip-path', background: DARK })
+    // dark until the video really plays, then one soft fade in (no white box, no poster swap)
+    if (media) {
+      media.removeAttribute('poster')
+      media.style.transition = 'opacity .5s ease'
+      media.style.opacity = '0'
+    }
+    const showMedia = () => { if (media) media.style.opacity = '1' }
+    const restoreMedia = () => {
+      if (!media) return
+      media.style.opacity = ''
+      media.style.transition = ''
+      if (keepPoster && !media.getAttribute('poster')) media.setAttribute('poster', keepPoster)
+    }
 
     const root = document.documentElement
     const keepRoot = { overflow: root.style.overflow, gutter: root.style.getPropertyValue('scrollbar-gutter') }
@@ -98,10 +121,19 @@ function useHeroIntro(on: boolean, onDone: () => void) {
       vid.style.clipPath = `inset(${iy.toFixed(2)}px ${ix.toFixed(2)}px round ${((RADIUS * e) / s).toFixed(2)}px)`
     }
 
-    let animStart = performance.now() + HOLD_MS
+    // the hold starts when the video is actually playing (so the 5s are all video), not when the page opens
+    let animStart = Infinity
     let raf = 0, finished = false, remeasured = false
-    const skip = () => { const now = performance.now(); if (now < animStart) animStart = now }
+    const startHold = () => { showMedia(); if (animStart === Infinity) animStart = performance.now() + HOLD_MS }
+    const skip = () => { showMedia(); const now = performance.now(); if (now < animStart) animStart = now }
     const onResize = () => measure()
+    // slow connection: stop waiting, bring the poster back and start the hold anyway
+    const tWait = window.setTimeout(() => {
+      if (media && media.paused && keepPoster && !media.getAttribute('poster')) media.setAttribute('poster', keepPoster)
+      startHold()
+    }, WAIT_MS)
+    media?.addEventListener('playing', startHold)
+    if (media && !media.paused && media.readyState >= 3) startHold()
     // fonts / images can move the hero a little after the first paint
     const t1 = window.setTimeout(measure, 300), t2 = window.setTimeout(measure, 1200)
     const unlock = () => {
@@ -110,13 +142,15 @@ function useHeroIntro(on: boolean, onDone: () => void) {
       else root.style.removeProperty('scrollbar-gutter')
       removeEventListener('wheel', skip); removeEventListener('touchmove', skip); removeEventListener('keydown', skip)
       removeEventListener('resize', onResize)
-      window.clearTimeout(t1); window.clearTimeout(t2)
+      media?.removeEventListener('playing', startHold)
+      window.clearTimeout(t1); window.clearTimeout(t2); window.clearTimeout(tWait)
     }
     const finish = () => {
       finished = true
       vid.style.transform = ''
       vid.style.clipPath = ''
       unlock()
+      restoreMedia()
       done.current()
     }
     const frame = (now: number) => {
@@ -137,6 +171,7 @@ function useHeroIntro(on: boolean, onDone: () => void) {
     return () => {
       if (raf) cancelAnimationFrame(raf)
       if (!finished) unlock()
+      restoreMedia()
       Object.assign(hero.style, keep.hero)
       Object.assign(vid.style, keep.vid)
     }
@@ -221,6 +256,12 @@ const GC_CSS = `
 
 /* no video controls (progress, time, sound) while the full-screen intro plays */
 .gc.intro-on .gc4 .hv-controls { opacity: 0 !important; pointer-events: none !important; visibility: hidden; }
+
+/* square corners on every picture: hero video (dark box, never white), process animation, boards, photos,
+   component sheets, accordion screenshots and the Final design screen. Cards, pills and buttons keep their radius. */
+.gc .gc4 .g-banner { border-radius: 0; background: ${DARK}; }
+.gc .gc4 .g-process, .gc .gc4 .g-board, .gc .gc4 .g-photo, .gc .gc4 .g-comp, .gc .gc4 .g-screen,
+.gc .gc4 .acc-body img, .gc .gc4 .g-show-narrow img { border-radius: 0; }
 
 /* the pinned Final design showcase sits below the fixed header */
 .gc .gc4 .g-show { padding-top: 96px; }

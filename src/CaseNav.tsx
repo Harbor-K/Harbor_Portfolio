@@ -5,12 +5,16 @@ import React, { useEffect, useRef, useState } from 'react'
 // useHeadroom(): the header slides away while you scroll down and comes back as soon as you scroll up
 // (always shown near the top of the page). Returns true while it should be hidden.
 //
-// <SideToc>: the case study's process on the LEFT side of the screen, working like Notion's floating table of contents
-// (Harbor's screen recording), made larger so it is easy to see:
-// - at rest: a column of dashes at the left edge, one per chapter; the chapter you are reading is the dark, longer dash
-// - point at it (or tab into it): a panel slides in from the left with the chapter names; the current chapter is blue,
-//   the row under the pointer gets a soft grey highlight; click a name to jump there. Moving away closes it.
+// <SideToc>: the case study's process on the LEFT side of the screen. It behaves like Notion's floating table of contents
+// (dashes at rest, a list on hover) but is styled in the same tone as the header's Projects menu (Harbor's note):
+// square corners, a 1px grey border and soft shadow, a grey "Process" label, numbered rows (01, 02 … like the site's
+// section eyebrows), and the current chapter shown with the menu's soft grey row and a small ▸ instead of blue text.
+// - at rest: a column of square-ended dashes at the left edge, one per chapter; the current chapter is the dark, longer dash
+// - point at it (or tab into it): the list slides in from the left; rows get a grey background on hover; click a chapter
+//   to jump there; moving away closes it
 // Hidden during the full-screen intro and on screens under 900px. `dark` = GameCove's dark palette.
+// Class names all start with "stoc-" so the site's shared styles can't reach in (the shared .panel / .k styles in
+// portfolio.ts once pushed the list out of view).
 // Each page passes its chapter list and the selector of its root (".tb", ".gc", ".ut") where its [data-chapter] sections live.
 
 const reducedMotion = () => typeof window !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -71,19 +75,23 @@ export function SideToc({ chapters, scope, hidden = false, dark = false }: { cha
   }
 
   return (
-    <nav className={'stoc' + (hidden ? ' off' : '') + (open ? ' open' : '') + (dark ? ' dark' : '')} aria-label="Case study contents" aria-hidden={hidden || undefined}
+    <nav className={'stoc' + (hidden ? ' stoc-off' : '') + (open ? ' stoc-open' : '') + (dark ? ' stoc-dark' : '')} aria-label="Case study process" aria-hidden={hidden || undefined}
       onMouseEnter={openNow} onMouseLeave={closeSoon} onFocus={openNow} onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) closeSoon() }}>
       <style>{STOC_CSS}</style>
       {/* at rest: one dash per chapter */}
-      <div className="dashes" aria-hidden="true">
-        {chapters.map(c => <i key={c} className={c === active ? 'on' : undefined} />)}
+      <div className="stoc-dashes" aria-hidden="true">
+        {chapters.map(c => <i key={c} className={c === active ? 'stoc-on' : undefined} />)}
       </div>
-      {/* on hover: the chapter list */}
-      <div className="panel">
-        <ol>
-          {chapters.map(c => (
+      {/* on hover: the numbered process list */}
+      <div className="stoc-pane">
+        <div className="stoc-label">Process</div>
+        <ol className="stoc-list">
+          {chapters.map((c, i) => (
             <li key={c}>
-              <button type="button" aria-current={c === active || undefined} tabIndex={hidden ? -1 : undefined} onClick={() => go(c)}>{c}</button>
+              <button type="button" className="stoc-row" aria-current={c === active || undefined} tabIndex={hidden ? -1 : undefined} onClick={() => go(c)}>
+                <span className="stoc-num">{String(i + 1).padStart(2, '0')}</span>
+                <span className="stoc-name">{c}</span>
+              </button>
             </li>
           ))}
         </ol>
@@ -94,34 +102,46 @@ export function SideToc({ chapters, scope, hidden = false, dark = false }: { cha
 
 const STOC_CSS = `
 .hb .stoc { position: fixed; left: 16px; top: 50%; z-index: 45; transform: translateY(-50%); transition: opacity .35s ease; }
-.hb .stoc.off { opacity: 0; pointer-events: none; }
+.hb .stoc.stoc-off { opacity: 0; pointer-events: none; }
 
-/* dashes at rest (Notion), larger and darker so they read on any background */
-.hb .stoc .dashes { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; padding: 16px 32px 16px 8px; transition: opacity .2s ease; }
-.hb .stoc .dashes i { display: block; width: 28px; height: 3px; border-radius: 2px; background: #B8B8B5; transition: background-color .25s, width .25s; }
-.hb .stoc .dashes i.on { width: 40px; background: #191919; }
-.hb .stoc.open .dashes { opacity: 0; }
+/* dashes at rest: square ends, site greys */
+.hb .stoc-dashes { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; padding: 16px 32px 16px 8px; transition: opacity .2s ease; }
+.hb .stoc-dashes i { display: block; width: 28px; height: 2px; border-radius: 0; background: #BDBDBA; transition: background-color .25s, width .25s; }
+.hb .stoc-dashes i.stoc-on { width: 40px; background: #0F0F0F; }
+.hb .stoc.stoc-open .stoc-dashes { opacity: 0; }
 
-/* panel on hover, opening from the left */
-.hb .stoc .panel { position: absolute; left: 0; top: 50%; width: 300px; max-height: min(76vh, 640px); overflow-y: auto; padding: 10px;
-  background: #fff; border: 1px solid #E9E9E7; border-radius: 12px; box-shadow: 0 16px 40px rgba(15,15,15,.12), 0 2px 6px rgba(15,15,15,.05);
-  opacity: 0; visibility: hidden; transform: translate(-8px, -50%); pointer-events: none;
-  transition: opacity .2s ease, transform .3s cubic-bezier(.2,.7,.2,1), visibility 0s .3s; }
-.hb .stoc.open .panel { opacity: 1; visibility: visible; transform: translate(0, -50%); pointer-events: auto; transition: opacity .2s ease, transform .3s cubic-bezier(.2,.7,.2,1), visibility 0s; }
-.hb .stoc ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
-.hb .stoc button { display: block; width: 100%; padding: 10px 14px; margin: 0; border: 0; border-radius: 8px; background: none; cursor: pointer; text-align: left;
-  font-size: 18px; line-height: 1.35; color: #5F5E5B; transition: background-color .15s, color .15s; }
-.hb .stoc button:hover { background: rgba(55,53,47,.08); color: #191919; }
-.hb .stoc button[aria-current] { color: #2383E2; font-weight: 500; }
-.hb .stoc button:focus-visible { outline: 2px solid #2383E2; outline-offset: -2px; }
+/* list on hover: same tone as the header's Projects menu (square, 1px border, soft shadow, grey label, soft grey current row) */
+.hb .stoc-pane { position: absolute; left: 0; top: 50%; display: block; width: 280px; max-height: min(78vh, 640px); margin: 0; overflow-y: auto; padding: 24px 0 16px;
+  background: #fff; border: 1px solid #DBDBD9; border-radius: 0; box-shadow: 0 24px 60px rgba(0,0,0,.10);
+  opacity: 0; visibility: hidden; transform: translate(-6px, -50%); pointer-events: none;
+  transition: opacity .18s ease, transform .25s cubic-bezier(.22,1,.36,1), visibility 0s .25s; }
+.hb .stoc.stoc-open .stoc-pane { opacity: 1; visibility: visible; transform: translate(0, -50%); pointer-events: auto; transition: opacity .22s ease, transform .35s cubic-bezier(.22,1,.36,1), visibility 0s; }
+.hb .stoc-label { padding: 0 24px; margin: 0 0 12px; font-size: 16px; color: #8C8C8A; }
+.hb .stoc-list { display: block; list-style: none; margin: 0; padding: 0; }
+.hb .stoc-list li { display: block; margin: 0; padding: 0; }
+.hb .stoc-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 24px; margin: 0;
+  border: 0; border-radius: 0; background: transparent; cursor: pointer; text-align: left; font-size: 16px; line-height: 1.35; color: #6B6B69;
+  transition: background-color .15s, color .15s; }
+.hb .stoc-num { flex: none; width: 22px; color: #B3B3B0; font-variant-numeric: tabular-nums; transition: color .15s; }
+.hb .stoc-name { flex: 1 1 auto; min-width: 0; }
+.hb .stoc-row:hover { background: #F2F2EF; color: #0F0F0F; }
+.hb .stoc-row:hover .stoc-num { color: #6B6B69; }
+.hb .stoc-row[aria-current] { background: #ECECE8; color: #0F0F0F; font-weight: 500; }
+.hb .stoc-row[aria-current] .stoc-num { color: #0F0F0F; }
+.hb .stoc-row[aria-current]::after { content: ""; flex: none; border-left: 6px solid currentColor; border-top: 4px solid transparent; border-bottom: 4px solid transparent; }
+.hb .stoc-row:focus-visible { outline: 2px solid #2563EB; outline-offset: -2px; }
 
 /* dark page (GameCove) */
-.hb .stoc.dark .dashes i { background: #5A5C63; }
-.hb .stoc.dark .dashes i.on { background: #F2F0EC; }
-.hb .stoc.dark .panel { background: #1F1F22; border-color: #2F3034; box-shadow: 0 16px 40px rgba(0,0,0,.5); }
-.hb .stoc.dark button { color: #A7A9B0; }
-.hb .stoc.dark button:hover { background: rgba(255,255,255,.07); color: #F2F0EC; }
-.hb .stoc.dark button[aria-current] { color: #529CCA; }
+.hb .stoc.stoc-dark .stoc-dashes i { background: #4E5056; }
+.hb .stoc.stoc-dark .stoc-dashes i.stoc-on { background: #F2F0EC; }
+.hb .stoc.stoc-dark .stoc-pane { background: #17171B; border-color: #2A2D31; box-shadow: 0 24px 60px rgba(0,0,0,.45); }
+.hb .stoc.stoc-dark .stoc-label { color: #7C7F86; }
+.hb .stoc.stoc-dark .stoc-row { color: #A7A9B0; }
+.hb .stoc.stoc-dark .stoc-num { color: #5F6168; }
+.hb .stoc.stoc-dark .stoc-row:hover { background: rgba(255,255,255,.06); color: #F2F0EC; }
+.hb .stoc.stoc-dark .stoc-row:hover .stoc-num { color: #A7A9B0; }
+.hb .stoc.stoc-dark .stoc-row[aria-current] { background: rgba(255,255,255,.1); color: #F2F0EC; }
+.hb .stoc.stoc-dark .stoc-row[aria-current] .stoc-num { color: #F2F0EC; }
 
 @media (max-width: 900px) { .hb .stoc { display: none; } }
 `

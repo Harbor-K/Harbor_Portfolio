@@ -3,8 +3,9 @@ import { CSS, IMG3 } from './portfolioV74'
 import { useScreenInit } from './useScreenInit.js'
 import { SiteHeaderB } from './SiteHeaderB'
 import { ClosingCTAB } from './ClosingCTAB'
+import { GAMECOVE_LOGO_SVG, UTRADA_LOGO_SVG, svgUri } from './logos'
 
-// Main page (v79). Built on v74's main page (v24 restored), moved here in v75.
+// Main page (v82). Built on v74's main page (v24 restored), moved here in v75.
 //
 // Header: the shared site header (SiteHeaderB.tsx, mode 'overlay') — the same header every page uses.
 // Hero — Harbor's Figma "Hero · Header B · Symmetry" (node 457:10725) with rox.com's interactions:
@@ -15,6 +16,8 @@ import { ClosingCTAB } from './ClosingCTAB'
 // - Headline: words rise in one by one (rox.com); buttons fade in at 0.7s / 0.8s; a dark layer lifts over 1.2s.
 // Selected work — the v68 section as it was (palantir.com "Our Software"-style rows, faint logo → video on hover,
 // warm white, 1440 container), with the heading and project names in Newsreader.
+// v82 (Harbor, Nov 9): GameCove and UTrada use the logo files Harbor supplied (logos.ts), at Trust Bank's logo size —
+// all three are 44px tall (Trust Bank 203px wide, UTrada 186px, GameCove 338px).
 // Closing CTA (v79) — Harbor's Figma "Closing CTA" (node 474:217) with the working Kim LLM chat: ClosingCTAB.tsx.
 // Footer (v79) — Harbor's Figma "Footer" (node 474:241): Footer.tsx, rendered by index.tsx under every page.
 // Type: UI in Helvetica Neue; hero quote / headline and the Selected work titles in Newsreader. Nothing under 16px.
@@ -39,12 +42,9 @@ const HERO_POSTER = IMG3 + 'hero-typing-poster.jpg'
 const GC = 'https://raw.githubusercontent.com/Harbor-K/landing_page/main/gamecove/assets/v4/'
 const TB = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/trust-bank/'
 
-// UTrada mark (same as the UTrada case page)
-const UTRADA_SVG = `<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="4" fill="#38029D"/><path d="M20.8137 12L20.7642 12.2773L19.0159 22.2134C18.4395 25.4849 15.3129 28.1484 12.0457 28.1484C10.4635 28.1484 9.07577 27.5308 8.13822 26.4127C7.17956 25.2689 6.80943 23.747 7.09286 22.1315L8.87681 12H9.07354C9.73433 12 10.3156 12.2606 10.7074 12.7278C11.1081 13.2073 11.2626 13.841 11.1454 14.5153L9.79101 22.2134C9.63596 23.0871 9.83325 23.9046 10.344 24.5149C10.843 25.1118 11.5861 25.4382 12.4391 25.4382C14.2581 25.4382 15.9993 23.9564 16.3205 22.1315L17.6754 14.4329C17.9099 13.092 19.1943 12 20.5347 12H20.8137Z" fill="white"/><path d="M32.6067 12L32.131 14.7102H27.9095L25.5448 28.1484H22.8328L25.198 14.7102H20.9766L21.4551 12H32.6067Z" fill="white"/></svg>`
-
 // Selected work rows (v68)
 type Project = {
-  title: string; sub: string; href: string; logo: string; logoSquare?: boolean
+  title: string; sub: string; href: string; logo: string
   video?: string; poster?: string; img?: string
 }
 const PROJECTS: Project[] = [
@@ -55,12 +55,12 @@ const PROJECTS: Project[] = [
   },
   {
     title: 'GameCove', sub: 'An AI game-analytics dashboard.', href: '#/gamecove',
-    logo: 'https://raw.githubusercontent.com/Harbor-K/landing_page/main/gamecove/assets/logo.png',
+    logo: svgUri(GAMECOVE_LOGO_SVG),
     video: GC + 'hero-ad.mp4', poster: GC + 'hero-ad-poster.jpg',
   },
   {
     title: 'UTrada', sub: 'Product design for a trading platform.', href: '#/utrada',
-    logo: `data:image/svg+xml;utf8,${encodeURIComponent(UTRADA_SVG)}`, logoSquare: true,
+    logo: svgUri(UTRADA_LOGO_SVG),
     img: IMG3 + 'utrada-screens.webp',
   },
 ]
@@ -123,9 +123,9 @@ const PAGE_CSS = `
 .pl-desc p { margin: 0; max-width: 200px; font-size: 18px; line-height: 1.35; }
 .pl-n { font-size: 16px; color: var(--mute); }
 .pl-media { position: relative; aspect-ratio: 16 / 9; }
+/* every project logo at Trust Bank's size: 44px tall, black at 10% (v82) */
 .pl-logo { position: absolute; left: 0; top: 50%; height: 44px; width: auto; max-width: 100%; transform: translateY(-50%);
   filter: grayscale(1) brightness(0); opacity: .1; transition: opacity .3s ease; }
-.pl-logo.sq { height: 96px; filter: grayscale(1); opacity: .1; }
 .pl-shot { position: absolute; inset: 0; overflow: hidden; background: #0F0F0F; opacity: 0; transform: scale(.94);
   transition: opacity .35s ease, transform .55s var(--ease); }
 .pl-shot video, .pl-shot img { display: block; width: 100%; height: 100%; object-fit: cover; }
@@ -241,7 +241,7 @@ function ProjectRow({ p, i }: { p: Project; i: number }) {
             <span className="pl-n">/0.{i + 1}</span>
           </div>
           <div className="pl-media" aria-hidden="true">
-            <img className={'pl-logo' + (p.logoSquare ? ' sq' : '')} src={p.logo} alt="" />
+            <img className="pl-logo" src={p.logo} alt="" />
             <div className="pl-shot">
               {p.video
                 ? <video ref={vid} src={p.video} poster={p.poster} muted loop playsInline preload="metadata" />

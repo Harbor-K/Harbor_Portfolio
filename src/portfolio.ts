@@ -1,9 +1,11 @@
 // Harbor portfolio main v3 — styles (Figma main page + rox.com-style interactions).
 // Minimum text size is 16px. Type is Helvetica Neue throughout.
 // Page background (--paper) is #FBFAF9, Harbor's warm white.
-// Footer: AirOps-style (airops.com) — near-black, link columns with bold white headings and grey links, then a big faint
-// "harbor" wordmark, then the copyright line at the bottom left. Every page uses the same footer markup
-// (.foot > .wrap > .foot-top + .foot-bottom, plus .wordmark); the CSS below reorders it to columns → wordmark → copyright.
+// Footer: near-black. Link area in the style of a24films.com (Harbor's reference): no column headings, big white links
+// stacked tightly, thin vertical lines between the groups (Explore links | Contact links | harbor + email box), a white
+// line under them; then the big faint "harbor" wordmark and the copyright line. Every page uses the same footer markup
+// (.foot > .wrap > .foot-top [.brand + .foot-cols > .foot-col × 2] + .foot-bottom, plus .wordmark); the CSS below
+// reorders it.
 export const IMG = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/main-v2/'
 export const IMG3 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/main-v3/'
 
@@ -200,15 +202,23 @@ a:hover .go, .card:hover .go, .exp-card:hover .go { transform: translateX(4px); 
   transform: scaleY(0); transform-origin: 50% 100%; transition: transform 1.2s var(--ease); transition-delay: calc(var(--i) * 6ms); }
 .bars.in i { transform: scaleY(var(--h)); }
 
-/* footer — AirOps style: link columns → big faint wordmark → copyright (see the note at the top) */
-.foot { position: relative; overflow: hidden; display: flex; flex-direction: column; background: #141413; color: #fff; padding: 96px 0 0; }
+/* footer — link area like a24films.com: big links, thin vertical lines, white line under; then wordmark → copyright */
+.foot { position: relative; overflow: hidden; display: flex; flex-direction: column; background: #141413; color: #fff; padding: 72px 0 0; }
 .foot > .wrap { display: contents; }
-.foot-top { order: 1; width: var(--wrap); margin: 0 auto; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 40px; }
+.foot-top { order: 1; width: var(--wrap); margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr);
+  border-bottom: 1px solid rgba(255,255,255,.75); }
 .foot-cols { display: contents; }
-.brand, .foot-col { display: flex; flex-direction: column; gap: 10px; font-size: 16px; line-height: 1.5; }
-.foot .brand .logo, .foot-col .h { margin-bottom: 6px; font-size: 16px; font-weight: 700; line-height: 1.5; letter-spacing: 0; color: #fff; }
-.brand a, .foot-col a, .foot-col span { color: rgba(255,255,255,.55); transition: color .2s; }
-.brand a:hover, .foot-col a:hover { color: #fff; }
+.foot-col { order: 1; display: flex; flex-direction: column; padding: 0 28px 64px 0; }
+.foot-col + .foot-col { padding-left: 28px; border-left: 1px solid rgba(255,255,255,.14); }
+.foot-col .h { display: none; }
+.foot-col a, .foot-col span { font-size: clamp(24px, 1.9vw, 32px); line-height: 1.18; letter-spacing: -0.01em; color: #FFFFFF; transition: opacity .2s; }
+.foot-col a:hover { opacity: .55; }
+.brand { order: 2; display: flex; flex-direction: column; justify-content: flex-end; gap: 12px; padding: 0 0 24px 28px; border-left: 1px solid rgba(255,255,255,.14); }
+.foot .brand .logo { font-size: 16px; font-weight: 500; line-height: 1.4; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.7); }
+.brand a { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 16px; border: 1px solid #FFFFFF;
+  font-size: 18px; color: #FFFFFF; transition: background-color .2s, color .2s; }
+.brand a::after { content: "→"; font-size: 18px; }
+.brand a:hover { background: #FFFFFF; color: #141413; }
 .wordmark { order: 2; width: var(--wrap); margin: 160px auto 0; font-size: clamp(140px, 19vw, 360px); font-weight: 600; line-height: .8;
   letter-spacing: -0.05em; color: rgba(255,255,255,.06); text-align: left; user-select: none; pointer-events: none; }
 .foot-bottom { order: 3; width: var(--wrap); margin: 0 auto; display: flex; justify-content: space-between; gap: 24px; padding: 56px 0 40px;
@@ -228,7 +238,6 @@ a:hover .go, .card:hover .go, .exp-card:hover .go { transform: translateX(4px); 
 @media (max-width: 1280px) {
   .approach, .grid-top, .panel { grid-template-columns: 1fr; gap: 48px; }
   .exp { grid-template-columns: repeat(2, 1fr); }
-  .foot-top { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (max-width: 900px) {
   .nav-links, .nav-right a:not(.btn-sm) { display: none; }
@@ -237,7 +246,9 @@ a:hover .go, .card:hover .go, .exp-card:hover .go { transform: translateX(4px); 
   .word { flex-basis: 85vw; }
   .h2, .h2-sm { font-size: 44px; }
   .sec-head { flex-direction: column; align-items: flex-start; }
-  .foot-top { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
+  .foot-top { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .foot-col { padding-bottom: 40px; }
+  .brand { grid-column: 1 / -1; padding: 24px 0; border-left: 0; border-top: 1px solid rgba(255,255,255,.14); }
   .wordmark { margin-top: 96px; font-size: 30vw; }
   .foot-bottom { flex-direction: column; gap: 8px; }
   .toast { left: 16px; right: 16px; width: auto; }

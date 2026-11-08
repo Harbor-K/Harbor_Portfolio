@@ -1,28 +1,31 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { CSS, IMG, IMG3 } from './portfolio'
 import { useScreenInit } from './useScreenInit.js'
-import { KimButton, VoiceAssistant } from './KimLLM'
+import { KimButton, VoiceAssistant, KimChat } from './KimLLM'
 
 // Harbor — portfolio main page v4, from Figma "44기 김지현 4차 PF" (node 260:282) and Harbor's review notes:
-// hero → Selected work → CTA → footer, on warm white (#FBFAF9). The main page's container is 1440px wide (.hb.home).
+// hero → Selected work → closing section → footer, on warm white (#FBFAF9). The main page's container is 1440px wide (.hb.home).
 // Removed at Harbor's request: the designer-skills strip under the hero, the info rows + note box in each project block,
 // and the separate Projects page (#/projects).
 // Header: left = Projects · About me; right = LinkedIn · CV · [✦ Kim LLM]. Book a call was taken out of the header at
-// Harbor's request (it stays in the hero, the closing CTA and the footer).
+// Harbor's request (it stays in the hero, the chat note and the footer).
 // "Projects" opens a compact rox.com-style menu (Harbor's notes on the first version: about two-thirds the size, no dark
 // media column on the left, no bottom links row, the video on the right at its own 16:9 ratio). Square and light, three
 // columns: the project list | "At a glance" (the project's line and key facts) | the project's video or image at 16:9
 // with "View project →" under it. Pointing at a project in the list switches the menu to it. While open the trigger gets
 // a grey background and a dash instead of the chevron, like rox.
-// Kim LLM (header button + panel) lives in KimLLM.tsx and is shared with the About and case-study pages.
+// Kim LLM (header button + panel + the inline chat card) lives in KimLLM.tsx and is shared with the other pages.
 // Selected work, laid out like palantir.com's "Our Software" list (Harbor's reference): a single "Selected work" heading in
 // the hero's type (Tektur Medium, same size as "Who is Harbor?"), then one full-width row per project — the project's
 // line and its number (/0.1) on the left, a faint logo in the middle (all logos shown as the same faint dark silhouette,
 // so the white GameCove logo shows too), the project name very large in Tektur Medium on the right. Pointing at a row
 // (or focusing it) turns the row light grey and brings up the project's video or image where the logo was; the video
-// plays only while pointed at. The whole row is the link. The list ends straight into the dark CTA section (no white gap
-// under the last row). The old solid "View project" cursor button was removed at Harbor's request. Touch screens (no
+// plays only while pointed at. The whole row is the link. The list ends straight into the dark closing section (no white
+// gap under the last row). The old solid "View project" cursor button was removed at Harbor's request. Touch screens (no
 // hover) show the media straight away.
+// Closing section (ClosingCTA, also on the About page): AirOps-style dark warm band (Harbor's reference) with the headline
+// and line centred, then the inline Kim LLM chat card (KimChat in KimLLM.tsx — conversation in the card, shortcut icons,
+// send button, and the note "Kim LLM answers only from what is on this site. Book a call for anything else.").
 // Hero background: Harbor's 8-second typing video, muted and looping, at 50% opacity in front of a black (#000000)
 // base, with the hero's dark gradient on top (Harbor's Figma layers: black background → video 50% → overlay gradient).
 // Reduced motion: poster only.
@@ -123,6 +126,12 @@ export const PAGE_CSS = `
   .pl-logo { display: none; }
 }
 
+/* ---------- closing section: AirOps-style band with the inline Kim LLM chat card (KimLLM.tsx) ---------- */
+.hb .cta-sec { background: #22211E; color: #FFFFFF; }
+.hb .cta-sec .cta-inner { padding: 160px 0; text-align: center; }
+.hb .cta-sec .h2 { margin: 0; font-size: clamp(44px, 3.6vw, 64px); font-weight: 300; line-height: 1.15; letter-spacing: -0.02em; }
+.hb .cta-sec .sub-dark { margin: 20px auto 0; max-width: 560px; font-size: 18px; line-height: 1.5; color: rgba(255,255,255,.7); }
+
 /* header: CV sits on the right with LinkedIn (no CV link yet, so it is plain text) */
 .hb .nav-right .cv { opacity: .8; }
 
@@ -179,6 +188,7 @@ export const PAGE_CSS = `
   .pl-desc p { max-width: none; }
   .pl-shot { opacity: 1; transform: none; }
   .pl-logo { display: none; }
+  .hb .cta-sec .cta-inner { padding: 120px 0; }
 }
 `
 
@@ -383,24 +393,14 @@ export function SiteHeader({ current, solid = false }: { current?: NavKey; solid
   )
 }
 
+// AirOps-style closing section: headline, line, and the inline Kim LLM chat card (KimChat).
 export function ClosingCTA() {
   return (
     <section className="cta-sec" id="contact" aria-label="Contact">
-      <div className="cta-frame">
-        <div className="cta-inner" data-reveal>
-          <h2 className="h2 h2-xl">Let’s connect the dots together.</h2>
-          <p className="sub-dark">Open to product design roles. A 30-minute call is the quickest way to start.</p>
-          <div className="ctas">
-            <a className="btn btn-ghost" href="#projects">See my work</a>
-            <a className="btn btn-light" href={LINKS.cal} target="_blank" rel="noreferrer">Book a call</a>
-          </div>
-        </div>
-        <div className="bars" data-reveal aria-hidden="true">
-          {Array.from({ length: BARS }, (_, i) => {
-            const h = Math.pow((i + 1) / BARS, 2.6)
-            return <i key={i} style={{ '--h': h.toFixed(3), '--i': i } as React.CSSProperties} />
-          })}
-        </div>
+      <div className="wrap cta-inner" data-reveal>
+        <h2 className="h2">Let’s connect the dots together.</h2>
+        <p className="sub-dark">Open to product design roles. A 30-minute call is the quickest way to start.</p>
+        <KimChat />
       </div>
     </section>
   )

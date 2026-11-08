@@ -1,5 +1,7 @@
 /* @import url() FONT IMPORTS MUST ALWAYS BE AT THE VERY TOP OF THIS FILE, ABOVE THE TAILWIND IMPORTS — DO NOT DELETE THIS COMMENT */
-@import url('https://fonts.googleapis.com/css2?family=Aboreto&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;700&display=swap');
+/* No web-font import here: the site is set in Helvetica Neue (Harbor's rule). Newsreader and Geist are loaded where they
+   are used (the main hero and Selected work in Home.tsx, the Projects menu in SiteHeaderB.tsx, the Closing CTA in
+   ClosingCTAB.tsx, the footer in Footer.tsx). */
 
 /* CRITICAL: THE FOLLOWING TAILWIND IMPORTS MUST NEVER BE DELETED OR REORDERED — DO NOT DELETE THIS COMMENT */
 @import 'tailwindcss/base';
@@ -7,7 +9,25 @@
 @import 'tailwindcss/utilities';
 
 /* END TAILWIND IMPORTS — ALL OTHER CSS MUST GO BELOW THIS LINE */
-/* Page styles live in portfolio.ts (main) and TrustBank.tsx (case study). Overrides below. */
+/* Page styles live in each page file; the header, Closing CTA and footer bring their own. Overrides below. */
+
+/* One typeface everywhere: Helvetica Neue, including form controls, buttons and Tailwind's sans / mono / serif utilities.
+   Elements that set their own font keep it on purpose: the handwriting on the Trust Bank Define whiteboard (Caveat /
+   Kalam), the Lato specimen in GameCove's design-system section, and the Figma fonts in the hero, Closing CTA and footer. */
+html, body, button, input, select, textarea, .hb, .hb *, .font-sans, .font-mono, .font-serif {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+/* Exception (Harbor's Figma hero, Nov 8): the main hero's quote and headline, and the project name on the Projects menu
+   card, are set in Newsreader, like rox.com's serif headline and menu title. */
+.hb .hx .serif, .hb .hx .serif *, .hb .mm .mm-name {
+  font-family: "Newsreader", Georgia, "Times New Roman", serif;
+  font-weight: 400;
+}
+
+/* footer (Footer.tsx): the wordmark sits at the top of its 296px band, at its own 1200:290 shape (Figma 474:290) */
+.ft .ft-word { align-items: flex-start; }
+/* footer: its top line is drawn inside the box, like Figma's inside stroke, so the footer is exactly 648px tall */
+footer.ft { border-top: 0; box-shadow: inset 0 1px 0 rgba(255,255,255,.08); }
 
 /* main: fix specificity clashes with `.hb a { color: inherit }` */
 .hb .btn-sm, .hb .btn-light { color: #0F0F0F; }

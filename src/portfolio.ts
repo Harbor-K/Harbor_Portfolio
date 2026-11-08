@@ -1,11 +1,15 @@
 // Harbor portfolio main v3 — styles (Figma main page + rox.com-style interactions).
 // Minimum text size is 16px. Type is Helvetica Neue throughout.
+// Page background (--paper) is #FBFAF9, Harbor's warm white.
+// Footer: AirOps-style (airops.com) — near-black, link columns with bold white headings and grey links, then a big faint
+// "harbor" wordmark, then the copyright line at the bottom left. Every page uses the same footer markup
+// (.foot > .wrap > .foot-top + .foot-bottom, plus .wordmark); the CSS below reorders it to columns → wordmark → copyright.
 export const IMG = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/main-v2/'
 export const IMG3 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/main-v3/'
 
 export const CSS = `
 :root {
-  --ink: #0F0F0F; --paper: #FFFFFF; --off: #F5F5F2; --mute: #595959; --line: #DBDBD9; --ph: #E6E6E3;
+  --ink: #0F0F0F; --paper: #FBFAF9; --off: #F5F5F2; --mute: #595959; --line: #DBDBD9; --ph: #E6E6E3;
   --font: "Helvetica Neue", Helvetica, Arial, sans-serif;
   --ease: cubic-bezier(.2, .7, .2, 1);
   --wrap: min(1320px, calc(100vw - 64px));
@@ -196,18 +200,19 @@ a:hover .go, .card:hover .go, .exp-card:hover .go { transform: translateX(4px); 
   transform: scaleY(0); transform-origin: 50% 100%; transition: transform 1.2s var(--ease); transition-delay: calc(var(--i) * 6ms); }
 .bars.in i { transform: scaleY(var(--h)); }
 
-/* footer */
-.foot { position: relative; overflow: hidden; background: var(--ink); color: #fff; padding: 80px 0 0; border-top: 1px solid rgba(255,255,255,.12); }
-.foot-top { display: flex; justify-content: space-between; gap: 40px; }
-.brand { display: flex; flex-direction: column; gap: 16px; }
-.brand a { font-size: 18px; color: rgba(255,255,255,.8); }
-.foot-cols { display: flex; gap: 120px; }
-.foot-col { display: flex; flex-direction: column; gap: 14px; font-size: 18px; color: rgba(255,255,255,.85); }
-.foot-col .h { font-size: 16px; color: rgba(255,255,255,.5); }
-.foot-col a { transition: color .2s; }
-.foot-col a:hover { color: #fff; text-decoration: underline; text-underline-offset: 4px; }
-.foot-bottom { display: flex; justify-content: space-between; margin-top: 64px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,.12); font-size: 16px; color: rgba(255,255,255,.5); }
-.wordmark { margin-top: 40px; text-align: center; font-size: 26vw; font-weight: 600; line-height: .78; letter-spacing: -0.05em; color: rgba(255,255,255,.05); user-select: none; transform: translateY(12%); }
+/* footer — AirOps style: link columns → big faint wordmark → copyright (see the note at the top) */
+.foot { position: relative; overflow: hidden; display: flex; flex-direction: column; background: #141413; color: #fff; padding: 96px 0 0; }
+.foot > .wrap { display: contents; }
+.foot-top { order: 1; width: var(--wrap); margin: 0 auto; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 40px; }
+.foot-cols { display: contents; }
+.brand, .foot-col { display: flex; flex-direction: column; gap: 10px; font-size: 16px; line-height: 1.5; }
+.foot .brand .logo, .foot-col .h { margin-bottom: 6px; font-size: 16px; font-weight: 700; line-height: 1.5; letter-spacing: 0; color: #fff; }
+.brand a, .foot-col a, .foot-col span { color: rgba(255,255,255,.55); transition: color .2s; }
+.brand a:hover, .foot-col a:hover { color: #fff; }
+.wordmark { order: 2; width: var(--wrap); margin: 160px auto 0; font-size: clamp(140px, 19vw, 360px); font-weight: 600; line-height: .8;
+  letter-spacing: -0.05em; color: rgba(255,255,255,.06); text-align: left; user-select: none; pointer-events: none; }
+.foot-bottom { order: 3; width: var(--wrap); margin: 0 auto; display: flex; justify-content: space-between; gap: 24px; padding: 56px 0 40px;
+  font-size: 16px; color: rgba(255,255,255,.5); }
 
 /* corner toast */
 .toast { position: fixed; right: 24px; bottom: 24px; z-index: 60; display: flex; align-items: center; gap: 14px; width: 360px; padding: 10px 44px 10px 10px;
@@ -223,6 +228,7 @@ a:hover .go, .card:hover .go, .exp-card:hover .go { transform: translateX(4px); 
 @media (max-width: 1280px) {
   .approach, .grid-top, .panel { grid-template-columns: 1fr; gap: 48px; }
   .exp { grid-template-columns: repeat(2, 1fr); }
+  .foot-top { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (max-width: 900px) {
   .nav-links, .nav-right a:not(.btn-sm) { display: none; }
@@ -231,7 +237,9 @@ a:hover .go, .card:hover .go, .exp-card:hover .go { transform: translateX(4px); 
   .word { flex-basis: 85vw; }
   .h2, .h2-sm { font-size: 44px; }
   .sec-head { flex-direction: column; align-items: flex-start; }
-  .foot-top, .foot-bottom { flex-direction: column; gap: 32px; }
+  .foot-top { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
+  .wordmark { margin-top: 96px; font-size: 30vw; }
+  .foot-bottom { flex-direction: column; gap: 8px; }
   .toast { left: 16px; right: 16px; width: auto; }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -5,7 +5,7 @@ import { KimButton, VoiceAssistant } from './KimLLM'
 
 // Harbor — portfolio main page v4, from Figma "44기 김지현 4차 PF" (node 260:282) and Harbor's review notes:
 // hero → three projects, one per block (title, line, media), laid out like rox.com's "Applied AI research" section
-// on white → CTA → footer.
+// on warm white (#FBFAF9) → CTA → footer.
 // Removed at Harbor's request: the designer-skills strip under the hero, the info rows + note box in each project block,
 // and the separate Projects page (#/projects).
 // Header: left = Projects · About me; right = LinkedIn · CV · [✦ Kim LLM]. Book a call was taken out of the header at
@@ -18,7 +18,14 @@ import { KimButton, VoiceAssistant } from './KimLLM'
 // Kim LLM (header button + panel) lives in KimLLM.tsx and is shared with the About and case-study pages.
 // Project blocks: each whole block (title + image) is one link; pointing anywhere on it turns the cursor into a solid
 // square "View project" button (cursor.tsx, data-cursor + data-cursor-variant="button").
-// Hero background: Harbor's 8-second typing video, muted and looping. Reduced motion: poster only.
+// Hero background: Harbor's 8-second typing video, muted and looping, at 50% opacity in front of a black (#000000)
+// base, with the hero's dark gradient on top (Harbor's Figma layers: black background → video 50% → overlay gradient).
+// Reduced motion: poster only.
+// Hero copy, from Harbor's Figma "Hero 3" frame (node 424:6740): no quote line; "Who is Harbor?" and the typed
+// "a product designer" in Tektur Medium (Google Fonts; 88px at 1920 wide, 110% line height, -3% letter spacing), both
+// white; the two buttons 40px under the headline. Everything else stays Helvetica Neue.
+// Footer (SiteFooter, also used by the About page): AirOps-style, styled in portfolio.ts — link columns, a big faint
+// "harbor" wordmark, then the copyright line.
 
 export { VoiceAssistant, useVoice } from './KimLLM'
 
@@ -29,10 +36,7 @@ export const LINKS = {
   email: 'mailto:harborkim0328@gmail.com',
 }
 
-// Only one quote is written so far; add up to five here and the hero rotates through them.
-const QUOTES = ['“I started in Fine Art, drawing what I saw.”']
-const QUOTE_MS = 5000
-
+const HERO_LINE2 = 'a product designer'
 const HERO_VIDEO = IMG3 + 'hero-typing.mp4'
 const HERO_POSTER = IMG3 + 'hero-typing-poster.jpg'
 
@@ -63,12 +67,18 @@ export const BARS = 140
 const SECTION_IDS: Record<string, string> = { work: 'projects', contact: 'contact' }
 
 export const PAGE_CSS = `
-.hb .foot { padding-bottom: 40px; }
+/* hero: black base, the typing video on top of it at 50% (Harbor's Figma layers), the dark gradient above both */
+.hb .hero, .hb .hero .hero-bg { background: #000000; }
+.hb .hero-vid { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 40%; opacity: .5; }
 
-/* hero background video (fills the hero like the photo did) */
-.hb .hero-vid { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 40%; }
+/* hero headline (Harbor's Figma "Hero 3", node 424:6740): Tektur Medium, 110% line height, -3% tracking, both lines white */
+.hb .hero .h1 .l1, .hb .hero .h1 .sub {
+  font-family: "Tektur", "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+  font-weight: 500; line-height: 1.1; letter-spacing: -0.03em; color: #FFFFFF; }
+.hb .hero .h1 .caret { background: #FFFFFF; }
+.hb .hero .hero-ctas { margin-top: 40px; }
 
-.projects-sec { background: #fff; }
+.projects-sec { background: var(--paper); }
 .proj + .proj { margin-top: 160px; }
 .hb a.proj { display: block; color: inherit; text-decoration: none; }
 .hb a.proj:focus-visible { outline: 2px solid #2563EB; outline-offset: 8px; }
@@ -358,6 +368,7 @@ export function ClosingCTA() {
   )
 }
 
+// AirOps-style footer (styles in portfolio.ts): columns → big faint wordmark → copyright.
 export function SiteFooter() {
   return (
     <footer className="foot">
@@ -374,6 +385,7 @@ export function SiteFooter() {
         </div>
         <div className="foot-bottom"><span>© 2026 Harbor Kim. All rights reserved.</span><span>Designed in Figma by Harbor</span></div>
       </div>
+      <div className="wordmark" aria-hidden="true">harbor</div>
     </footer>
   )
 }
@@ -428,10 +440,9 @@ function HeroVideo() {
 
 export function App() {
   const screenInit = useScreenInit() as { section?: string } | undefined
-  const [q, setQ] = useState(0)
   const heroBg = useRef<HTMLDivElement>(null)
 
-  const line2 = useTyped('a product designer, end to end', 'hero', 45, 700)
+  const line2 = useTyped(HERO_LINE2, 'hero', 45, 700)
   useReveal()
 
   // Hero parallax.
@@ -449,13 +460,6 @@ export function App() {
     return () => { removeEventListener('scroll', onScroll); cancelAnimationFrame(raf) }
   }, [])
 
-  // Hero quote rotation.
-  useEffect(() => {
-    if (QUOTES.length < 2) return
-    const a = window.setInterval(() => setQ(v => (v + 1) % QUOTES.length), QUOTE_MS)
-    return () => clearInterval(a)
-  }, [])
-
   // Screens preview: jump to the requested section on load.
   useEffect(() => {
     const key = screenInit?.section
@@ -470,16 +474,17 @@ export function App() {
   return (
     <div className="hb" id="top">
       <style>{CSS + PAGE_CSS}</style>
+      {/* hero headline font (Harbor's Figma "Hero 3") */}
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tektur:wght@500&display=swap" />
       <SiteHeader />
 
       {/* ===== Hero ===== */}
       <section className="hero" aria-label="Intro">
         <div className="hero-bg" ref={heroBg}><HeroVideo /></div>
         <div className="hero-copy">
-          <p className="quote" key={q}>{QUOTES[q]}</p>
           <h1 className="h1">
             <span className="l1">Who is Harbor?</span>
-            <span className="sub" aria-label="a product designer, end to end">{line2}<i className="caret" aria-hidden="true" /></span>
+            <span className="sub" aria-label={HERO_LINE2}>{line2}<i className="caret" aria-hidden="true" /></span>
           </h1>
           <div className="ctas hero-ctas">
             <a className="btn btn-ghost" href="#projects">See my work</a>

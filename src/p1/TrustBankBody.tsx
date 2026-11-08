@@ -2,7 +2,6 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { AffinityScroll } from './AffinityScroll';
 import { TestTop } from './TestTop';
 import { FixBlock } from './FixBlock';
-import { HeroSection } from './TrustHero';
 
 /**
  * Trust Bank case-study BODY (hero → reflection), copied from Portfolio_1 (components/case/TrustBankCase.tsx):
@@ -11,7 +10,6 @@ import { HeroSection } from './TrustHero';
  * TrustBank.tsx wraps this body with this site's header, next case study card and footer.
  * Also included from Portfolio_1: the soft per-block scroll reveal (CaseReveal) and the hover magnifier on the
  * thematic-analysis board and DVF map (ImageLightbox).
- * The hero lives in TrustHero.tsx: on this site it opens with the video full-screen and shrinks into place on scroll.
  * Each section carries data-chapter so this site's header can show the current chapter.
  */
 
@@ -20,6 +18,9 @@ const L = 'https://raw.githubusercontent.com/Harbor-K/landing_page/main/trust-ba
 const PROTOTYPE_URL =
   'https://www.figma.com/proto/8cWe2vvqXJcQ3vWBtNqxFe/%F0%9F%94%B5-Trust-Bank_Design?node-id=627-8762&p=f&viewport=-335%2C-955%2C0.14&t=OAe3UV92aMoOUQHu-1&scaling=scale-down&content-scaling=fixed&starting-point-node-id=627%3A8762&show-proto-sidebar=1&page-id=200%3A3608';
 const IMG = {
+  logo: A + 'logo.svg',
+  heroVideo: A + 'hero-sfx-v2.mp4',
+  heroPoster: A + 'hero-sfx-v2-poster.jpg',
   journeyVideo: A + 'journey-motion.mp4',
   journeyPoster: A + 'journey-motion-poster.jpg',
   processVideo: A + 'process-motion.mp4',
@@ -107,6 +108,163 @@ function Motion({ src, poster, ratio, label, className = '', bg }: { src: string
   );
 }
 
+const fmt = (t: number) => {
+  if (!isFinite(t)) return '0:00';
+  const m = Math.floor(t / 60);
+  const sec = Math.floor(t % 60);
+  return `${m}:${sec.toString().padStart(2, '0')}`;
+};
+
+/**
+ * Hero motion with its sound effects. Always starts muted; the speaker button turns sound on at 50%.
+ * Controls (play/pause, progress bar, volume) show for the first 3 seconds, then hide; hovering the video brings them back.
+ */
+function SoundMotion({ src, poster, ratio, label, className = '', bg }: { src: string; poster: string; ratio: string; label: string; className?: string; bg: string }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(true);
+  const [volume, setVolume] = useState(0.5);
+  const [time, setTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [intro, setIntro] = useState(true);
+  const [hover, setHover] = useState(false);
+  const [focus, setFocus] = useState(false);
+  const show = intro || hover || focus;
+
+  useEffect(() => {
+    const v = ref.current;
+    if (!v) return;
+    v.volume = 0.5;
+    v.muted = true;
+    v.play().catch(() => {});
+    const t = window.setTimeout(() => setIntro(false), 3000);
+    return () => window.clearTimeout(t);
+  }, []);
+
+  const togglePlay = () => {
+    const v = ref.current;
+    if (!v) return;
+    if (v.paused) v.play().catch(() => {});
+    else v.pause();
+  };
+  const toggleMute = () => {
+    const v = ref.current;
+    if (!v) return;
+    v.muted = !v.muted;
+    if (!v.muted && v.volume === 0) v.volume = 0.5;
+    setMuted(v.muted);
+    setVolume(v.volume);
+  };
+  const changeVolume = (val: number) => {
+    const v = ref.current;
+    if (!v) return;
+    v.volume = val;
+    v.muted = val === 0;
+    setVolume(val);
+    setMuted(v.muted);
+  };
+  const seek = (val: number) => {
+    const v = ref.current;
+    if (!v || !duration) return;
+    v.currentTime = val;
+    setTime(val);
+  };
+
+  const shownVolume = muted ? 0 : volume;
+  const pct = duration ? (time / duration) * 100 : 0;
+
+  return (
+    <div
+      className={`relative overflow-hidden ${className}`}
+      style={{ aspectRatio: ratio, background: bg }}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onFocusCapture={() => setFocus(true)}
+      onBlurCapture={() => setFocus(false)}
+    >
+      <video
+        ref={ref}
+        className="block w-full h-full object-cover cursor-pointer"
+        src={src}
+        poster={poster}
+        muted
+        loop
+        playsInline
+        preload="auto"
+        aria-label={label}
+        onClick={togglePlay}
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)}
+        onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+      />
+
+      <div
+        className={`absolute inset-x-0 bottom-0 px-5 pb-4 pt-12 transition-opacity duration-300 ${show ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.45) 100%)', fontFamily: HELV }}
+      >
+        <input
+          type="range"
+          min={0}
+          max={duration || 0}
+          step={0.01}
+          value={time}
+          onChange={(e) => seek(Number(e.target.value))}
+          aria-label="Video progress"
+          className="tb-range block w-full"
+          style={{ ['--fill' as string]: `${pct}%` } as React.CSSProperties}
+        />
+        <div className="mt-3 flex items-center gap-4 text-white">
+          <button type="button" onClick={togglePlay} aria-label={playing ? 'Pause' : 'Play'} className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-white/15">
+            {playing ? (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                <rect x="6" y="5" width="4" height="14" rx="1" />
+                <rect x="14" y="5" width="4" height="14" rx="1" />
+              </svg>
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                <path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z" />
+              </svg>
+            )}
+          </button>
+          <span className="text-[16px] tabular-nums">
+            {fmt(time)} / {fmt(duration)}
+          </span>
+          <div className="ml-auto flex items-center gap-2">
+            <button type="button" onClick={toggleMute} aria-label={muted ? 'Turn sound on' : 'Mute'} className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-white/15">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M11 5 6 9H2v6h4l5 4V5z" fill="currentColor" />
+                {shownVolume === 0 ? (
+                  <>
+                    <line x1="22" y1="9" x2="16" y2="15" />
+                    <line x1="16" y1="9" x2="22" y2="15" />
+                  </>
+                ) : (
+                  <>
+                    <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+                    {shownVolume > 0.5 && <path d="M19 5a10 10 0 0 1 0 14" />}
+                  </>
+                )}
+              </svg>
+            </button>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
+              value={shownVolume}
+              onChange={(e) => changeVolume(Number(e.target.value))}
+              aria-label="Volume"
+              className="tb-range w-[100px]"
+              style={{ ['--fill' as string]: `${shownVolume * 100}%` } as React.CSSProperties}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** Board exports carry their drop shadow, so they are a little wider than the 1440 column. */
 function ShadowedImg({ src, alt, natural, column = 1440, zoom = false }: { src: string; alt: string; natural: number; column?: number; zoom?: boolean }) {
   const over = (natural - column) / column;
@@ -129,6 +287,59 @@ function Stat({ value, label }: { value: string; label: string }) {
 }
 
 /* ---------- sections ---------- */
+
+function HeroSection() {
+  return (
+    <section className="bg-white pt-28 md:pt-[120px] pb-20" data-chapter="Trust Bank">
+      <Container>
+        <img src={IMG.logo} alt="trust" className="h-[29px] w-auto" />
+        <h1
+          className="mt-10 md:mt-[38px] text-[40px] md:text-[63px] leading-none tracking-[-0.02em] font-bold max-w-[720px]"
+          style={{ fontFamily: HELV, color: INK }}
+        >
+          Turning hidden rewards
+          <br />
+          into everyday loyalty
+        </h1>
+        <Body className="mt-8 md:mt-[31px] max-w-[760px]">
+          Helping people find and use their rewards in a digital bank
+          <br />
+          Trust Bank (Singapore) · UX case study
+        </Body>
+
+        <SoundMotion
+          src={IMG.heroVideo}
+          poster={IMG.heroPoster}
+          ratio="2 / 1"
+          bg="#049ddc"
+          className="mt-10 md:mt-[30px] rounded-[20px]"
+          label="Trust Bank rewards: linking FairPrice in one tap and watching every payment fill the Linkpoints bar"
+        />
+
+        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8" style={{ fontFamily: HELV, color: INK }}>
+          <div>
+            <p className="text-[17px] leading-[1.4]">TIMELINE</p>
+            <p className="mt-2 text-[18px] leading-[29px]">8 weeks June – August 2026</p>
+          </div>
+          <div>
+            <p className="text-[17px] leading-[1.4]">TEAM &amp; ROLE</p>
+            <p className="mt-2 text-[18px] leading-[29px]">
+              2 designers
+              <br />
+              I led: Planning, UI Design, Usability test
+              <br />
+              Together: Research synthesis ideation, Testing
+            </p>
+          </div>
+          <div>
+            <p className="text-[17px] leading-[1.4]">INDUSTRY</p>
+            <p className="mt-2 text-[18px] leading-[29px]">Fintech, Digital banking, Mobile app</p>
+          </div>
+        </div>
+      </Container>
+    </section>
+  );
+}
 
 function OverviewRow({ label, children, className = '' }: { label: string; children: React.ReactNode; className?: string }) {
   return (
@@ -874,8 +1085,7 @@ function ReflectionSection() {
 
 /* ---------- Portfolio_1 scroll reveal (CaseReveal) ---------- */
 
-/** each block inside a section's 1440 column fades up a little as it enters the screen, with a short stagger.
- *  Blocks marked data-no-reveal (the hero video slot) are left alone. */
+/** each block inside a section's 1440 column fades up a little as it enters the screen, with a short stagger */
 function useCaseReveal(rootRef: React.RefObject<HTMLElement>) {
   useLayoutEffect(() => {
     const root = rootRef.current;
@@ -886,7 +1096,6 @@ function useCaseReveal(rootRef: React.RefObject<HTMLElement>) {
     columns.forEach((col) => {
       Array.from(col.children).forEach((child, i) => {
         const el = child as HTMLElement;
-        if (el.hasAttribute('data-no-reveal')) return;
         el.classList.add('reveal');
         el.style.setProperty('--reveal-delay', `${Math.min(i, 4) * 120}ms`);
         items.push(el);

@@ -1,41 +1,12 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { CSS, IMG, IMG3 } from './portfolio'
 import { useScreenInit } from './useScreenInit.js'
-import { KimButton, VoiceAssistant, KimChat } from './KimLLM'
 
 // Harbor — portfolio main page v4, from Figma "44기 김지현 4차 PF" (node 260:282) and Harbor's review notes:
-// hero → Selected work → closing section → footer, on warm white (#FBFAF9). The main page's container is 1440px wide (.hb.home).
+// hero → three projects, one per block (title, line, media), laid out like rox.com's "Applied AI research" section
+// on white → CTA → footer, with an aurora voice assistant in the corner.
 // Removed at Harbor's request: the designer-skills strip under the hero, the info rows + note box in each project block,
-// and the separate Projects page (#/projects).
-// Header: left = Projects · About me; right = LinkedIn · CV · [✦ Kim LLM]. Book a call was taken out of the header at
-// Harbor's request (it stays in the hero, the chat note and the footer).
-// "Projects" opens a compact rox.com-style menu (Harbor's notes on the first version: about two-thirds the size, no dark
-// media column on the left, no bottom links row, the video on the right at its own 16:9 ratio). Square and light, three
-// columns: the project list | "At a glance" (the project's line and key facts) | the project's video or image at 16:9
-// with "View project →" under it. Pointing at a project in the list switches the menu to it. While open the trigger gets
-// a grey background and a dash instead of the chevron, like rox.
-// Kim LLM (header button + panel + the inline chat card) lives in KimLLM.tsx and is shared with the other pages.
-// Selected work, laid out like palantir.com's "Our Software" list (Harbor's reference): a single "Selected work" heading in
-// the hero's type (Tektur Medium, same size as "Who is Harbor?"), then one full-width row per project — the project's
-// line and its number (/0.1) on the left, a faint logo in the middle (all logos shown as the same faint dark silhouette,
-// so the white GameCove logo shows too), the project name very large in Tektur Medium on the right. Pointing at a row
-// (or focusing it) turns the row light grey and brings up the project's video or image where the logo was; the video
-// plays only while pointed at. The whole row is the link. The list ends straight into the dark closing section (no white
-// gap under the last row). The old solid "View project" cursor button was removed at Harbor's request. Touch screens (no
-// hover) show the media straight away.
-// Closing section (ClosingCTA, also on the About page): AirOps-style dark warm band (Harbor's reference) with the headline
-// and line centred, then the inline Kim LLM chat card (KimChat in KimLLM.tsx — conversation in the card, shortcut icons,
-// send button, and the note "Kim LLM answers only from what is on this site. Book a call for anything else.").
-// Hero background: Harbor's 8-second typing video, muted and looping, at 50% opacity in front of a black (#000000)
-// base, with the hero's dark gradient on top (Harbor's Figma layers: black background → video 50% → overlay gradient).
-// Reduced motion: poster only.
-// Hero copy, from Harbor's Figma "Hero 3" frame (node 424:6740): no quote line; "Who is Harbor?" and the typed
-// "a product designer" in Tektur Medium (Google Fonts; 88px at 1920 wide, 110% line height, -3% letter spacing), both
-// white; the two buttons 40px under the headline. Everything else stays Helvetica Neue.
-// Footer (SiteFooter, also used by the About page): AirOps-style, styled in portfolio.ts — link columns, a big faint
-// "harbor" wordmark, then the copyright line.
-
-export { VoiceAssistant, useVoice } from './KimLLM'
+// and the separate Projects page (#/projects). The header's "Projects" is now Portfolio_1's dropdown (ProjectsMenu).
 
 export const LINKS = {
   cal: 'https://cal.com/harbor-kim-wqsmkt/30min',
@@ -44,151 +15,102 @@ export const LINKS = {
   email: 'mailto:harborkim0328@gmail.com',
 }
 
-const HERO_LINE2 = 'a product designer'
-const HERO_VIDEO = IMG3 + 'hero-typing.mp4'
-const HERO_POSTER = IMG3 + 'hero-typing-poster.jpg'
+// Only one quote is written so far; add up to five here and the hero rotates through them.
+const QUOTES = ['“I started in Fine Art, drawing what I saw.”']
+const QUOTE_MS = 5000
 
 export const TB = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/trust-bank/'
 // GameCove 15s ad (same file as the GameCove case-study hero); plays muted on loop here.
 const GC = 'https://raw.githubusercontent.com/Harbor-K/landing_page/main/gamecove/assets/v4/'
-// UTrada mark (same as the UTrada case page)
-const UTRADA_SVG = `<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="4" fill="#38029D"/><path d="M20.8137 12L20.7642 12.2773L19.0159 22.2134C18.4395 25.4849 15.3129 28.1484 12.0457 28.1484C10.4635 28.1484 9.07577 27.5308 8.13822 26.4127C7.17956 25.2689 6.80943 23.747 7.09286 22.1315L8.87681 12H9.07354C9.73433 12 10.3156 12.2606 10.7074 12.7278C11.1081 13.2073 11.2626 13.841 11.1454 14.5153L9.79101 22.2134C9.63596 23.0871 9.83325 23.9046 10.344 24.5149C10.843 25.1118 11.5861 25.4382 12.4391 25.4382C14.2581 25.4382 15.9993 23.9564 16.3205 22.1315L17.6754 14.4329C17.9099 13.092 19.1943 12 20.5347 12H20.8137Z" fill="white"/><path d="M32.6067 12L32.131 14.7102H27.9095L25.5448 28.1484H22.8328L25.198 14.7102H20.9766L21.4551 12H32.6067Z" fill="white"/></svg>`
 
 type Project = {
-  title: string; sub: string; href: string; logo: string; logoSquare?: boolean
-  video?: string; poster?: string; img?: string
+  title: string; sub: string; href?: string
+  video?: string; poster?: string; img?: string; alt?: string; ratio?: string
 }
 const PROJECTS: Project[] = [
   {
-    title: 'Trust Bank', sub: 'Turning hidden rewards into everyday loyalty.', href: '#/trust-bank',
-    logo: TB + 'logo.svg',
-    video: TB + 'hero-sfx-v2.mp4', poster: TB + 'hero-sfx-v2-poster.jpg',
+    title: 'Trust Bank Singapore', sub: 'Turning hidden rewards into everyday loyalty.', href: '#/trust-bank',
+    img: IMG3 + 'trust-bank-thumb.webp', alt: 'Trust Bank rewards screen in front of the trust wordmark', ratio: '2 / 1',
   },
   {
     title: 'GameCove', sub: 'An AI game-analytics dashboard.', href: '#/gamecove',
-    logo: 'https://raw.githubusercontent.com/Harbor-K/landing_page/main/gamecove/assets/logo.png',
-    video: GC + 'hero-ad.mp4', poster: GC + 'hero-ad-poster.jpg',
+    video: GC + 'hero-ad.mp4', poster: GC + 'hero-ad-poster.jpg', alt: 'GameCove ad: Overview, AI mapping, Retention and the AI agent', ratio: '2 / 1',
   },
   {
-    title: 'UTrada', sub: 'Product design for a trading platform.', href: '#/utrada',
-    logo: `data:image/svg+xml;utf8,${encodeURIComponent(UTRADA_SVG)}`, logoSquare: true,
-    img: IMG3 + 'utrada-screens.webp',
+    title: 'UTrada', sub: 'Product design for a trading platform.',
+    img: IMG3 + 'utrada-screens.webp', alt: 'UTrada website screens: home, features, forex table and join flow',
   },
 ]
 
 export const BARS = 140
 const SECTION_IDS: Record<string, string> = { work: 'projects', contact: 'contact' }
 
-// Tektur Medium: the hero headline, the Selected work heading and the project names
-const TEKTUR = '"Tektur", "Helvetica Neue", Helvetica, Arial, sans-serif'
-
 export const PAGE_CSS = `
-/* main page container: 1440px wide (Harbor's request) */
-.hb.home { --wrap: min(1440px, calc(100vw - 64px)); }
+.hb .foot { padding-bottom: 40px; }
 
-/* hero: black base, the typing video on top of it at 50% (Harbor's Figma layers), the dark gradient above both */
-.hb .hero, .hb .hero .hero-bg { background: #000000; }
-.hb .hero-vid { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 40%; opacity: .5; }
+.projects-sec { background: #fff; }
+.proj + .proj { margin-top: 160px; }
+.proj-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 40px; margin-bottom: 40px; }
+.proj-head h3 { margin: 0; font-size: 44px; font-weight: 400; line-height: 1.15; letter-spacing: -0.02em; }
+.proj-head h3 .sub { display: block; color: #8C8C8A; font-weight: 300; }
+.proj-frame { border: 1px solid var(--line); }
+.proj-media { display: block; padding: 0; overflow: hidden; }
+.proj-media .shot { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: #E9E9E6; }
+.proj-media video, .proj-media img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 1.2s var(--ease); }
+.proj-media:hover video, .proj-media:hover img { transform: scale(1.03); }
+.proj-media .view { position: absolute; left: 20px; bottom: 20px; padding: 10px 16px; background: #fff; color: var(--ink); font-size: 16px; font-weight: 500;
+  opacity: 0; transform: translateY(8px); transition: opacity .3s, transform .3s var(--ease); }
+.proj-media:hover .view { opacity: 1; transform: none; }
 
-/* hero headline (Harbor's Figma "Hero 3", node 424:6740): Tektur Medium, 110% line height, -3% tracking, both lines white */
-.hb .hero .h1 .l1, .hb .hero .h1 .sub {
-  font-family: ${TEKTUR} !important;
-  font-weight: 500; line-height: 1.1; letter-spacing: -0.03em; color: #FFFFFF; }
-.hb .hero .h1 .caret { background: #FFFFFF; }
-.hb .hero .hero-ctas { margin-top: 40px; }
-
-/* ---------- Selected work: palantir.com "Our Software"-style list ---------- */
-.pl-sec { background: var(--paper); padding-bottom: 0; }
-.pl-title { margin: 0 0 40px; font-family: ${TEKTUR} !important; font-size: clamp(56px, 4.6vw, 88px); font-weight: 500; line-height: 1.1; letter-spacing: -0.03em; color: var(--ink); }
-.pl-list { list-style: none; margin: 0; padding: 0; }
-.hb a.pl-link { display: block; color: var(--ink); text-decoration: none; transition: background-color .35s ease; }
-.hb a.pl-link:hover, .hb a.pl-link:focus-visible { background: #F0F0EE; }
-.hb a.pl-link:focus-visible { outline: 2px solid #2563EB; outline-offset: -2px; }
-.pl-row { display: grid; grid-template-columns: 220px minmax(0, 360px) minmax(0, 1fr); gap: 48px; align-items: center; min-height: 320px; padding: 48px 0; }
-.pl-item + .pl-item .pl-row { border-top: 1px solid var(--line); }
-.pl-link:hover .pl-row, .pl-link:focus-visible .pl-row, .pl-item:hover + .pl-item .pl-row { border-top-color: transparent; }
-.pl-desc { align-self: stretch; display: flex; flex-direction: column; justify-content: space-between; gap: 24px; }
-.pl-desc p { margin: 0; max-width: 200px; font-size: 18px; line-height: 1.35; }
-.pl-n { font-size: 16px; color: var(--mute); }
-.pl-media { position: relative; aspect-ratio: 16 / 9; }
-/* faint logo: every logo becomes the same light silhouette (the GameCove logo is white, so it is darkened first) */
-.pl-logo { position: absolute; left: 0; top: 50%; height: 44px; width: auto; max-width: 100%; transform: translateY(-50%);
-  filter: grayscale(1) brightness(0); opacity: .1; transition: opacity .3s ease; }
-.pl-logo.sq { height: 96px; filter: grayscale(1); opacity: .1; }
-.pl-shot { position: absolute; inset: 0; overflow: hidden; background: #0F0F0F; opacity: 0; transform: scale(.94);
-  transition: opacity .35s ease, transform .55s var(--ease); }
-.pl-shot video, .pl-shot img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.pl-link:hover .pl-shot, .pl-link:focus-visible .pl-shot { opacity: 1; transform: none; }
-.pl-link:hover .pl-logo, .pl-link:focus-visible .pl-logo { opacity: 0; }
-.pl-name { font-family: ${TEKTUR} !important; font-size: clamp(64px, 6.3vw, 120px); font-weight: 500; line-height: 1; letter-spacing: -0.03em; white-space: nowrap; }
-@media (hover: none) {
-  .pl-shot { opacity: 1; transform: none; }
-  .pl-logo { display: none; }
-}
-
-/* ---------- closing section: AirOps-style band with the inline Kim LLM chat card (KimLLM.tsx) ---------- */
-.hb .cta-sec { background: #22211E; color: #FFFFFF; }
-.hb .cta-sec .cta-inner { padding: 160px 0; text-align: center; }
-.hb .cta-sec .h2 { margin: 0; font-size: clamp(44px, 3.6vw, 64px); font-weight: 300; line-height: 1.15; letter-spacing: -0.02em; }
-.hb .cta-sec .sub-dark { margin: 20px auto 0; max-width: 560px; font-size: 18px; line-height: 1.5; color: rgba(255,255,255,.7); }
-
-/* header: CV sits on the right with LinkedIn (no CV link yet, so it is plain text) */
-.hb .nav-right .cv { opacity: .8; }
-
-/* ---------- Projects menu (compact, rox.com style) ---------- */
+/* Projects dropdown in the header (from Portfolio_1's HomeDock) */
 .hb .pj-menu { position: relative; display: flex; align-items: center; }
-.hb .pj-trigger { display: inline-flex; align-items: center; gap: 10px; padding: 6px 10px; margin: -6px -10px; background: transparent; border: 0; border-radius: 0;
-  cursor: pointer; font-size: 16px; white-space: nowrap; opacity: .8; transition: opacity .2s, background-color .2s; }
+.hb .pj-trigger { display: flex; align-items: center; gap: 6px; padding: 0; background: none; border: 0; cursor: pointer; font-size: 16px; white-space: nowrap; opacity: .8; transition: opacity .2s; }
 .hb .pj-trigger:hover, .hb .pj-trigger.on { opacity: 1; }
-.hb .pj-trigger.on { background: rgba(255,255,255,.16); }
-.hb .site.scrolled .pj-trigger.on { background: rgba(15,15,15,.07); }
-.hb .pj-trigger svg { display: block; width: 14px; height: 14px; }
+.hb .pj-panel { position: absolute; top: 100%; left: -12px; padding-top: 12px; width: min(560px, calc(100vw - 32px)); transform-origin: 0 0; }
 .hb .pj-menu span { opacity: 1; }
-.hb .pj-panel a, .hb .pj-panel span { opacity: 1; } /* the header's dimmed-link style doesn't apply inside the menu */
 
-.hb .pj-panel { position: absolute; top: 100%; padding-top: 16px; z-index: 55; color: #0F0F0F;
-  opacity: 0; visibility: hidden; transform: translateY(-6px); pointer-events: none;
-  transition: opacity .18s ease, transform .25s cubic-bezier(.22,1,.36,1), visibility 0s .25s; }
-.hb .pj-panel.open { opacity: 1; visibility: visible; transform: none; pointer-events: auto; transition: opacity .22s ease, transform .35s cubic-bezier(.22,1,.36,1), visibility 0s; }
-.hb .pj-box { display: grid; grid-template-columns: 200px minmax(0, 1fr) 320px; min-height: 300px;
-  background: #fff; border: 1px solid #DBDBD9; box-shadow: 0 24px 60px rgba(0,0,0,.10); }
-.hb .pj-k { font-size: 16px; color: #8C8C8A; }
+/* Aurora voice assistant — ChatGPT-voice-style orb */
+@property --rot { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+.orb { position: relative; border-radius: 50%; overflow: hidden; isolation: isolate;
+  background: radial-gradient(circle at 50% 120%, #1D4ED8 0%, #3B82F6 35%, #93C5FD 65%, #E0F2FE 100%); }
+.orb::before, .orb::after { content: ""; position: absolute; inset: -25%; border-radius: 50%; filter: blur(14px); }
+.orb::before { background: conic-gradient(from var(--rot), #E0F2FE, #60A5FA, #FFFFFF, #38BDF8, #BFDBFE, #2563EB, #E0F2FE); opacity: .85; animation: orb-spin 7s linear infinite; mix-blend-mode: soft-light; }
+.orb::after { background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.95), rgba(255,255,255,0) 45%), radial-gradient(circle at 70% 75%, rgba(147,197,253,.9), rgba(147,197,253,0) 50%);
+  animation: orb-drift 5s ease-in-out infinite alternate; }
+@keyframes orb-spin { to { --rot: 360deg; } }
+@keyframes orb-drift { 0% { transform: translate(-6%, -4%) scale(1); } 100% { transform: translate(6%, 5%) scale(1.12); } }
+.orb.live { animation: orb-pulse 1.1s ease-in-out infinite; }
+.orb.talk { animation: orb-talk .5s ease-in-out infinite alternate; }
+@keyframes orb-pulse { 50% { transform: scale(1.06); } }
+@keyframes orb-talk { 0% { transform: scale(.97); } 100% { transform: scale(1.08); } }
 
-/* project list */
-.hb .pj-cats { padding: 24px 0; }
-.hb .pj-cats .pj-k { padding: 0 24px; margin-bottom: 12px; }
-.hb .pj-cats ul { list-style: none; margin: 0; padding: 0; }
-.hb .pj-cats a { display: block; padding: 10px 24px; font-size: 16px; color: #0F0F0F; text-decoration: none; transition: background-color .15s; }
-.hb .pj-cats a.on { background: #F2F2EF; }
-.hb .pj-cats a:focus-visible { outline: 2px solid #2563EB; outline-offset: -2px; }
+.voice-fab { position: fixed; right: 24px; bottom: 24px; z-index: 60; width: 64px; height: 64px; padding: 0; border: 3px solid #fff; border-radius: 50%; cursor: pointer; background: none;
+  box-shadow: 0 10px 30px rgba(37,99,235,.45), 0 0 0 1px rgba(0,0,0,.06); transform: scale(0); transition: transform .5s var(--ease); }
+.voice-fab.show { transform: scale(1); }
+.voice-fab:hover { transform: scale(1.08); }
+.voice-fab .orb { display: block; width: 100%; height: 100%; }
+.voice-pop { position: fixed; right: 24px; bottom: 104px; z-index: 60; width: 360px; padding: 28px 24px 24px; background: #fff; color: var(--ink); border: 1px solid var(--line);
+  border-radius: 24px; box-shadow: 0 24px 60px rgba(0,0,0,.18); transform-origin: bottom right; text-align: center;
+  transform: translateY(12px) scale(.96); opacity: 0; pointer-events: none; transition: transform .35s var(--ease), opacity .25s; }
+.voice-pop.open { transform: none; opacity: 1; pointer-events: auto; }
+.voice-pop .big { width: 150px; height: 150px; margin: 0 auto; }
+.voice-status { margin-top: 18px; font-size: 16px; color: var(--mute); }
+.voice-q { margin-top: 10px; font-size: 16px; font-weight: 500; min-height: 22px; }
+.voice-a { margin-top: 8px; font-size: 16px; line-height: 1.5; color: #333; min-height: 48px; }
+.voice-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 18px; }
+.voice-chips button { padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px; background: #fff; font-size: 16px; cursor: pointer; color: var(--ink); }
+.voice-chips button:hover { background: var(--off); }
+.voice-ctrl { display: flex; justify-content: center; gap: 12px; margin-top: 20px; }
+.voice-ctrl button { width: 52px; height: 52px; border-radius: 50%; border: 0; cursor: pointer; display: grid; place-items: center; }
+.voice-ctrl .mic { background: var(--ink); color: #fff; }
+.voice-ctrl .mic.on { background: #2563EB; }
+.voice-ctrl .end { background: var(--off); color: var(--ink); }
+.voice-ctrl svg { width: 22px; height: 22px; display: block; }
 
-/* at a glance + video (off-white) */
-.hb .pj-feat { padding: 24px; background: #F5F5F2; }
-.hb .pj-feat .about { margin: 12px 0 0; font-size: 18px; font-weight: 300; line-height: 1.35; letter-spacing: -0.01em; color: #0F0F0F; }
-.hb .pj-feat ul { list-style: none; margin: 18px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-.hb .pj-feat li { font-size: 16px; line-height: 1.4; color: #6B6B69; }
-.hb .pj-feat li.lead { display: flex; gap: 8px; color: #0F0F0F; }
-.hb .pj-feat li.lead::before { content: ""; flex: none; margin-top: 6px; border-left: 6px solid currentColor; border-top: 4px solid transparent; border-bottom: 4px solid transparent; height: 0; }
-
-.hb .pj-vid { padding: 24px 24px 24px 0; background: #F5F5F2; display: flex; flex-direction: column; gap: 14px; }
-.hb .pj-shot { position: relative; display: block; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; background: #0F0F0F; }
-.hb .pj-shot .layer { position: absolute; inset: 0; transition: opacity .45s ease, transform .7s cubic-bezier(.22,1,.36,1); }
-.hb .pj-shot .layer video, .hb .pj-shot .layer img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.hb .pj-go { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; font-size: 16px; font-weight: 500; color: #0F0F0F; text-decoration: none; }
-.hb .pj-go .go { transition: transform .25s var(--ease); }
-.hb .pj-go:hover .go { transform: translateX(4px); }
-
-@media (max-width: 1100px) {
-  .pl-row { grid-template-columns: 180px minmax(0, 280px) minmax(0, 1fr); gap: 32px; }
-}
 @media (max-width: 900px) {
-  .hb .nav-right .cv { display: none; }
-  .pl-row { grid-template-columns: minmax(0, 1fr); gap: 20px; min-height: 0; padding: 40px 0; }
-  .pl-name { order: -1; font-size: 56px; white-space: normal; }
-  .pl-desc p { max-width: none; }
-  .pl-shot { opacity: 1; transform: none; }
-  .pl-logo { display: none; }
-  .hb .cta-sec .cta-inner { padding: 120px 0; }
+  .proj-head { flex-direction: column; align-items: flex-start; }
+  .proj-head h3 { font-size: 32px; }
+  .voice-pop { left: 16px; right: 16px; width: auto; }
 }
 `
 
@@ -206,73 +128,157 @@ function useTyped(text: string, key: string | number, speed = 32, delay = 0) {
   return text.slice(0, n)
 }
 
-/* ---------- Projects menu ---------- */
-// Facts come from the case-study pages already on the site (Trust Bank hero details, GameCove ad, UTrada skeleton).
+// Voice assistant: scripted answers about Harbor (no AI backend). Uses the browser's speech
+// recognition where available (Chrome/Edge/Safari) and speaks replies with speech synthesis.
+const CHIPS = ['Who is Harbor?', 'Show me projects', 'Trust Bank', 'How to contact']
+const ANSWERS: { k: RegExp; a: string }[] = [
+  { k: /trust|bank|reward/i, a: 'Trust Bank Singapore was an eight-week project. Harbor led planning, UI design and usability tests, and the redesign scored 85 on ease of use.' },
+  { k: /game|cove|dashboard/i, a: 'GameCove is an AI game-analytics dashboard Harbor designed as a team project.' },
+  { k: /utrada|trading/i, a: 'At UTrada, Harbor worked on product design for a trading platform from 2024 to 2026.' },
+  { k: /project|work|portfolio|case/i, a: 'Three featured projects: Trust Bank Singapore, GameCove and UTrada. Scroll to Selected work to see each one.' },
+  { k: /contact|email|call|hire|book|reach/i, a: 'You can book a 30-minute call, or email harborkim0328@gmail.com.' },
+  { k: /who|about|harbor|background|yourself/i, a: 'Harbor is a product designer with over three years in fintech and e-learning. She started in Fine Art, and now designs end to end, from research to UI.' },
+]
+const FALLBACK = 'I can tell you about Harbor, her projects, or how to get in touch.'
+const answerFor = (q: string) => (ANSWERS.find(x => x.k.test(q))?.a ?? FALLBACK)
+
+export function useVoice() {
+  const [mode, setMode] = useState<'idle' | 'listening' | 'speaking'>('idle')
+  const [q, setQ] = useState('')
+  const [a, setA] = useState('')
+  const rec = useRef<any>(null)
+  const SR = typeof window !== 'undefined' ? ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition) : null
+  const canListen = !!SR
+
+  const speak = (text: string) => {
+    setA(text)
+    const synth = window.speechSynthesis
+    if (!synth) { setMode('idle'); return }
+    synth.cancel()
+    const u = new SpeechSynthesisUtterance(text)
+    u.lang = 'en-US'; u.rate = 1.02
+    u.onstart = () => setMode('speaking')
+    u.onend = () => setMode('idle')
+    u.onerror = () => setMode('idle')
+    synth.speak(u)
+  }
+  const ask = (text: string) => { rec.current?.abort?.(); setQ(text); speak(answerFor(text)) }
+  const stop = () => { rec.current?.abort?.(); window.speechSynthesis?.cancel(); setMode('idle') }
+  const listen = () => {
+    if (!SR) return
+    if (mode === 'listening') { rec.current?.stop(); return }
+    window.speechSynthesis?.cancel()
+    const r = new SR()
+    r.lang = 'en-US'; r.interimResults = true; r.maxAlternatives = 1
+    let finalText = ''
+    r.onresult = (e: any) => {
+      const t = Array.from(e.results).map((x: any) => x[0].transcript).join('')
+      setQ(t)
+      if (e.results[e.results.length - 1].isFinal) finalText = t
+    }
+    r.onerror = (e: any) => { setMode('idle'); if (e.error === 'not-allowed') setA('Microphone access is blocked here. Pick a question below instead.') }
+    r.onend = () => { if (finalText) speak(answerFor(finalText)); else setMode(m => (m === 'listening' ? 'idle' : m)) }
+    rec.current = r
+    setA('')
+    setMode('listening')
+    try { r.start() } catch { setMode('idle') }
+  }
+  useEffect(() => () => { rec.current?.abort?.(); window.speechSynthesis?.cancel() }, [])
+  return { mode, q, a, canListen, ask, stop, listen }
+}
+
+/* ---------- Projects dropdown (copied from Portfolio_1's HomeDock) ---------- */
+// Hovering "Projects" opens a dark panel. Left: the three case studies (name + one line). Right: the case's hero video,
+// muted and looping; pointing at another case cross-fades to its video. Click a name or the video to open that case.
+// UTrada has no video or case page here yet, so it shows its icon and links to the UTrada block on the main page.
+// Closes on Esc, a click outside, scrolling, a route change, or moving the pointer away.
 
 const RAW = 'https://raw.githubusercontent.com/Harbor-K/'
+const UTRADA_SVG = `<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="4" fill="url(#ut)"/><path d="M20.8137 12L20.7642 12.2773L19.0159 22.2134C18.4395 25.4849 15.3129 28.1484 12.0457 28.1484C10.4635 28.1484 9.07577 27.5308 8.13822 26.4127C7.17956 25.2689 6.80943 23.747 7.09286 22.1315L8.87681 12H9.07354C9.73433 12 10.3156 12.2606 10.7074 12.7278C11.1081 13.2073 11.2626 13.841 11.1454 14.5153L9.79101 22.2134C9.63596 23.0871 9.83325 23.9046 10.344 24.5149C10.843 25.1118 11.5861 25.4382 12.4391 25.4382C14.2581 25.4382 15.9993 23.9564 16.3205 22.1315L17.6754 14.4329C17.9099 13.092 19.1943 12 20.5347 12H20.8137Z" fill="white"/><path d="M32.6067 12L32.131 14.7102H27.9095L25.5448 28.1484H22.8328L25.198 14.7102H20.9766L21.4551 12H32.6067Z" fill="white"/><defs><linearGradient id="ut" x1="40" y1="20" x2="0" y2="20" gradientUnits="userSpaceOnUse"><stop stop-color="#872ADF"/><stop offset="1" stop-color="#38029D"/></linearGradient></defs></svg>`
+const UTRADA_ICON = `data:image/svg+xml;utf8,${encodeURIComponent(UTRADA_SVG)}`
 const WORK_LIST = [
   {
     name: 'Trust Bank',
+    sub: 'Rewards UX revamp',
     href: '#/trust-bank',
+    icon: '',
     video: `${RAW}harbor-pf/main/assets/trust-bank/hero-sfx-v2.mp4`,
     poster: `${RAW}harbor-pf/main/assets/trust-bank/hero-sfx-v2-poster.jpg`,
-    img: '',
-    about: 'Turning hidden rewards into everyday loyalty.',
-    facts: [
-      { t: 'Rewards UX revamp', lead: true },
-      { t: 'Digital banking, mobile app', lead: true },
-      { t: '8 weeks, June – August 2026' },
-      { t: 'I led planning, UI design and usability tests' },
-    ],
   },
   {
     name: 'GameCove',
+    sub: 'AI analytics dashboard',
     href: '#/gamecove',
+    icon: '',
     video: `${RAW}landing_page/main/gamecove/assets/v4/hero-ad.mp4`,
     poster: `${RAW}landing_page/main/gamecove/assets/v4/hero-ad-poster.jpg`,
-    img: '',
-    about: 'An AI game-analytics dashboard.',
-    facts: [
-      { t: 'AI analytics dashboard', lead: true },
-      { t: 'Team project', lead: true },
-      { t: 'Overview, AI mapping, Retention' },
-      { t: 'AI agent' },
-    ],
   },
-  {
-    name: 'UTrada',
-    href: '#/utrada',
-    video: '',
-    poster: '',
-    img: IMG3 + 'utrada-screens.webp',
-    about: 'Product design for a trading platform.',
-    facts: [
-      { t: 'Trading platform', lead: true },
-      { t: 'Design system', lead: true },
-      { t: '2024 – 2026' },
-    ],
-  },
+  { name: 'UTrada', sub: 'Trading platform design system', href: '#projects', icon: UTRADA_ICON, video: '', poster: '' },
 ]
+const LIST_W = 200
+const PREVIEW_W = 560 - LIST_W - 6 * 3 // 342
+const EASE = 'cubic-bezier(.22,1,.36,1)'
 
-const MENU_W = 800
+/** the right-hand pane: each case's main video (muted, looping); only the shown one plays */
+function ProjectPreview({ open, active }: { open: boolean; active: number }) {
+  const vids = useRef<(HTMLVideoElement | null)[]>([])
+  useEffect(() => {
+    vids.current.forEach((v, i) => {
+      if (!v) return
+      if (open && i === active) { v.muted = true; v.play().catch(() => {}) } else v.pause()
+    })
+  }, [open, active])
+  return (
+    <a
+      href={WORK_LIST[active].href}
+      tabIndex={-1}
+      aria-hidden
+      className="relative block shrink-0 self-stretch overflow-hidden rounded-[10px]"
+      style={{ width: PREVIEW_W, minHeight: 200, background: '#18181B' }}
+    >
+      {WORK_LIST.map((p, i) => {
+        const on = i === active
+        return (
+          <div
+            key={p.name}
+            className="absolute inset-0"
+            style={{
+              opacity: on ? 1 : 0,
+              transform: on ? 'scale(1)' : 'scale(1.04)',
+              filter: on ? 'blur(0px)' : 'blur(6px)',
+              transition: `opacity .45s ease, transform .6s ${EASE}, filter .45s ease`,
+            }}
+          >
+            {p.video ? (
+              <video
+                ref={el => { vids.current[i] = el }}
+                src={p.video}
+                poster={p.poster}
+                muted
+                loop
+                playsInline
+                preload={i === 0 ? 'auto' : 'metadata'}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-[10px]">
+                <img src={p.icon} alt="" className="h-12 w-12 rounded-[8px]" />
+                <span className="text-[16px] font-bold text-white/70">{p.name}</span>
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </a>
+  )
+}
 
 function ProjectsMenu() {
   const [open, setOpen] = useState(false)
   const [everOpen, setEverOpen] = useState(false) // the videos load on the first open and stay
-  const [hot, setHot] = useState(0) // which project the menu shows
-  const [box, setBox] = useState({ left: 0, width: MENU_W })
+  const [hot, setHot] = useState(0) // which project the preview shows
   const ref = useRef<HTMLDivElement>(null)
-  const vids = useRef<(HTMLVideoElement | null)[]>([])
   const closeTimer = useRef(0)
-
-  // the panel starts at the header's left edge (under the logo), like rox; 800px wide, or less on narrow screens
-  const place = () => {
-    const m = ref.current, w = m?.closest('.nav') as HTMLElement | null
-    if (!m || !w) return
-    const mr = m.getBoundingClientRect(), wr = w.getBoundingClientRect()
-    setBox({ left: Math.round(wr.left - mr.left), width: Math.round(Math.min(wr.width, MENU_W)) })
-  }
-  useLayoutEffect(() => { if (open) place() }, [open])
 
   useEffect(() => {
     if (!open) return
@@ -283,75 +289,83 @@ function ProjectsMenu() {
     addEventListener('pointerdown', onDown)
     addEventListener('scroll', close, { passive: true })
     addEventListener('hashchange', close)
-    addEventListener('resize', place)
     return () => {
       removeEventListener('keydown', onKey)
       removeEventListener('pointerdown', onDown)
       removeEventListener('scroll', close)
       removeEventListener('hashchange', close)
-      removeEventListener('resize', place)
     }
   }, [open])
 
-  // only the shown project's video plays
-  useEffect(() => {
-    vids.current.forEach((v, i) => {
-      if (!v) return
-      if (open && i === hot) { v.muted = true; v.play().catch(() => {}) } else v.pause()
-    })
-  }, [open, hot, everOpen])
-
   const openNow = () => { window.clearTimeout(closeTimer.current); setEverOpen(true); setOpen(true) }
   const closeSoon = () => { window.clearTimeout(closeTimer.current); closeTimer.current = window.setTimeout(() => setOpen(false), 180) }
-  const p = WORK_LIST[hot]
 
   return (
     <div ref={ref} className="pj-menu" onMouseEnter={openNow} onMouseLeave={closeSoon}>
-      <button type="button" aria-haspopup="true" aria-expanded={open} onClick={() => (open ? setOpen(false) : openNow())} onFocus={openNow}
-        className={'pj-trigger' + (open ? ' on' : '')}>
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => (open ? setOpen(false) : openNow())}
+        onFocus={openNow}
+        className={'pj-trigger' + (open ? ' on' : '')}
+      >
         Projects
-        {open
-          ? <svg viewBox="0 0 14 14" fill="none" aria-hidden><path d="M2.5 7h9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
-          : <svg viewBox="0 0 14 14" fill="none" aria-hidden><path d="M3 5.25L7 9.25L11 5.25" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden
+          style={{ transform: open ? 'rotate(180deg)' : 'none', transition: `transform .25s ${EASE}` }}>
+          <path d="M3 5.25L7 9.25L11 5.25" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
       </button>
 
-      <div className={'pj-panel' + (open ? ' open' : '')} style={{ left: box.left, width: box.width }} aria-hidden={!open}>
-        <div className="pj-box">
-          {/* the list */}
-          <div className="pj-cats">
-            <div className="pj-k">Projects</div>
-            <ul>
-              {WORK_LIST.map((w, i) => (
-                <li key={w.name}>
-                  <a href={w.href} className={i === hot ? 'on' : undefined} tabIndex={open ? 0 : -1}
-                    onMouseEnter={() => setHot(i)} onFocus={() => setHot(i)} onClick={() => setOpen(false)}>{w.name}</a>
+      {/* the panel: its top padding bridges the hover gap under the trigger */}
+      <div
+        className="pj-panel"
+        style={{
+          transform: `translateY(${open ? 0 : -8}px) scale(${open ? 1 : 0.985})`,
+          opacity: open ? 1 : 0,
+          visibility: open ? 'visible' : 'hidden',
+          pointerEvents: open ? 'auto' : 'none',
+          transition: open
+            ? `opacity .22s ease, transform .35s ${EASE}, visibility 0s`
+            : `opacity .18s ease, transform .25s ${EASE}, visibility 0s .25s`,
+        }}
+      >
+        <div
+          className="flex gap-[6px] overflow-hidden rounded-[14px] p-[6px]"
+          style={{ background: '#111113', boxShadow: '0 0 0 1px rgba(255,255,255,0.08), 0 20px 48px rgba(0,0,0,0.35)' }}
+        >
+          <ul role="menu" aria-label="Projects" className="flex shrink-0 flex-col gap-[2px]" style={{ width: LIST_W }}>
+            {WORK_LIST.map((p, i) => {
+              const on = hot === i
+              return (
+                <li key={p.name} role="none">
+                  <a
+                    role="menuitem"
+                    href={p.href}
+                    onMouseEnter={() => setHot(i)}
+                    onFocus={() => setHot(i)}
+                    onClick={() => setOpen(false)}
+                    tabIndex={open ? 0 : -1}
+                    className="block rounded-[8px] px-[12px] py-[10px] focus-visible:outline-none"
+                    style={{
+                      background: on ? 'rgba(255,255,255,0.07)' : 'transparent',
+                      opacity: open ? 1 : 0,
+                      transform: open ? 'none' : 'translateY(-4px)',
+                      transition: `background-color .2s ease, opacity .3s ease ${open ? 0.05 + 0.04 * i : 0}s, transform .35s ${EASE} ${open ? 0.05 + 0.04 * i : 0}s`,
+                    }}
+                  >
+                    <span className="block text-[16px] font-bold leading-[20px]" style={{ color: on ? '#FFFFFF' : 'rgba(255,255,255,0.86)', transition: 'color .2s ease' }}>
+                      {p.name}
+                    </span>
+                    <span className="mt-[2px] block text-[16px] leading-[20px]" style={{ color: on ? '#A1A1AA' : '#71717A', transition: 'color .2s ease' }}>
+                      {p.sub}
+                    </span>
+                  </a>
                 </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* at a glance */}
-          <div className="pj-feat">
-            <div className="pj-k">At a glance</div>
-            <p className="about">{p.about}</p>
-            <ul>
-              {p.facts.map(f => <li key={f.t} className={f.lead ? 'lead' : undefined}>{f.t}</li>)}
-            </ul>
-          </div>
-
-          {/* the project's video / image at 16:9, and the link */}
-          <div className="pj-vid">
-            <a className="pj-shot" href={p.href} tabIndex={-1} aria-hidden="true" onClick={() => setOpen(false)}>
-              {everOpen && WORK_LIST.map((w, i) => (
-                <div key={w.name} className="layer" style={{ opacity: i === hot ? 1 : 0, transform: i === hot ? 'scale(1)' : 'scale(1.04)' }}>
-                  {w.video
-                    ? <video ref={el => { vids.current[i] = el }} src={w.video} poster={w.poster} muted loop playsInline preload={i === 0 ? 'auto' : 'metadata'} />
-                    : <img src={w.img} alt="" />}
-                </div>
-              ))}
-            </a>
-            <a className="pj-go" href={p.href} tabIndex={open ? 0 : -1} onClick={() => setOpen(false)}>View project <span className="go">→</span></a>
-          </div>
+              )
+            })}
+          </ul>
+          {everOpen && <ProjectPreview open={open} active={hot} />}
         </div>
       </div>
     </div>
@@ -360,7 +374,7 @@ function ProjectsMenu() {
 
 export type NavKey = 'about' | undefined
 
-// Shared site header. On the main page it starts transparent over the hero and turns light on scroll;
+// Shared site header. On the main page it starts transparent over the photo and turns light on scroll;
 // on the About page it is always light (`solid`).
 export function SiteHeader({ current, solid = false }: { current?: NavKey; solid?: boolean }) {
   const [scrolled, setScrolled] = useState(solid)
@@ -380,12 +394,13 @@ export function SiteHeader({ current, solid = false }: { current?: NavKey; solid
             <nav className="nav-links" aria-label="Main">
               <ProjectsMenu />
               <a href="#/about" className={current === 'about' ? 'current' : undefined} aria-current={current === 'about' ? 'page' : undefined}>About me</a>
+              <span>CV</span>
             </nav>
           </div>
           <div className="nav-right">
             <a href={LINKS.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>
-            <span className="cv">CV</span>
-            <KimButton />
+            <a href={LINKS.instagram} target="_blank" rel="noreferrer">Instagram</a>
+            <a className="btn-sm" href={LINKS.cal} target="_blank" rel="noreferrer">Book a call</a>
           </div>
         </div>
       </div>
@@ -393,20 +408,29 @@ export function SiteHeader({ current, solid = false }: { current?: NavKey; solid
   )
 }
 
-// AirOps-style closing section: headline, line, and the inline Kim LLM chat card (KimChat).
 export function ClosingCTA() {
   return (
     <section className="cta-sec" id="contact" aria-label="Contact">
-      <div className="wrap cta-inner" data-reveal>
-        <h2 className="h2">Let’s connect the dots together.</h2>
-        <p className="sub-dark">Open to product design roles. A 30-minute call is the quickest way to start.</p>
-        <KimChat />
+      <div className="cta-frame">
+        <div className="cta-inner" data-reveal>
+          <h2 className="h2 h2-xl">Let’s connect the dots together.</h2>
+          <p className="sub-dark">Open to product design roles. A 30-minute call is the quickest way to start.</p>
+          <div className="ctas">
+            <a className="btn btn-ghost" href="#projects">See my work</a>
+            <a className="btn btn-light" href={LINKS.cal} target="_blank" rel="noreferrer">Book a call</a>
+          </div>
+        </div>
+        <div className="bars" data-reveal aria-hidden="true">
+          {Array.from({ length: BARS }, (_, i) => {
+            const h = Math.pow((i + 1) / BARS, 2.6)
+            return <i key={i} style={{ '--h': h.toFixed(3), '--i': i } as React.CSSProperties} />
+          })}
+        </div>
       </div>
     </section>
   )
 }
 
-// AirOps-style footer (styles in portfolio.ts): columns → big faint wordmark → copyright.
 export function SiteFooter() {
   return (
     <footer className="foot">
@@ -423,7 +447,6 @@ export function SiteFooter() {
         </div>
         <div className="foot-bottom"><span>© 2026 Harbor Kim. All rights reserved.</span><span>Designed in Figma by Harbor</span></div>
       </div>
-      <div className="wordmark" aria-hidden="true">harbor</div>
     </footer>
   )
 }
@@ -441,55 +464,75 @@ export function useReveal(dep?: unknown) {
   }, [dep])
 }
 
-// One project = one full-width row (palantir.com "Our Software" style). Pointing at it shows the media and plays the video.
-function ProjectRow({ p, i }: { p: Project; i: number }) {
-  const vid = useRef<HTMLVideoElement>(null)
-  const play = () => { const v = vid.current; if (v) { v.muted = true; v.play().catch(() => {}) } }
-  const stop = () => { const v = vid.current; if (v) v.pause() }
+// Aurora voice assistant (fixed bottom-right), shared by every page.
+export function VoiceAssistant() {
+  const [fab, setFab] = useState(false)
+  const [chat, setChat] = useState(false)
+  const voice = useVoice()
+  useEffect(() => { const c = window.setTimeout(() => setFab(true), 1200); return () => clearTimeout(c) }, [])
+  useEffect(() => {
+    if (!chat) return
+    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') { setChat(false); voice.stop() } }
+    addEventListener('keydown', k)
+    return () => removeEventListener('keydown', k)
+  }, [chat])
   return (
-    <li className="pl-item" data-reveal>
-      <a className="pl-link" href={p.href} onMouseEnter={play} onMouseLeave={stop} onFocus={play} onBlur={stop}
-        aria-label={`${p.title}: ${p.sub}`}>
-        <div className="wrap pl-row">
-          <div className="pl-desc">
-            <p>{p.sub}</p>
-            <span className="pl-n">/0.{i + 1}</span>
-          </div>
-          <div className="pl-media" aria-hidden="true">
-            <img className={'pl-logo' + (p.logoSquare ? ' sq' : '')} src={p.logo} alt="" />
-            <div className="pl-shot">
-              {p.video
-                ? <video ref={vid} src={p.video} poster={p.poster} muted loop playsInline preload="metadata" />
-                : <img src={p.img} alt="" loading="lazy" />}
-            </div>
-          </div>
-          <div className="pl-name">{p.title}</div>
+    <>
+      <div className={'voice-pop' + (chat ? ' open' : '')} role="dialog" aria-label="Ask about Harbor" aria-hidden={!chat}>
+        <div className={'orb big' + (voice.mode === 'listening' ? ' live' : voice.mode === 'speaking' ? ' talk' : '')} aria-hidden="true" />
+        <div className="voice-status" aria-live="polite">
+          {voice.mode === 'listening' ? 'Listening…' : voice.mode === 'speaking' ? 'Speaking…' : voice.canListen ? 'Tap the mic and ask about Harbor' : 'Pick a question'}
         </div>
-      </a>
-    </li>
+        <div className="voice-q">{voice.q}</div>
+        <div className="voice-a">{voice.a}</div>
+        <div className="voice-chips">
+          {CHIPS.map(c => <button key={c} tabIndex={chat ? 0 : -1} onClick={() => voice.ask(c)}>{c}</button>)}
+        </div>
+        <div className="voice-ctrl">
+          {voice.canListen && (
+            <button className={'mic' + (voice.mode === 'listening' ? ' on' : '')} tabIndex={chat ? 0 : -1} aria-label={voice.mode === 'listening' ? 'Stop listening' : 'Start talking'} onClick={voice.listen}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="1.8" strokeLinecap="round" width="22" height="22"><rect x="9" y="3" width="6" height="12" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>
+            </button>
+          )}
+          <button className="end" tabIndex={chat ? 0 : -1} aria-label="Close" onClick={() => { voice.stop(); setChat(false) }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="#0F0F0F" strokeWidth="2" strokeLinecap="round" width="22" height="22"><path d="M6 6l12 12M18 6L6 18" /></svg>
+          </button>
+        </div>
+      </div>
+      <button className={'voice-fab' + (fab ? ' show' : '')} aria-label={chat ? 'Close voice assistant' : 'Ask about Harbor'} aria-expanded={chat}
+        onClick={() => { if (chat) voice.stop(); setChat(v => !v) }}>
+        <span className={'orb' + (voice.mode !== 'idle' ? ' live' : '')} />
+      </button>
+    </>
   )
 }
 
-/** the hero's background video: muted, looping, plays inline; reduced motion keeps the poster still */
-function HeroVideo() {
-  const v = useRef<HTMLVideoElement>(null)
-  useEffect(() => {
-    const el = v.current; if (!el) return
-    el.muted = true
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { el.pause(); return }
-    el.play().catch(() => {})
-  }, [])
+function ProjectBlock({ p }: { p: Project }) {
+  const href = p.href ?? '#projects'
   return (
-    <video ref={v} className="hero-img hero-vid" src={HERO_VIDEO} poster={HERO_POSTER}
-      autoPlay muted loop playsInline preload="auto" aria-hidden="true" />
+    <article className="proj" data-reveal>
+      <div className="proj-head">
+        <h3><span>{p.title}</span><span className="sub">{p.sub}</span></h3>
+        <a className="link" href={href}>View project <span className="go">→</span></a>
+      </div>
+      <a className="proj-frame proj-media" href={href} aria-label={`View ${p.title}`}>
+        <div className="shot" style={p.ratio ? { aspectRatio: p.ratio } : undefined}>
+          {p.video
+            ? <video src={p.video} poster={p.poster} autoPlay muted loop playsInline preload="metadata" aria-label={p.alt} />
+            : <img src={p.img} alt={p.alt ?? ''} loading="lazy" />}
+          <span className="view">View project →</span>
+        </div>
+      </a>
+    </article>
   )
 }
 
 export function App() {
   const screenInit = useScreenInit() as { section?: string } | undefined
+  const [q, setQ] = useState(0)
   const heroBg = useRef<HTMLDivElement>(null)
 
-  const line2 = useTyped(HERO_LINE2, 'hero', 45, 700)
+  const line2 = useTyped('a product designer, end to end', 'hero', 45, 700)
   useReveal()
 
   // Hero parallax.
@@ -507,6 +550,13 @@ export function App() {
     return () => { removeEventListener('scroll', onScroll); cancelAnimationFrame(raf) }
   }, [])
 
+  // Hero quote rotation.
+  useEffect(() => {
+    if (QUOTES.length < 2) return
+    const a = window.setInterval(() => setQ(v => (v + 1) % QUOTES.length), QUOTE_MS)
+    return () => clearInterval(a)
+  }, [])
+
   // Screens preview: jump to the requested section on load.
   useEffect(() => {
     const key = screenInit?.section
@@ -519,19 +569,18 @@ export function App() {
   }, [screenInit])
 
   return (
-    <div className="hb home" id="top">
+    <div className="hb" id="top">
       <style>{CSS + PAGE_CSS}</style>
-      {/* Tektur Medium: hero headline, Selected work heading and project names */}
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tektur:wght@500&display=swap" />
       <SiteHeader />
 
       {/* ===== Hero ===== */}
       <section className="hero" aria-label="Intro">
-        <div className="hero-bg" ref={heroBg}><HeroVideo /></div>
+        <div className="hero-bg" ref={heroBg}><div className="hero-img" style={{ backgroundImage: `url("${IMG3}hero.jpg")` }} /></div>
         <div className="hero-copy">
+          <p className="quote" key={q}>{QUOTES[q]}</p>
           <h1 className="h1">
             <span className="l1">Who is Harbor?</span>
-            <span className="sub" aria-label={HERO_LINE2}>{line2}<i className="caret" aria-hidden="true" /></span>
+            <span className="sub" aria-label="a product designer, end to end">{line2}<i className="caret" aria-hidden="true" /></span>
           </h1>
           <div className="ctas hero-ctas">
             <a className="btn btn-ghost" href="#projects">See my work</a>
@@ -541,14 +590,17 @@ export function App() {
       </section>
 
       <main>
-        {/* ===== Selected work — palantir.com "Our Software"-style list ===== */}
-        <section className="sec pl-sec" id="projects" aria-labelledby="pl-title">
+        {/* ===== Selected work — one project per block ===== */}
+        <section className="sec projects-sec" id="projects" aria-label="Selected work">
           <div className="wrap">
-            <h2 className="pl-title" id="pl-title" data-reveal>Selected work</h2>
+            <div className="sec-head" data-reveal>
+              <div>
+                <div className="eyebrow">(01) Selected work</div>
+                <h2 className="h2">Projects, end to end</h2>
+              </div>
+            </div>
+            {PROJECTS.map(p => <ProjectBlock p={p} key={p.title} />)}
           </div>
-          <ul className="pl-list">
-            {PROJECTS.map((p, i) => <ProjectRow p={p} i={i} key={p.title} />)}
-          </ul>
         </section>
 
         <ClosingCTA />

@@ -26,6 +26,9 @@ html, body, button, input, select, textarea, .hb, .hb *, .font-sans, .font-mono,
 /* footer (Footer.tsx): its top line is drawn inside the box, like Figma's inside stroke */
 footer.ft { border-top: 0; box-shadow: inset 0 1px 0 rgba(255,255,255,.08); }
 
+/* About (Pages.tsx): each filter row is exactly 24px, so the four make the Figma 96px block */
+.hb .ab-filters li { display: flex; height: 24px; margin: 0; padding: 0; }
+
 /* main: fix specificity clashes with `.hb a { color: inherit }` */
 .hb .btn-sm, .hb .btn-light { color: #0F0F0F; }
 .hb .site.scrolled .btn-sm { color: #FFFFFF; }

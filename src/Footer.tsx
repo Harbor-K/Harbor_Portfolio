@@ -6,13 +6,12 @@ import { FOOTER_LOGO_SVG } from './harborLogo'
 // footers (class "foot") are hidden.
 // - #0A0809, a 1px rgba(255,255,255,.08) line drawn inside the top, 80px top / 40px bottom padding: 392px tall at 1920.
 // - 1440 container, 64px between the top row and the bottom row.
-// - Top row (160px): the Harbor logo (Figma's own SVG, 167×40) in a 432px column, then three link columns —
-//   Explore 336px (Home, Projects, About me, Resume), Projects 432px (Trust Bank, GameCove, UTrada), Contact 240px
-//   (LinkedIn, Instagram, Email, Book a call). Headings #FAFAFA, links #8C8C8C; 16px under a heading, 8px between links.
+// - Top row (160px): the Harbor logo (v88: mark + "Harbor" in Newsreader Medium, Figma 569:10674, at 164×40) in a 432px
+//   column, then three link columns — Explore 336px (Home, Projects, About me, Resume), Projects 432px (Trust Bank,
+//   GameCove, UTrada), Contact 240px (LinkedIn, Instagram, Email, Book a call). Column headings in Newsreader Regular
+//   16/24 #FAFAFA (v88, Harbor); links in Helvetica Neue Regular 16/24 #8C8C8C; 16px under a heading, 8px between links.
 // - Bottom row (48px): a 1px rgba(250,250,250,.16) line inside its top, 24px padding, then "© 2026 Harbor (Jihyun) Kim.
-//   All rights reserved." on the left and "Back to top ↑" on the right, both #8C8C8C.
-// Type: every text in the footer is one style — Helvetica Neue Regular 16/24 (Figma shows it as Arimo, its stand-in),
-// sentence case (v86, Harbor: "CV" is now "Resume", like the header button).
+//   All rights reserved." on the left and "Back to top ↑" on the right, Helvetica Neue 16/24 #8C8C8C.
 // Lines are drawn inside boxes (inset shadows), like Figma's inside strokes, so no line adds to a size.
 // Interactions: links and the logo brighten on hover; the logo and "Home" go to the top of the main page;
 // "Resume" opens an email asking for it (no file yet), like the header's Resume button;
@@ -27,6 +26,7 @@ const F = {
   resume: `mailto:${MAIL}?subject=${encodeURIComponent('Resume request')}`,
 }
 const SANS = '"Helvetica Neue", Helvetica, Arial, sans-serif'
+const SERIF = '"Newsreader", Georgia, "Times New Roman", serif'
 
 const FT_CSS = `
 .foot:not(.ft) { display: none !important; }
@@ -35,9 +35,10 @@ footer.ft { position: relative; display: flex; justify-content: center; padding:
 .ft *, .ft *::before, .ft *::after { box-sizing: border-box; }
 .ft .ft-in { display: flex; flex-direction: column; gap: 64px; width: min(1440px, calc(100vw - 64px)); }
 
-/* one text style for the whole footer: Helvetica Neue Regular 16/24 */
-.ft .ft-h, .ft .ft-links a, .ft .ft-copy, .ft .ft-top-btn { font-family: ${SANS}; font-size: 16px; font-weight: 400; line-height: 24px;
+/* text: links, copyright and "Back to top" in Helvetica Neue Regular 16/24; column headings in Newsreader Regular 16/24 */
+.ft .ft-links a, .ft .ft-copy, .ft .ft-top-btn { font-family: ${SANS}; font-size: 16px; font-weight: 400; line-height: 24px;
   letter-spacing: 0; text-transform: none; white-space: nowrap; }
+.ft .ft-h { margin: 0; font-family: ${SERIF}; font-size: 16px; font-weight: 400; line-height: 24px; letter-spacing: 0; color: #FAFAFA; white-space: nowrap; }
 
 /* top row: 432 | 336 | 432 | 240 */
 .ft .ft-top { display: flex; align-items: flex-start; width: 100%; }
@@ -47,9 +48,8 @@ footer.ft { position: relative; display: flex; justify-content: center; padding:
 .ft .ft-col.c2 { width: 30%; }
 .ft .ft-col.c3 { width: 16.6667%; }
 .ft .ft-logo { display: inline-flex; color: #FAFAFA; text-decoration: none; transition: opacity .2s ease; }
-.ft .ft-logo svg { display: block; width: 167px; height: 40px; }
+.ft .ft-logo svg { display: block; width: 164px; height: 40px; }
 .ft .ft-logo:hover { opacity: .8; }
-.ft .ft-h { margin: 0; color: #FAFAFA; }
 .ft .ft-links { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .ft .ft-links a { display: block; color: #8C8C8C; text-decoration: none; transition: color .2s ease; }
 .ft .ft-links a:hover, .ft .ft-links a:focus-visible { color: #FAFAFA; }
@@ -92,6 +92,7 @@ const toTop = () => window.scrollTo({ top: 0, behavior: reduce() ? 'auto' : 'smo
 export function Footer() {
   return (
     <footer className="ft" aria-label="Site footer">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" />
       <style>{FT_CSS}</style>
       <div className="ft-in">
         <div className="ft-top">

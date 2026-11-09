@@ -3,20 +3,25 @@ import { CSS, IMG } from './portfolio'
 import { PAGE_CSS, LINKS, SiteHeader, SiteFooter, ClosingCTA, VoiceAssistant, useReveal } from './App'
 
 // About me page.
-// Top: a gallery laid out like accordion.net.au/work (Harbor's reference) — a filter list on the left (ALL / WORK / DRAWING /
-// TRAVEL with counts), a LIST / GRID switch at the bottom left, the photos stacked down the middle with a small label and
-// a large title over each, and a thumbnail index on the right that follows the scroll (the current one in colour,
-// marked with + on both sides; click to jump). GRID shows the same photos three across; pointing at one turns the
-// others grey and shows its title; clicking it opens it in the list.
-// Type stays Helvetica Neue (Harbor's rule) and every text is 16px or larger, so the labels are bigger than the reference's.
-// Copy comes from Portfolio_1's About page (statement, Fine Art → UX, what I do now, travel and sketching) and the
-// captions this page already had. Photos: only the ones large enough to show big (600–900px); the small collage shots
-// from Portfolio_1 (117–440px) would blur at this size.
-// The red panda drawing (last item) was removed at Harbor's request (Nov 9), so the gallery has six photos.
-// Below the gallery, from Experience down, nothing changed (Harbor's note).
+// Top (v87): Harbor's Figma "About · accordion list (11/09)" (44기 김지현 4차 PF, node 557:27), built to its sizes —
+// - Page #FAFAF9. A 1440 row: a 276px left rail | the 888px list | a 276px right rail.
+// - List: six 888×1024 photos, 8px apart, starting 16px under the header, 160px under the last one. Each photo is
+//   filled (cover, centred) under a shade (24% → 40% → 64% black). Inside, 40px padding: the label (Helvetica Neue
+//   16/24, +4% tracking, capitals) and the title (Newsreader 64/72, -2%) 16px apart in the middle; the line of copy
+//   (16/24, 72% white, 560 wide, centred) at the bottom, in a 48px band balanced by a 48px band at the top so every
+//   title sits on the same line.
+// - Left rail (stays on screen while the list scrolls): filters ALL / WORK 2 / DRAWING 3 / TRAVEL 1, 24px rows, the
+//   current one in #0F0F0F with an 8px square, the others at 40% with their count; LIST / GRID 24px apart, 40px from
+//   the bottom of the screen.
+// - Right rail (stays on screen): the photo index, 8px apart — 48×64 in grey, the current one 64×80 in colour with a
+//   "+" 8px before it; right edge on the 1440 line. Click to jump; it follows the scroll.
+// - GRID shows the same photos three across; pointing at one greys the others and shows its title; click opens it in
+//   the list.
+// Copy from the Figma frame. Every text 16px or larger.
+// Below the list, from Experience down, nothing changed (Harbor's note).
 
 const SUB_CSS = `
-.sub-page { background: #fff; }
+.sub-page { background: #FAFAF9; }
 .sub-ctas { display: flex; gap: 12px; margin-top: 40px; flex-wrap: wrap; }
 .btn-ink { background: var(--ink); color: #fff; font-weight: 500; }
 .hb .btn-ink { color: #fff; }
@@ -70,68 +75,83 @@ const SUB_CSS = `
 }
 `
 
-/* ------------------------------------------------------------------ gallery (accordion.net.au/work layout) */
+/* ------------------------------------------------------------------ the list (Figma 557:27) */
+
+const SANS = '"Helvetica Neue", Helvetica, Arial, sans-serif'
+const SERIF = '"Newsreader", Georgia, "Times New Roman", serif'
 
 const AB_CSS = `
-.hb .ab { background: #fff; padding: 112px 0 40px; }
-.hb .ab-layout { display: grid; grid-template-columns: 220px minmax(0, 1fr) 120px; gap: 24px; width: min(1440px, calc(100vw - 48px)); margin: 0 auto; }
-.hb .ab-side { position: relative; }
-.hb .ab-side-in { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; justify-content: center; }
-.hb .ab-filters, .hb .ab-view { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.hb .ab-view { position: absolute; left: 0; bottom: 28px; flex-direction: row; gap: 20px; }
-.hb .ab-opt { display: inline-flex; align-items: center; gap: 8px; padding: 0; margin: 0; background: none; border: 0; cursor: pointer;
-  font-size: 16px; line-height: 1.3; letter-spacing: .05em; text-transform: uppercase; color: #B3B3B0; transition: color .2s; }
-.hb .ab-opt:hover, .hb .ab-opt[aria-pressed="true"] { color: var(--ink); }
-.hb .ab-opt .sq { width: 8px; height: 8px; background: currentColor; opacity: 0; transition: opacity .2s; }
-.hb .ab-opt[aria-pressed="true"] .sq { opacity: 1; }
-.hb .ab-opt .n { color: #B3B3B0; letter-spacing: 0; }
+.hb .ab { background: #FAFAF9; padding: 0 0 160px; }
+.hb .ab-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 888px) minmax(0, 1fr); width: min(1440px, calc(100vw - 64px)); margin: 0 auto; }
+.hb .ab-side, .hb .ab-thumbs { position: relative; }
+.hb .ab-side-in, .hb .ab-thumbs-in { position: sticky; top: 0; height: 100vh; }
 
-/* list: photos down the middle, label + title over each */
-.hb .ab-list { display: flex; flex-direction: column; gap: 8px; width: min(720px, 100%); margin: 0 auto; }
-.hb .ab-item { position: relative; overflow: hidden; background: #111; scroll-margin-top: 96px; }
-.hb .ab-item img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; transition: transform 1.4s var(--ease); }
+/* rail text: 16/24, +4% tracking, capitals; current #0F0F0F with an 8px square, the rest 40% */
+.hb .ab-filters { position: absolute; left: 0; top: calc(50% - 92px); display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.hb .ab-view { position: absolute; left: 0; bottom: 40px; display: flex; gap: 24px; }
+.hb .ab-opt { display: inline-flex; align-items: center; gap: 8px; height: 24px; padding: 0; margin: 0; background: none; border: 0; border-radius: 0; cursor: pointer;
+  font-family: ${SANS}; font-size: 16px; font-weight: 400; line-height: 24px; color: rgba(15,15,15,.4); transition: color .2s ease; }
+.hb .ab-opt .lab { letter-spacing: .04em; text-transform: uppercase; }
+.hb .ab-opt .sq { display: none; flex: none; width: 8px; height: 8px; background: currentColor; }
+.hb .ab-opt:hover { color: rgba(15,15,15,.72); }
+.hb .ab-opt[aria-pressed="true"] { color: #0F0F0F; }
+.hb .ab-opt[aria-pressed="true"] .sq { display: block; }
+.hb .ab-opt:focus-visible { outline: 2px solid #0F0F0F; outline-offset: 3px; }
+
+/* list: 888×1024 photos, 8px apart */
+.hb .ab-list { display: flex; flex-direction: column; gap: 8px; padding-top: 80px; }
+.hb .ab-item { position: relative; display: flex; flex-direction: column; align-items: center; width: 100%; height: 1024px; padding: 40px;
+  overflow: hidden; background: #111; color: #FAFAFA; scroll-margin-top: 80px; }
+.hb .ab-item img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%; transition: transform 1.4s var(--ease); }
 .hb .ab-item:hover img { transform: scale(1.02); }
-.hb .ab-item::after { content: ""; position: absolute; inset: 0; background: rgba(0,0,0,.36); pointer-events: none; }
-.hb .ab-cap { position: absolute; z-index: 1; left: 0; right: 0; top: 50%; transform: translateY(-50%); padding: 0 40px; text-align: center; color: #fff; }
-.hb .ab-cap .k { font-size: 16px; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.9); }
-.hb .ab-cap h2 { margin: 12px 0 0; font-size: clamp(40px, 4vw, 64px); font-weight: 300; line-height: 1.05; letter-spacing: -0.03em; }
-.hb .ab-cap p { margin: 18px auto 0; max-width: 470px; font-size: 18px; line-height: 1.5; color: rgba(255,255,255,.88); }
+.hb .ab-item::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(0,0,0,.24) 0%, rgba(0,0,0,.4) 50%, rgba(0,0,0,.64) 100%); }
+.hb .ab-band { position: relative; z-index: 1; flex: none; height: 48px; width: 100%; }
+.hb .ab-cap { position: relative; z-index: 1; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+  width: 100%; text-align: center; }
+.hb .ab-cap .k { font-family: ${SANS}; font-size: 16px; font-weight: 400; line-height: 24px; letter-spacing: .04em; text-transform: uppercase; color: #FAFAFA; }
+.hb .ab-cap h2 { margin: 0; font-family: ${SERIF}; font-size: 64px; font-weight: 400; line-height: 72px; letter-spacing: -0.02em; color: #FAFAFA; }
+.hb .ab-body { position: relative; z-index: 1; flex: none; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 48px; width: 100%; }
+.hb .ab-body p { margin: 0; width: 560px; max-width: 100%; font-family: ${SANS}; font-size: 16px; font-weight: 400; line-height: 24px; text-align: center; color: rgba(250,250,250,.72); }
 
-/* thumbnail index on the right */
-.hb .ab-thumbs { position: relative; }
-.hb .ab-thumbs-in { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: flex-end; gap: 6px; padding-right: 22px; }
-.hb .ab-thumb { position: relative; display: block; width: 40px; height: 48px; padding: 0; border: 0; background: #eee; cursor: pointer; transition: width .3s var(--ease), height .3s var(--ease); }
-.hb .ab-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; filter: grayscale(1); opacity: .75; transition: filter .3s, opacity .3s; }
-.hb .ab-thumb:hover img { opacity: 1; }
-.hb .ab-thumb.on { width: 54px; height: 64px; }
-.hb .ab-thumb.on img { filter: none; opacity: 1; }
-.hb .ab-thumb.on::before, .hb .ab-thumb.on::after { content: "+"; position: absolute; top: 50%; transform: translateY(-50%); font-size: 16px; line-height: 1; color: var(--ink); }
-.hb .ab-thumb.on::before { left: -18px; }
-.hb .ab-thumb.on::after { right: -18px; }
+/* photo index: 48×64 grey, the current 64×80 in colour with "+" before it; right edge on the 1440 line */
+.hb .ab-thumbs-col { position: absolute; right: 0; top: calc(50% - 140px); display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.hb .ab-thumb { display: flex; align-items: center; gap: 8px; padding: 0; margin: 0; background: none; border: 0; border-radius: 0; cursor: pointer; }
+.hb .ab-thumb .pl { display: none; font-family: ${SANS}; font-size: 16px; line-height: 24px; color: #0F0F0F; }
+.hb .ab-thumb .im { display: block; width: 48px; height: 64px; overflow: hidden; background: #E6E6E3; transition: width .3s var(--ease), height .3s var(--ease); }
+.hb .ab-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; filter: grayscale(1); transition: filter .3s ease; }
+.hb .ab-thumb:hover img { filter: grayscale(.4); }
+.hb .ab-thumb.on .pl { display: block; }
+.hb .ab-thumb.on .im { width: 64px; height: 80px; }
+.hb .ab-thumb.on img { filter: none; }
+.hb .ab-thumb:focus-visible { outline: 2px solid #0F0F0F; outline-offset: 3px; }
 
 /* grid: three across; pointing at one greys the rest and shows its title */
-.hb .ab-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
-.hb .ab-card { position: relative; display: block; width: 100%; aspect-ratio: 1 / 1; padding: 0; margin: 0; border: 0; overflow: hidden; background: #eee; cursor: pointer; text-align: left; }
+.hb .ab-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding-top: 80px; }
+.hb .ab-card { position: relative; display: block; width: 100%; aspect-ratio: 888 / 1024; padding: 0; margin: 0; border: 0; overflow: hidden; background: #eee; cursor: pointer; text-align: left; }
 .hb .ab-card img { display: block; width: 100%; height: 100%; object-fit: cover; transition: filter .4s, transform 1s var(--ease); }
 .hb .ab-grid:hover .ab-card:not(:hover) img { filter: grayscale(1); }
 .hb .ab-card:hover img { transform: scale(1.02); }
 .hb .ab-card .cc { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 14px 14px; background: #fff; color: var(--ink); transform: translateY(101%); transition: transform .35s var(--ease); }
 .hb .ab-card:hover .cc, .hb .ab-card:focus-visible .cc { transform: none; }
-.hb .ab-card .cc .t { display: block; font-size: 20px; line-height: 1.2; letter-spacing: -0.01em; }
-.hb .ab-card .cc .k { display: block; margin-top: 4px; font-size: 16px; letter-spacing: .05em; text-transform: uppercase; color: var(--mute); }
+.hb .ab-card .cc .t { display: block; font-family: ${SERIF}; font-size: 20px; line-height: 1.2; letter-spacing: -0.01em; }
+.hb .ab-card .cc .k { display: block; margin-top: 4px; font-size: 16px; letter-spacing: .04em; text-transform: uppercase; color: var(--mute); }
 
-@media (max-width: 1100px) {
-  .hb .ab-layout { grid-template-columns: 180px minmax(0, 1fr) 96px; }
+@media (max-width: 1200px) {
+  .hb .ab-layout { grid-template-columns: 160px minmax(0, 1fr) 104px; }
+  .hb .ab-item { height: auto; aspect-ratio: 888 / 1024; }
 }
 @media (max-width: 900px) {
-  .hb .ab { padding-top: 104px; }
-  .hb .ab-layout { grid-template-columns: minmax(0, 1fr); width: calc(100vw - 32px); gap: 0; }
-  .hb .ab-side-in { position: static; height: auto; flex-direction: row; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px 20px; margin-bottom: 20px; }
-  .hb .ab-filters { flex-direction: row; flex-wrap: wrap; gap: 8px 16px; }
-  .hb .ab-view { position: static; }
+  .hb .ab-layout { grid-template-columns: minmax(0, 1fr); width: calc(100vw - 32px); }
+  .hb .ab-side-in { position: static; height: auto; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px 20px; padding-top: 88px; }
+  .hb .ab-filters, .hb .ab-view { position: static; }
+  .hb .ab-filters { flex-direction: row; flex-wrap: wrap; gap: 0 16px; }
   .hb .ab-thumbs { display: none; }
-  .hb .ab-cap { padding: 0 20px; }
-  .hb .ab-cap p { font-size: 16px; }
+  .hb .ab-list, .hb .ab-grid { padding-top: 16px; }
+  .hb .ab-item { padding: 24px; }
+  .hb .ab-cap h2 { font-size: 40px; line-height: 48px; }
+  .hb .ab-band { height: 24px; }
+  .hb .ab-body { height: auto; }
   .hb .ab-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 `
@@ -140,45 +160,36 @@ const A = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/abou
 const V = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/6a56c6411f5a62474ed739e5fb9b361e0733428b/assets/about/v2/'
 
 type Cat = 'Work' | 'Drawing' | 'Travel'
-type Item = { id: string; cat: Cat; src: string; ratio: string; pos?: string; label: string; title: string; notes?: string[]; alt: string }
+type Item = { id: string; cat: Cat; src: string; label: string; title: string; note?: string; alt: string }
 
-// Copy: Portfolio_1 About (statement, Fine Art → UX, what I do now, travel line) and this page's earlier captions.
+// Copy: the Figma frame (557:27).
 const ITEMS: Item[] = [
   {
-    id: 'about', cat: 'Work', src: A + 'film-fintech.jpg', ratio: '4 / 3', pos: '50% 40%',
-    label: 'About me', title: 'Harbor Kim',
-    notes: [
-      'I’m an AI-native product designer who owns the work end to end, from finding the problem to shipping the fix.',
-      'I’ve spent 3+ years on fintech and e-learning: trading platforms, digital banking, crypto wallets and data dashboards.',
-    ],
+    id: 'about', cat: 'Work', src: A + 'film-fintech.jpg', label: 'About me', title: 'Harbor Kim',
+    note: 'I’m an AI-native product designer who owns the work end to end, from finding the problem to shipping the fix.',
     alt: 'Harbor at work with her laptop',
   },
   {
-    id: 'fine-art', cat: 'Drawing', src: V + 'fineart-exhibition.jpg', ratio: '4 / 5', pos: '50% 35%',
-    label: 'Where I started', title: 'Fine Art',
-    notes: ['I started in Fine Art, painting what I saw. I loved it, but I wanted to make things everyone can use. That brought me to UX.'],
+    id: 'fine-art', cat: 'Drawing', src: V + 'fineart-exhibition.jpg', label: 'Where I started', title: 'Fine Art',
+    note: 'I started in Fine Art, painting what I saw. I loved it, but I wanted to make things everyone can use. That brought me to UX.',
     alt: 'Harbor at her Fine Art exhibition, in front of her watercolour paintings',
   },
   {
-    id: 'now', cat: 'Work', src: V + 'sticky-wall.jpg', ratio: '4 / 5', pos: '30% 45%',
-    label: 'What I do now', title: 'Fintech, end to end',
-    notes: ['Now I design fintech products, end to end. I test everything with real people.'],
+    id: 'now', cat: 'Work', src: V + 'sticky-wall.jpg', label: 'What I do now', title: 'Fintech, end to end',
+    note: 'Now I design fintech products, end to end. I test everything with real people.',
     alt: 'Harbor sorting sticky notes on a research wall',
   },
   {
-    id: 'abroad', cat: 'Travel', src: A + 'film-places.jpg', ratio: '4 / 3',
-    label: 'Australia · UK', title: 'Lived and worked abroad',
-    notes: ['Off the clock, I travel and sketch the places I visit.'],
+    id: 'abroad', cat: 'Travel', src: A + 'film-places.jpg', label: 'Australia · UK', title: 'Lived and worked abroad',
+    note: 'Off the clock, I travel and sketch the places I visit.',
     alt: 'Harbor at afternoon tea, by Sydney Harbour and on the cliffs by the sea',
   },
   {
-    id: 'on-location', cat: 'Drawing', src: A + 'drawing-1.jpg', ratio: '4 / 5',
-    label: 'Off the clock', title: 'Sketching on location',
+    id: 'on-location', cat: 'Drawing', src: A + 'drawing-1.jpg', label: 'Off the clock', title: 'Sketching on location',
     alt: 'A pencil sketch of a tree, held up in front of the place it was drawn',
   },
   {
-    id: 'what-i-see', cat: 'Drawing', src: A + 'drawing-3.jpg', ratio: '1 / 1',
-    label: 'Off the clock', title: 'Drawing what I see',
+    id: 'what-i-see', cat: 'Drawing', src: A + 'drawing-3.jpg', label: 'Off the clock', title: 'Drawing what I see',
     alt: 'A watercolour sketch held up in front of the street it shows',
   },
 ]
@@ -192,10 +203,10 @@ function Gallery() {
   const [active, setActive] = useState(ITEMS[0].id)
   const sec = useRef<HTMLElement>(null)
   const items = cat === 'All' ? ITEMS : ITEMS.filter(i => i.cat === cat)
-  const count = (c: 'All' | Cat) => (c === 'All' ? ITEMS.length : ITEMS.filter(i => i.cat === c).length)
+  const count = (c: Cat) => ITEMS.filter(i => i.cat === c).length
   useReveal(`${cat}-${view}`)
 
-  // the photo in the middle of the screen is the current one in the thumbnail index
+  // the photo in the middle of the screen is the current one in the photo index
   useEffect(() => {
     if (view !== 'list' || !('IntersectionObserver' in window)) return
     const els = Array.from(document.querySelectorAll<HTMLElement>('.ab-item'))
@@ -204,7 +215,7 @@ function Gallery() {
     return () => io.disconnect()
   }, [cat, view])
 
-  // a new filter or view starts from the top of the gallery
+  // a new filter or view starts from the top of the list
   const toTop = () => {
     const s = sec.current
     if (s && s.getBoundingClientRect().top < 0) scrollTo({ top: s.offsetTop, behavior: 'auto' })
@@ -234,7 +245,7 @@ function Gallery() {
               {CATS.map(c => (
                 <li key={c}>
                   <button type="button" className="ab-opt" aria-pressed={cat === c} onClick={() => pickCat(c)}>
-                    <span className="sq" aria-hidden="true" />{c === 'All' ? 'All' : c}{c !== 'All' && <span className="n">({count(c)})</span>}
+                    <span className="sq" aria-hidden="true" /><span className="lab">{c}</span>{c !== 'All' && <span className="n">{count(c)}</span>}
                   </button>
                 </li>
               ))}
@@ -242,7 +253,7 @@ function Gallery() {
             <div className="ab-view" role="group" aria-label="View">
               {(['list', 'grid'] as const).map(v => (
                 <button key={v} type="button" className="ab-opt" aria-pressed={view === v} onClick={() => pickView(v)}>
-                  <span className="sq" aria-hidden="true" />{v}
+                  <span className="sq" aria-hidden="true" /><span className="lab">{v}</span>
                 </button>
               ))}
             </div>
@@ -253,13 +264,14 @@ function Gallery() {
           {view === 'list' ? (
             <div className="ab-list">
               {items.map(it => (
-                <article key={it.id} className="ab-item" data-id={it.id} data-reveal style={{ aspectRatio: it.ratio }}>
-                  <img src={it.src} alt={it.alt} loading="lazy" style={it.pos ? { objectPosition: it.pos } : undefined} />
+                <article key={it.id} className="ab-item" data-id={it.id} data-reveal>
+                  <img src={it.src} alt={it.alt} loading="lazy" />
+                  <div className="ab-band" aria-hidden="true" />
                   <div className="ab-cap">
                     <div className="k">{it.label}</div>
                     <h2>{it.title}</h2>
-                    {it.notes?.map((n, i) => <p key={i}>{n}</p>)}
                   </div>
+                  <div className="ab-body">{it.note && <p>{it.note}</p>}</div>
                 </article>
               ))}
             </div>
@@ -267,7 +279,7 @@ function Gallery() {
             <div className="ab-grid">
               {items.map((it, i) => (
                 <button key={it.id} type="button" className="ab-card" data-reveal style={{ '--d': i % 3 } as React.CSSProperties} onClick={() => openFromGrid(it.id)} aria-label={`${it.title}, ${it.label}`}>
-                  <img src={it.src} alt="" loading="lazy" style={it.pos ? { objectPosition: it.pos } : undefined} />
+                  <img src={it.src} alt="" loading="lazy" />
                   <span className="cc" aria-hidden="true"><span className="t">{it.title}</span><span className="k">{it.label}</span></span>
                 </button>
               ))}
@@ -276,15 +288,18 @@ function Gallery() {
         </div>
 
         <nav className="ab-thumbs" aria-label="Photo index">
-          {view === 'list' && (
-            <div className="ab-thumbs-in">
-              {items.map(it => (
-                <button key={it.id} type="button" className={'ab-thumb' + (active === it.id ? ' on' : '')} aria-label={it.title} aria-current={active === it.id || undefined} onClick={() => goTo(it.id)}>
-                  <img src={it.src} alt="" loading="lazy" style={it.pos ? { objectPosition: it.pos } : undefined} />
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="ab-thumbs-in">
+            {view === 'list' && (
+              <div className="ab-thumbs-col">
+                {items.map(it => (
+                  <button key={it.id} type="button" className={'ab-thumb' + (active === it.id ? ' on' : '')} aria-label={it.title} aria-current={active === it.id || undefined} onClick={() => goTo(it.id)}>
+                    <span className="pl" aria-hidden="true">+</span>
+                    <span className="im"><img src={it.src} alt="" loading="lazy" /></span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </nav>
       </div>
     </section>

@@ -8,6 +8,7 @@ import { UTrada } from "./UTrada";
 import { AboutPage } from "./Pages";
 import { CursorTrail } from "./cursor";
 import { Footer } from "./Footer";
+import { useTabMeta } from "./tabMeta";
 import { useScreenInit } from "./useScreenInit.js";
 
 // Pages: the main page (Home.tsx); "#/about" the About page; "#/trust-bank", "#/gamecove" and "#/utrada" the case studies.
@@ -15,6 +16,7 @@ import { useScreenInit } from "./useScreenInit.js";
 // rendered here under whichever page is open (the main page included).
 // The line cursor (cursor.tsx) runs on every page — since v81 the main page too (Harbor, Nov 9). It is mounted once here
 // and stays mounted across page changes, so it never doubles up or restarts.
+// Browser tab (v83): Harbor-mark icon, a title per page, and "Still here?" while the tab is in the background (tabMeta.ts).
 // Any other hash (#projects, #contact…) is a section of the main page. An old "#/projects" link lands on Selected work.
 // Opening a page always jumps to its top instantly (not the site's smooth scroll), so a case study's full-screen intro
 // starts from the top even when you arrive from the bottom of another page.
@@ -40,6 +42,7 @@ function Root() {
   const isUT = is("#/utrada", "utrada");
   const isAB = is("#/about", "about");
   const page = isTB ? "tb" : isGC ? "gc" : isUT ? "ut" : isAB ? "ab" : "main";
+  useTabMeta(page);
 
   useEffect(() => {
     if (page !== "main") { jumpTop(); return; }

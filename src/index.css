@@ -1,7 +1,6 @@
 /* @import url() FONT IMPORTS MUST ALWAYS BE AT THE VERY TOP OF THIS FILE, ABOVE THE TAILWIND IMPORTS — DO NOT DELETE THIS COMMENT */
 /* No web-font import here: the site is set in Helvetica Neue (Harbor's rule). Newsreader and Geist are loaded where they
-   are used (the main hero and Selected work in Home.tsx, the Projects menu in SiteHeaderB.tsx, the Closing CTA in
-   ClosingCTAB.tsx, the footer in Footer.tsx). */
+   are used (Home.tsx, SiteHeaderB.tsx, ClosingCTAB.tsx). */
 
 /* CRITICAL: THE FOLLOWING TAILWIND IMPORTS MUST NEVER BE DELETED OR REORDERED — DO NOT DELETE THIS COMMENT */
 @import 'tailwindcss/base';
@@ -13,7 +12,7 @@
 
 /* One typeface everywhere: Helvetica Neue, including form controls, buttons and Tailwind's sans / mono / serif utilities.
    Elements that set their own font keep it on purpose: the handwriting on the Trust Bank Define whiteboard (Caveat /
-   Kalam), the Lato specimen in GameCove's design-system section, and the Figma fonts in the hero, Closing CTA and footer. */
+   Kalam), the Lato specimen in GameCove's design-system section, and the Figma fonts in the hero and Closing CTA. */
 html, body, button, input, select, textarea, .hb, .hb *, .font-sans, .font-mono, .font-serif {
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
@@ -24,9 +23,7 @@ html, body, button, input, select, textarea, .hb, .hb *, .font-sans, .font-mono,
   font-weight: 400;
 }
 
-/* footer (Footer.tsx): the wordmark sits at the top of its 296px band, at its own 1200:290 shape (Figma 474:290) */
-.ft .ft-word { align-items: flex-start; }
-/* footer: its top line is drawn inside the box, like Figma's inside stroke, so the footer is exactly 648px tall */
+/* footer (Footer.tsx): its top line is drawn inside the box, like Figma's inside stroke */
 footer.ft { border-top: 0; box-shadow: inset 0 1px 0 rgba(255,255,255,.08); }
 
 /* main: fix specificity clashes with `.hb a { color: inherit }` */

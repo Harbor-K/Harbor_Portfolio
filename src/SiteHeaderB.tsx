@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { HEADER_LOGO_SVG } from './harborLogo'
-import { GIFS, useGifSrc } from './gifPlay'
+import { GIFS, GIF_MS, useGifSrc } from './gifPlay'
 
 // The site header, shared by every page (main, About, Trust Bank, GameCove, UTrada).
 //
@@ -13,15 +13,17 @@ import { GIFS, useGifSrc } from './gifPlay'
 //   [ project card 320×360 | project list 330 ]
 // - Card: the project's picture filling it; 32px padding; at the top the project name (Newsreader 32/38, -2%) with its
 //   one-line description 8px under it (16/24, 75%); at the bottom "View project" (44px).
-//   Background (v90, Harbor): Trust Bank and GameCove play Harbor's 320×360 GIFs, which carry their own dark edges for
-//   the text, so no extra shade goes on them; each starts from its first frame when its project comes up. UTrada's
-//   screens keep the dark gradient.
+//   Background: Trust Bank and GameCove play Harbor's 320×360 GIFs, which carry their own dark edges for the text, so no
+//   extra shade goes on them; each starts from its first frame when its project comes up. UTrada's screens keep the
+//   dark gradient.
 // - List: 32px top / 16px sides; "Projects" label (16/24, 60%), 12px, then the three projects as 44px rows (12px
 //   side padding). Label and project names share one left edge (28px in), and the label's top lines up with the card's
 //   project name (32px down), so the panel reads as two groups: the shown project, and the choice of project.
-// - Interactions: opens on hover / click / focus, moves through the projects by itself every 2.8s while open
-//   (pointing at the list holds it), pointing at a project shows it in the card, Esc / click outside / page change
-//   closes it. The card's pictures load on the first open.
+// - Interactions: opens on hover / click / focus and moves through the projects by itself while open (pointing at the
+//   list holds it). v94: a GIF project stays up for its whole GIF (5.3s) before the next one, so its story plays to the
+//   end — at 2.8s GameCove moved on before its chat panel ever slid in, and looked frozen; UTrada's still stays 2.8s.
+//   Pointing at a project shows it in the card, Esc / click outside / page change closes it. The card's pictures load
+//   on the first open.
 //
 // mode — how the header sits on the page under it:
 // - 'overlay' (main page): transparent with light text over the dark hero; the light bar with ink text once scrolled.
@@ -155,7 +157,9 @@ const MENU: MenuItem[] = [
   { name: 'GameCove', sub: 'AI analytics dashboard', href: '#/gamecove', gif: GIFS.gameCoveMenu },
   { name: 'UTrada', sub: 'Trading platform design system', href: '#/utrada', img: IMG3 + 'utrada-screens.webp' },
 ]
-const CYCLE_MS = 2800
+// how long each project stays up while the menu moves through them: a GIF plays to its end (plus a beat), a still 2.8s
+const STILL_MS = 2800
+const dwell = (m: MenuItem) => (m.gif ? GIF_MS + 200 : STILL_MS)
 
 /** one card background; a GIF starts from its first frame whenever its project comes up */
 function MenuLayer({ m, active }: { m: MenuItem; active: boolean }) {
@@ -171,7 +175,7 @@ function ProjectsMenu() {
   const [open, setOpen] = useState(false)
   const [everOpen, setEverOpen] = useState(false) // the pictures load on the first open and stay
   const [hot, setHot] = useState(0)
-  const [held, setHeld] = useState(false) // pointer on the project list: stop cycling
+  const [held, setHeld] = useState(false) // pointer on the project list: stop moving on
   const ref = useRef<HTMLDivElement>(null)
   const closeTimer = useRef(0)
 
@@ -190,12 +194,12 @@ function ProjectsMenu() {
     }
   }, [open])
 
-  // while open, the menu moves through the projects by itself
+  // while open, the menu moves on to the next project once the shown one has had its time (a GIF: its whole length)
   useEffect(() => {
     if (!open || held || matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    const t = window.setInterval(() => setHot(h => (h + 1) % MENU.length), CYCLE_MS)
-    return () => clearInterval(t)
-  }, [open, held])
+    const t = window.setTimeout(() => setHot(h => (h + 1) % MENU.length), dwell(MENU[hot]))
+    return () => clearTimeout(t)
+  }, [open, held, hot])
 
   const openNow = () => { window.clearTimeout(closeTimer.current); setEverOpen(true); setOpen(true) }
   const closeSoon = () => { window.clearTimeout(closeTimer.current); closeTimer.current = window.setTimeout(() => { setOpen(false); setHeld(false) }, 180) }

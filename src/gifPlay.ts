@@ -10,6 +10,8 @@ export const GIFS = {
   gameCoveRow: G4 + 'gamecove-row.gif',
   gameCoveMenu: G4 + 'gamecove-menu.gif',
 }
+// every one of the four runs 76 frames, 5.32s, then loops (measured from the files)
+export const GIF_MS = 5320
 
 // A GIF keeps looping on its own clock, so pointing at a project could land in the middle of its story. To start it from
 // its first frame each time it is shown, the file is downloaded once and handed to the <img> as a fresh blob: URL on

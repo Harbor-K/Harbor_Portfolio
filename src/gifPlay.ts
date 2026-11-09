@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 
-// Harbor's animated GIFs (v90): Trust Bank and GameCove, for the main page's Selected work rows (384×224) and the
-// Projects menu card (320×360). Hosted with the site's other assets (Harbor-K/harbor-pf, assets/main-v4).
+// Harbor's animated GIFs: Trust Bank and GameCove, for the main page's Selected work rows (384×224) and the Projects
+// menu card (320×360). Hosted with the site's other assets (Harbor-K/harbor-pf, assets/main-v4).
+// v91 (Harbor, Nov 9): Trust Bank's two GIFs replaced with new versions (-v2 files; the first versions stay in the repo).
 const G4 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/main-v4/'
 export const GIFS = {
-  trustBankRow: G4 + 'trustbank-row.gif',
-  trustBankMenu: G4 + 'trustbank-menu.gif',
+  trustBankRow: G4 + 'trustbank-row-v2.gif',
+  trustBankMenu: G4 + 'trustbank-menu-v2.gif',
   gameCoveRow: G4 + 'gamecove-row.gif',
   gameCoveMenu: G4 + 'gamecove-menu.gif',
 }

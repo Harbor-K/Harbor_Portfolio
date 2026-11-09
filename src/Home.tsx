@@ -3,26 +3,28 @@ import { CSS, IMG3 } from './portfolioV74'
 import { useScreenInit } from './useScreenInit.js'
 import { SiteHeaderB } from './SiteHeaderB'
 import { GAMECOVE_LOGO_SVG, UTRADA_LOGO_SVG, svgUri } from './logos'
+import { GIFS, useGifSrc } from './gifPlay'
 
-// Main page (v84) — Harbor's Figma "Main · Trust Bank hover (video)" (44기 김지현 4차 PF, node 530:5259), built to the
-// frame's sizes and type; every interaction as before (v83).
+// Main page — Harbor's Figma "Main · Trust Bank hover (video)" (44기 김지현 4차 PF, node 530:5259), built to the
+// frame's sizes and type.
 //
-// Header: the shared site header (SiteHeaderB.tsx, mode 'overlay'); its Figma spacing/weights are applied in index.css.
+// Header: the shared site header (SiteHeaderB.tsx, mode 'overlay').
 // Hero (1080 at 1920×1080):
 // - Harbor's typing video, same slow zoom-in, parallax and gradient as before; #0F0F0F behind it.
 // - Copy 80px from the bottom: quote ticker (Newsreader 20/32, 90%), 16px, headline (Newsreader 64/72, -2%; two 68px
 //   lines, words 16px apart, second line 60%), 32px, two 192×48 buttons 8px apart (Helvetica Neue 16/24).
-// - Interactions unchanged: quote ticker every 2.5s, words rise in one by one, buttons fade in, dark layer lifts.
+// - Interactions: quote ticker every 2.5s, words rise in one by one, buttons fade in, dark layer lifts.
 // Selected work (#FBFAF9, 160px top and bottom):
 // - "Selected work" Newsreader 48/56 -2%, 64px above the list.
 // - Rows 320px (48px padding) in the 1440 column: 240px description (Helvetica Neue 18/24; /0.n 16/24 #595959),
 //   48px, 384×224 media, 48px, project name (Newsreader 96/96 -3%). 1px #DBDBD9 line between rows (hidden next to a
 //   hovered row), all lines drawn inside so rows stay 320.
-// - Logos at rest: 40px tall, black at 10% (Trust Bank, GameCove 307×40, UTrada 169×40).
-// - Hover (as before): the row turns #F0F0EE, the logo gives way to the project video / screens. As in the Figma hover
-//   frame, the other rows step back: their description to 48% and their name to 24%.
-// No Closing CTA on the main page (Harbor, Nov 9 — not in the Figma frame); ClosingCTAB.tsx is kept for later.
-// Footer: Footer.tsx (Figma 538:6543), rendered by index.tsx under every page.
+// - Logos at rest: 40px tall, black at 10%.
+// - Hover: the row turns #F0F0EE, the logo gives way to the project's media; the other rows step back (description
+//   48%, name 24%).
+// - Media (v90, Harbor): Trust Bank and GameCove show Harbor's 384×224 GIFs (gifPlay.ts), started from their first
+//   frame each time the row is pointed at; UTrada shows its screens.
+// Footer: Footer.tsx, rendered by index.tsx under every page.
 // Type: Helvetica Neue for UI (Figma's Arimo stands in for it), Newsreader for the hero and Selected work titles.
 
 const LINKS = {
@@ -42,29 +44,22 @@ const HERO_L2 = 'from Data to Impact'
 const HERO_VIDEO = IMG3 + 'hero-typing.mp4'
 const HERO_POSTER = IMG3 + 'hero-typing-poster.jpg'
 
-const GC = 'https://raw.githubusercontent.com/Harbor-K/landing_page/main/gamecove/assets/v4/'
 const TB = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/trust-bank/'
 
 // Selected work rows
-type Project = {
-  title: string; sub: string; href: string; logo: string
-  video?: string; poster?: string; img?: string
-}
+type Project = { title: string; sub: string; href: string; logo: string; gif?: string; img?: string }
 const PROJECTS: Project[] = [
   {
     title: 'Trust Bank', sub: 'Turning hidden rewards into everyday loyalty.', href: '#/trust-bank',
-    logo: TB + 'logo.svg',
-    video: TB + 'hero-sfx-v2.mp4', poster: TB + 'hero-sfx-v2-poster.jpg',
+    logo: TB + 'logo.svg', gif: GIFS.trustBankRow,
   },
   {
     title: 'GameCove', sub: 'An AI game-analytics dashboard.', href: '#/gamecove',
-    logo: svgUri(GAMECOVE_LOGO_SVG),
-    video: GC + 'hero-ad.mp4', poster: GC + 'hero-ad-poster.jpg',
+    logo: svgUri(GAMECOVE_LOGO_SVG), gif: GIFS.gameCoveRow,
   },
   {
     title: 'UTrada', sub: 'Product design for a trading platform.', href: '#/utrada',
-    logo: svgUri(UTRADA_LOGO_SVG),
-    img: IMG3 + 'utrada-screens.webp',
+    logo: svgUri(UTRADA_LOGO_SVG), img: IMG3 + 'utrada-screens.webp',
   },
 ]
 
@@ -132,7 +127,7 @@ const PAGE_CSS = `
   filter: grayscale(1) brightness(0); opacity: .1; transition: opacity .3s ease; }
 .pl-shot { position: absolute; inset: 0; overflow: hidden; background: #0F0F0F; opacity: 0; transform: scale(.94);
   transition: opacity .35s ease, transform .55s var(--ease); }
-.pl-shot video, .pl-shot img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.pl-shot img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .pl-link:hover .pl-shot, .pl-link:focus-visible .pl-shot { opacity: 1; transform: none; }
 .pl-link:hover .pl-logo, .pl-link:focus-visible .pl-logo { opacity: 0; }
 .hb .pl-name { font-family: ${SERIF}; font-size: clamp(64px, 5vw, 96px); font-weight: 400; line-height: 1; letter-spacing: -0.03em; color: #0F0F0F;
@@ -236,15 +231,14 @@ function useReveal(dep?: unknown) {
   }, [dep])
 }
 
-// Selected work row. Pointing at it shows the media and plays the video.
+// Selected work row. Pointing at it (or focusing it) shows the media; a GIF starts from its first frame each time.
 function ProjectRow({ p, i }: { p: Project; i: number }) {
-  const vid = useRef<HTMLVideoElement>(null)
-  const play = () => { const v = vid.current; if (v) { v.muted = true; v.play().catch(() => {}) } }
-  const stop = () => { const v = vid.current; if (v) v.pause() }
+  const [on, setOn] = useState(false)
+  const gif = useGifSrc(p.gif, on)
   return (
     <li className="pl-item" data-reveal>
-      <a className="pl-link" href={p.href} onMouseEnter={play} onMouseLeave={stop} onFocus={play} onBlur={stop}
-        aria-label={`${p.title}: ${p.sub}`}>
+      <a className="pl-link" href={p.href} onMouseEnter={() => setOn(true)} onMouseLeave={() => setOn(false)}
+        onFocus={() => setOn(true)} onBlur={() => setOn(false)} aria-label={`${p.title}: ${p.sub}`}>
         <div className="wrap pl-row">
           <div className="pl-desc">
             <p>{p.sub}</p>
@@ -253,9 +247,7 @@ function ProjectRow({ p, i }: { p: Project; i: number }) {
           <div className="pl-media" aria-hidden="true">
             <img className="pl-logo" src={p.logo} alt="" />
             <div className="pl-shot">
-              {p.video
-                ? <video ref={vid} src={p.video} poster={p.poster} muted loop playsInline preload="metadata" />
-                : <img src={p.img} alt="" loading="lazy" />}
+              {p.gif ? <img src={gif} alt="" width={384} height={224} /> : <img src={p.img} alt="" loading="lazy" />}
             </div>
           </div>
           <div className="pl-name">{p.title}</div>

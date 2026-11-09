@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { HEADER_LOGO_SVG } from './harborLogo'
+import { GIFS, useGifSrc } from './gifPlay'
 
 // The site header, shared by every page (main, About, Trust Bank, GameCove, UTrada).
 //
@@ -7,17 +8,20 @@ import { HEADER_LOGO_SVG } from './harborLogo'
 // Projects ▾ (96×24, 8px side padding) · 40px · About me | LinkedIn ↗ (8px to the arrow) · 32px · Resume (40px, 16px
 // side padding). Helvetica Neue Regular 16/24. Resume has no file yet, so it opens an email asking for it.
 //
-// Projects menu (v85, Harbor's Figma "Main · Projects menu open" 538:9995): one compact panel, 652×360, centred under
+// Projects menu (Harbor's Figma "Main · Projects menu open" 538:9995): one compact panel, 652×360, centred under
 // the Projects trigger, 8px below the header —
 //   [ project card 320×360 | project list 330 ]
-// - Card: the project's video (or screens) filling it under a dark gradient; 32px padding; at the top the project name
-//   (Newsreader 32/38, -2%) with its one-line description 8px under it (16/24, 75%); at the bottom "View project" (44px).
+// - Card: the project's picture filling it; 32px padding; at the top the project name (Newsreader 32/38, -2%) with its
+//   one-line description 8px under it (16/24, 75%); at the bottom "View project" (44px).
+//   Background (v90, Harbor): Trust Bank and GameCove play Harbor's 320×360 GIFs, which carry their own dark edges for
+//   the text, so no extra shade goes on them; each starts from its first frame when its project comes up. UTrada's
+//   screens keep the dark gradient.
 // - List: 32px top / 16px sides; "Projects" label (16/24, 60%), 12px, then the three projects as 44px rows (12px
 //   side padding). Label and project names share one left edge (28px in), and the label's top lines up with the card's
 //   project name (32px down), so the panel reads as two groups: the shown project, and the choice of project.
-// - Interactions as before: opens on hover / click / focus, moves through the projects by itself every 2.8s while open
+// - Interactions: opens on hover / click / focus, moves through the projects by itself every 2.8s while open
 //   (pointing at the list holds it), pointing at a project shows it in the card, Esc / click outside / page change
-//   closes it. The card's media load on the first open.
+//   closes it. The card's pictures load on the first open.
 //
 // mode — how the header sits on the page under it:
 // - 'overlay' (main page): transparent with light text over the dark hero; the light bar with ink text once scrolled.
@@ -35,8 +39,6 @@ const LINKS = {
   resume: `mailto:harborkim0328@gmail.com?subject=${encodeURIComponent('Resume request')}`,
 }
 const IMG3 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/main-v3/'
-const GC = 'https://raw.githubusercontent.com/Harbor-K/landing_page/main/gamecove/assets/v4/'
-const TB = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/trust-bank/'
 
 function ArrowUpRight() {
   return (
@@ -114,8 +116,9 @@ const HDR_CSS = `
 .hdrb .mm-card { position: relative; display: flex; flex-direction: column; justify-content: space-between; height: 360px; padding: 32px;
   overflow: hidden; background: #0C0A09; color: #FAFAFA; text-decoration: none; }
 .hdrb .mm-card .layer { position: absolute; inset: 0; transition: opacity .45s ease, transform .7s cubic-bezier(.22,1,.36,1); }
-.hdrb .mm-card .layer video, .hdrb .mm-card .layer img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 0; }
-.hdrb .mm-card::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+.hdrb .mm-card .layer img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 0; }
+/* the dark gradient for the text, only on pictures that don't carry their own (the GIFs do) */
+.hdrb .mm-card .layer.shade::after { content: ""; position: absolute; inset: 0; pointer-events: none;
   background: linear-gradient(180deg, rgba(12,10,9,.72) 0%, rgba(12,10,9,.25) 42%, rgba(12,10,9,.2) 62%, rgba(12,10,9,.7) 100%); }
 .hdrb .mm-card > .mm-t, .hdrb .mm-card > .mm-go { position: relative; z-index: 1; }
 .hdrb .mm-t { display: flex; flex-direction: column; gap: 8px; animation: hdrb-in .45s cubic-bezier(.22,1,.36,1) both; }
@@ -146,20 +149,30 @@ const HDR_CSS = `
 `
 
 /* ---------- Projects menu ---------- */
-const MENU = [
-  { name: 'Trust Bank', sub: 'Rewards UX revamp', href: '#/trust-bank', video: TB + 'hero-sfx-v2.mp4', poster: TB + 'hero-sfx-v2-poster.jpg', img: '' },
-  { name: 'GameCove', sub: 'AI analytics dashboard', href: '#/gamecove', video: GC + 'hero-ad.mp4', poster: GC + 'hero-ad-poster.jpg', img: '' },
-  { name: 'UTrada', sub: 'Trading platform design system', href: '#/utrada', video: '', poster: '', img: IMG3 + 'utrada-screens.webp' },
+type MenuItem = { name: string; sub: string; href: string; gif?: string; img?: string }
+const MENU: MenuItem[] = [
+  { name: 'Trust Bank', sub: 'Rewards UX revamp', href: '#/trust-bank', gif: GIFS.trustBankMenu },
+  { name: 'GameCove', sub: 'AI analytics dashboard', href: '#/gamecove', gif: GIFS.gameCoveMenu },
+  { name: 'UTrada', sub: 'Trading platform design system', href: '#/utrada', img: IMG3 + 'utrada-screens.webp' },
 ]
 const CYCLE_MS = 2800
 
+/** one card background; a GIF starts from its first frame whenever its project comes up */
+function MenuLayer({ m, active }: { m: MenuItem; active: boolean }) {
+  const gif = useGifSrc(m.gif, active)
+  return (
+    <div className={'layer' + (m.gif ? '' : ' shade')} style={{ opacity: active ? 1 : 0, transform: active ? 'scale(1)' : 'scale(1.04)' }}>
+      <img src={m.gif ? gif : m.img} alt="" width={320} height={360} />
+    </div>
+  )
+}
+
 function ProjectsMenu() {
   const [open, setOpen] = useState(false)
-  const [everOpen, setEverOpen] = useState(false) // the media load on the first open and stay
+  const [everOpen, setEverOpen] = useState(false) // the pictures load on the first open and stay
   const [hot, setHot] = useState(0)
   const [held, setHeld] = useState(false) // pointer on the project list: stop cycling
   const ref = useRef<HTMLDivElement>(null)
-  const vids = useRef<(HTMLVideoElement | null)[]>([])
   const closeTimer = useRef(0)
 
   useEffect(() => {
@@ -184,14 +197,6 @@ function ProjectsMenu() {
     return () => clearInterval(t)
   }, [open, held])
 
-  // only the shown project's video plays
-  useEffect(() => {
-    vids.current.forEach((v, i) => {
-      if (!v) return
-      if (open && i === hot) { v.muted = true; v.play().catch(() => {}) } else v.pause()
-    })
-  }, [open, hot, everOpen])
-
   const openNow = () => { window.clearTimeout(closeTimer.current); setEverOpen(true); setOpen(true) }
   const closeSoon = () => { window.clearTimeout(closeTimer.current); closeTimer.current = window.setTimeout(() => { setOpen(false); setHeld(false) }, 180) }
   const p = MENU[hot]
@@ -210,13 +215,7 @@ function ProjectsMenu() {
       <div className={'mm-wrap' + (open ? ' open' : '')} aria-hidden={!open}>
         <div className="mm">
           <a className="mm-card" href={p.href} tabIndex={-1} aria-hidden="true" onClick={() => setOpen(false)}>
-            {everOpen && MENU.map((m, i) => (
-              <div key={m.name} className="layer" style={{ opacity: i === hot ? 1 : 0, transform: i === hot ? 'scale(1)' : 'scale(1.04)' }}>
-                {m.video
-                  ? <video ref={el => { vids.current[i] = el }} src={m.video} poster={m.poster} muted loop playsInline preload={i === 0 ? 'auto' : 'metadata'} />
-                  : <img src={m.img} alt="" />}
-              </div>
-            ))}
+            {everOpen && MENU.map((m, i) => <MenuLayer key={m.name} m={m} active={open && i === hot} />)}
             <span className="mm-t" key={p.name}>
               <span className="mm-name">{p.name}</span>
               <span className="mm-sub">{p.sub}</span>

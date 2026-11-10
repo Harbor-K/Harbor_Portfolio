@@ -2,11 +2,12 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { CSS } from './portfolio'
 import { SiteHeader, VoiceAssistant } from './App'
 
-// About me page — v101 (Harbor, Nov 10): copy and spacing from Harbor's Figma "About · Kinfolk style · default (11/10)"
+// About me page — copy and spacing from Harbor's Figma "About · Kinfolk style · default (11/10)"
 // (44기 김지현 4차 PF, node 613:14748), on a 1440 grid inside a 1920 frame, page #FAFAF9:
 // 1. Hero (613:14774) — 56px under the header: "Designer now, / once a painter" (Newsreader 64/72, -2%; the first line
-//    #0F0F0F, the second #8C8C8C) with the pitch (18/24, #595959) 24px under it; 64px; the 432×504 painting photo; 104px;
-//    "My story ↓ | Resume ↗" (16/24, arrows in Geist Mono, divider #8C8C8C, 16px apart); 32px. 1000 tall in Figma.
+//    #0F0F0F, the second #8C8C8C) with the pitch (18/24, #595959) 24px under it; 64px; the 432×504 photo (v102, Harbor:
+//    her two self-portraits behind an easel); 104px; "My story ↓ | Resume ↗" (16/24, arrows in Geist Mono, divider
+//    #8C8C8C, 16px apart); 32px. 1000 tall in Figma.
 //    It starts at the very top of the page, under the see-through header, and ends 50px above the bottom of the window,
 //    so the band always shows in that 50px strip (Kinfolk). The photo gives way on shorter windows (up to 504 tall,
 //    never under 280) so everything else keeps its Figma sizes; on a 1114px-tall window it is exactly the Figma frame.
@@ -32,7 +33,7 @@ import { SiteHeader, VoiceAssistant } from './App'
 // - Topics (Kinfolk's CategoryList): pointing at one topic fades the others to #BDBDBA (Figma hover frame;
 //   0.5s cubic-bezier(.25,1,.5,1) after 0.1s, the pointed one at once) and shows its 160×200 photo centred 24px above
 //   it, at once. Human-centered has the Figma photo; the others are picks from her photos (swap freely).
-// Photos: from the Figma frame (2x), in Harbor-K/harbor-pf assets/about/v3.
+// Photos: Harbor-K/harbor-pf assets/about/v3.
 // Note: the site-wide ".hb *" Helvetica rule (index.css) reaches every element, so any span inside a serif or mono line
 // has to name its font itself.
 
@@ -41,8 +42,8 @@ const SERIF = '"Newsreader", Georgia, "Times New Roman", serif'
 const MONO = '"Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace'
 const V3 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/about/v3/'
 const RESUME = `mailto:harborkim0328@gmail.com?subject=${encodeURIComponent('Resume request')}`
-// the photo drifts inside its frame: the image layer is 10% taller than the frame (kept small so the Figma framing
-// barely changes) and moves down by 0.06× the scroll, never past the extra 10%
+// the photo drifts inside its frame: the image layer is 10% taller than the frame (kept small so the framing barely
+// changes) and moves down by 0.06× the scroll, never past the extra 10%
 const PARALLAX = 0.06
 
 const AB_CSS = `
@@ -324,7 +325,7 @@ export function AboutPage() {
             <figure className="abk-fig">
               <div className="abk-ph">
                 <div className="abk-ph-bg" ref={phBg}>
-                  <img src={V3 + 'hero-paintings.jpg'} alt="Harbor's paintings leaning against a studio wall" />
+                  <img src={V3 + 'hero-portraits.jpg'} alt="Two of Harbor's oil self-portraits behind a wooden easel in a studio" />
                 </div>
                 <div className="abk-ph-intro" aria-hidden="true" />
               </div>

@@ -1,402 +1,274 @@
-import React, { useEffect, useRef, useState } from 'react'
-import { CSS, IMG } from './portfolio'
-import { PAGE_CSS, LINKS, SiteHeader, SiteFooter, ClosingCTA, VoiceAssistant, useReveal } from './App'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { CSS } from './portfolio'
+import { SiteHeader, VoiceAssistant } from './App'
 
-// About me page.
-// Top (v87): Harbor's Figma "About · accordion list (11/09)" (44기 김지현 4차 PF, node 557:27), built to its sizes —
-// - Page #FAFAF9. A 1440 row: a 276px left rail | the 888px list | a 276px right rail.
-// - List: six 888×1024 photos, 8px apart, starting 16px under the header, 160px under the last one. Each photo is
-//   filled (cover, centred) under a shade (24% → 40% → 64% black). Inside, 40px padding: the label (Helvetica Neue
-//   16/24, +4% tracking, capitals) and the title (Newsreader 64/72, -2%) 16px apart in the middle; the line of copy
-//   (16/24, 72% white, 560 wide, centred) at the bottom, in a 48px band balanced by a 48px band at the top so every
-//   title sits on the same line.
-// - Left rail (stays on screen while the list scrolls): filters ALL / WORK 2 / DRAWING 3 / TRAVEL 1, 24px rows, the
-//   current one in #0F0F0F with an 8px square, the others at 40% with their count; LIST / GRID 24px apart, 40px from
-//   the bottom of the screen.
-// - Right rail (stays on screen): the photo index, 8px apart — 48×64 in grey, the current one 64×80 in colour with a
-//   "+" 8px before it; right edge on the 1440 line. Click to jump; it follows the scroll.
-// - GRID shows the same photos three across; pointing at one greys the others and shows its title; click opens it in
-//   the list.
-// Copy from the Figma frame. Every text 16px or larger.
-// Below the list, from Experience down, nothing changed (Harbor's note).
-
-const SUB_CSS = `
-.sub-page { background: #FAFAF9; }
-.sub-ctas { display: flex; gap: 12px; margin-top: 40px; flex-wrap: wrap; }
-.btn-ink { background: var(--ink); color: #fff; font-weight: 500; }
-.hb .btn-ink { color: #fff; }
-.btn-ink:hover { background: #333; }
-.btn-line { border: 1px solid var(--ink); color: var(--ink); }
-.btn-line:hover { background: var(--ink); color: #fff; }
-
-/* filter tabs */
-.filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 40px; }
-.filters button { padding: 10px 18px; border: 1px solid var(--line); background: #fff; font-size: 16px; color: var(--mute); cursor: pointer; transition: background .25s, color .25s, border-color .25s; }
-.filters button:hover { color: var(--ink); border-color: var(--ink); }
-.filters button[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
-.filters .count { margin-left: 6px; opacity: .6; }
-
-/* work grid (rox team) */
-.wgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
-.wcard { border: 1px solid var(--line); background: #fff; display: flex; flex-direction: column; }
-.wcard .logo-box { aspect-ratio: 1 / 1; overflow: hidden; background: var(--off); border-bottom: 1px solid var(--line); display: grid; place-items: center; }
-.wcard .logo-box img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 1s var(--ease); }
-.wcard:hover .logo-box img { transform: scale(1.04); }
-.wcard .logo-box .tile { font-size: 32px; font-weight: 300; color: #8C8C8A; }
-.wcard .body { padding: 20px 20px 24px; }
-.wcard h3 { margin: 12px 0 0; font-size: 24px; font-weight: 500; }
-.wcard p { margin: 6px 0 0; font-size: 16px; color: var(--mute); }
-.wcard .period { margin-top: 16px; font-size: 16px; }
-.wcard.hide { display: none; }
-
-/* mid CTA band */
-.band { background: var(--off); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-.band-in { display: flex; justify-content: space-between; align-items: center; gap: 40px; padding: 96px 0; }
-.band h2 { margin: 0; font-size: 44px; font-weight: 300; letter-spacing: -0.02em; line-height: 1.15; }
-.band h2 .mute { color: #8C8C8A; display: block; }
-
-/* background cards (rox advisors) */
-.bgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
-.bcard { padding: 32px 28px 40px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); min-height: 260px; display: flex; flex-direction: column; }
-.bcard .n { font-size: 16px; color: #8C8C8A; }
-.bcard .big { margin-top: auto; font-size: 44px; font-weight: 300; letter-spacing: -0.03em; }
-.bcard .t { margin-top: 8px; font-size: 18px; font-weight: 500; }
-.bcard .s { margin-top: 6px; font-size: 16px; line-height: 1.5; color: var(--mute); }
-
-.tools { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 40px; }
-
-@media (max-width: 1280px) {
-  .wgrid, .bgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-@media (max-width: 900px) {
-  .wgrid, .bgrid { grid-template-columns: minmax(0, 1fr); }
-  .band-in { flex-direction: column; align-items: flex-start; }
-  .band h2 { font-size: 32px; }
-}
-`
-
-/* ------------------------------------------------------------------ the list (Figma 557:27) */
+// About me page — Harbor's Figma "About · Kinfolk style · default (11/10)" (44기 김지현 4차 PF, node 617:2),
+// built to its sizes on a 1440 grid inside a 1920 frame, page #FAFAF9:
+// 1. Hero — v98 (Harbor, Nov 10): node 613:14774. 56px under the header: "From canvas / to clarity" (Newsreader 64/72,
+//    -2%) with the pitch (18/24, #595959) 16px under it; 64px; the 432×504 painting photo; 64px; "My story ↓ | Resume ↗"
+//    (16/24, arrows in Geist Mono, divider #8C8C8C, 16px apart).
+//    Kinfolk's first screen ends just above the bottom of the window so the next section shows under it: the hero is
+//    as tall as the window less the 64px header and a 50px strip (Harbor: "50px"), so the top 50px of the window's
+//    bottom always shows the band. The photo gives way on shorter windows (up to 504 tall, never under 280) so
+//    everything else keeps its Figma sizes; on a 1077px-tall window it is exactly the Figma frame (963 tall).
+// 2. Band — 952 tall, the sticky-wall photo full width under a shade (transparent from 40% → 72% #0A0808 at the
+//    bottom). Caption row 64px from the bottom: WHAT I DO + two Newsreader 32/40 lines on the left, GLOBAL MINDSET +
+//    three 16/24 lines (336 wide) on the right.
+// 3. Off work — 128px padding; "Off work" (Newsreader 48/56) with ← → (48×48, 1px 16% line) over a 1px #0F0F0F rule
+//    24px below (81 tall in all); 40px; six 288×360 photo cards, 24px apart, running off the right edge (label
+//    #595959, line #0F0F0F). The arrows move the row one card at a time.
+// 4. Topics — 224px top / 160px bottom: six topics in Newsreader 40/48, 16px apart, centred.
+// Then the site footer (index.tsx).
+//
+// Interactions, copied from kinfolk.com (Harbor: "only the first and second sections and the CategoryList"):
+// - Sections 1→2: Kinfolk pins its full-screen story under the issue cover and slides the cover away over it. Here the
+//   band sits pinned (position: sticky) behind the hero, which scrolls up over it like a curtain, uncovering the photo
+//   from the bottom; once the hero has gone the band lets go and scrolls on with the page. If the screen is taller than
+//   the band, the band pins with its bottom on the bottom of the screen, so there is never a gap under it.
+//   "My story ↓" scrolls to the point where the hero has just gone and the whole band is showing.
+// - Topics (Kinfolk's CategoryList): pointing at one topic fades the others to #BDBDBD (Figma hover frame 618:149;
+//   Kinfolk's timing: 0.5s cubic-bezier(.25,1,.5,1) after 0.1s, the pointed one at once) and shows its 160×200 photo
+//   centred 24px above it, at once.
+// Photos: from the Figma frame (2x), in Harbor-K/harbor-pf assets/about/v3. Topic photos other than UX research are
+// picks from her case studies (swap freely).
+// Note: the site-wide ".hb *" Helvetica rule (index.css) reaches every element, so any span inside a serif or mono line
+// has to name its font itself.
 
 const SANS = '"Helvetica Neue", Helvetica, Arial, sans-serif'
 const SERIF = '"Newsreader", Georgia, "Times New Roman", serif'
+const MONO = '"Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace'
+const V3 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/about/v3/'
+const RESUME = `mailto:harborkim0328@gmail.com?subject=${encodeURIComponent('Resume request')}`
 
 const AB_CSS = `
-.hb .ab { background: #FAFAF9; padding: 0 0 160px; }
-.hb .ab-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 888px) minmax(0, 1fr); width: min(1440px, calc(100vw - 64px)); margin: 0 auto; }
-.hb .ab-side, .hb .ab-thumbs { position: relative; }
-.hb .ab-side-in, .hb .ab-thumbs-in { position: sticky; top: 0; height: 100vh; }
+.hb.abk { background: #FAFAF9; }
+.hb .abk-main { padding-top: 64px; }
+.hb .abk-wrap { width: min(1440px, calc(100% - 64px)); margin: 0 auto; }
 
-/* rail text: 16/24, +4% tracking, capitals; current #0F0F0F with an 8px square, the rest 40% */
-.hb .ab-filters { position: absolute; left: 0; top: calc(50% - 92px); display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
-.hb .ab-view { position: absolute; left: 0; bottom: 40px; display: flex; gap: 24px; }
-.hb .ab-opt { display: inline-flex; align-items: center; gap: 8px; height: 24px; padding: 0; margin: 0; background: none; border: 0; border-radius: 0; cursor: pointer;
-  font-family: ${SANS}; font-size: 16px; font-weight: 400; line-height: 24px; color: rgba(15,15,15,.4); transition: color .2s ease; }
-.hb .ab-opt .lab { letter-spacing: .04em; text-transform: uppercase; }
-.hb .ab-opt .sq { display: none; flex: none; width: 8px; height: 8px; background: currentColor; }
-.hb .ab-opt:hover { color: rgba(15,15,15,.72); }
-.hb .ab-opt[aria-pressed="true"] { color: #0F0F0F; }
-.hb .ab-opt[aria-pressed="true"] .sq { display: block; }
-.hb .ab-opt:focus-visible { outline: 2px solid #0F0F0F; outline-offset: 3px; }
+/* ---- sections 1 + 2: the band pins behind the hero (Kinfolk) ---- */
+.hb .abk-stack { position: relative; }
+.hb .abk-band { position: sticky; top: max(0px, calc(100vh - 952px)); z-index: 0; height: 952px; overflow: hidden;
+  display: flex; flex-direction: column; justify-content: flex-end; padding: 64px 0; background: #1a1716; color: #FAFAFA; }
+.hb .abk-band > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.hb .abk-band::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(10,8,8,0) 40%, rgba(10,8,8,.72) 100%); }
+/* window less the 64px header and the 50px strip of the band */
+.hb .abk-hero { position: relative; z-index: 1; margin-top: -952px; height: calc(100vh - 114px); min-height: 743px;
+  padding-top: 56px; background: #FAFAF9; display: flex; flex-direction: column; align-items: center; gap: 64px; }
+.hb .abk-spacer { height: 952px; }
 
-/* list: 888×1024 photos, 8px apart */
-.hb .ab-list { display: flex; flex-direction: column; gap: 8px; padding-top: 80px; }
-.hb .ab-item { position: relative; display: flex; flex-direction: column; align-items: center; width: 100%; height: 1024px; padding: 40px;
-  overflow: hidden; background: #111; color: #FAFAFA; scroll-margin-top: 80px; }
-.hb .ab-item img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%; transition: transform 1.4s var(--ease); }
-.hb .ab-item:hover img { transform: scale(1.02); }
-.hb .ab-item::after { content: ""; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(180deg, rgba(0,0,0,.24) 0%, rgba(0,0,0,.4) 50%, rgba(0,0,0,.64) 100%); }
-.hb .ab-band { position: relative; z-index: 1; flex: none; height: 48px; width: 100%; }
-.hb .ab-cap { position: relative; z-index: 1; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
-  width: 100%; text-align: center; }
-.hb .ab-cap .k { font-family: ${SANS}; font-size: 16px; font-weight: 400; line-height: 24px; letter-spacing: .04em; text-transform: uppercase; color: #FAFAFA; }
-.hb .ab-cap h2 { margin: 0; font-family: ${SERIF}; font-size: 64px; font-weight: 400; line-height: 72px; letter-spacing: -0.02em; color: #FAFAFA; }
-.hb .ab-body { position: relative; z-index: 1; flex: none; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 48px; width: 100%; }
-.hb .ab-body p { margin: 0; width: 560px; max-width: 100%; font-family: ${SANS}; font-size: 16px; font-weight: 400; line-height: 24px; text-align: center; color: rgba(250,250,250,.72); }
+.hb .abk-head { display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; }
+.hb .abk-h1 { margin: 0; font-family: ${SERIF}; font-size: 64px; font-weight: 400; line-height: 72px; letter-spacing: -0.02em;
+  color: #0F0F0F; text-align: center; }
+.hb .abk-h1 span { display: block; font-family: inherit; }
+.hb .abk-pitch { margin: 0; font-family: ${SANS}; font-size: 18px; font-weight: 400; line-height: 24px; color: #595959; text-align: center; }
+.hb .abk-pitch span { display: block; font-family: inherit; }
+.hb .abk-fig { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 64px; }
+/* 504 tall in the Figma frame; shorter only when the window is (56+208+64 above, 64+24+43 below = 459 + the 114) */
+.hb .abk-fig img { display: block; height: clamp(280px, calc(100vh - 573px), 504px); width: auto; aspect-ratio: 432 / 504; object-fit: cover; }
+.hb .abk-links { display: flex; align-items: center; gap: 16px; }
+.hb .abk-links a, .hb .abk-links .dv { font-family: ${SANS}; font-size: 16px; font-weight: 400; line-height: 24px; white-space: nowrap; }
+.hb .abk-links a { color: #0F0F0F; text-decoration: none; transition: opacity .2s ease; }
+.hb .abk-links a:hover { opacity: .6; }
+.hb .abk-links a:focus-visible { outline: 2px solid #0F0F0F; outline-offset: 3px; }
+.hb .abk-links .ar { font-family: ${MONO}; }
+.hb .abk-links .dv { color: #8C8C8C; }
 
-/* photo index: 48×64 grey, the current 64×80 in colour with "+" before it; right edge on the 1440 line */
-.hb .ab-thumbs-col { position: absolute; right: 0; top: calc(50% - 140px); display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
-.hb .ab-thumb { display: flex; align-items: center; gap: 8px; padding: 0; margin: 0; background: none; border: 0; border-radius: 0; cursor: pointer; }
-.hb .ab-thumb .pl { display: none; font-family: ${SANS}; font-size: 16px; line-height: 24px; color: #0F0F0F; }
-.hb .ab-thumb .im { display: block; width: 48px; height: 64px; overflow: hidden; background: #E6E6E3; transition: width .3s var(--ease), height .3s var(--ease); }
-.hb .ab-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; filter: grayscale(1); transition: filter .3s ease; }
-.hb .ab-thumb:hover img { filter: grayscale(.4); }
-.hb .ab-thumb.on .pl { display: block; }
-.hb .ab-thumb.on .im { width: 64px; height: 80px; }
-.hb .ab-thumb.on img { filter: none; }
-.hb .ab-thumb:focus-visible { outline: 2px solid #0F0F0F; outline-offset: 3px; }
+.hb .abk-caprow { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: flex-end; gap: 40px; }
+.hb .abk-cap { display: flex; flex-direction: column; gap: 8px; }
+.hb .abk-eye { margin: 0; font-family: ${SANS}; font-size: 16px; font-weight: 400; line-height: 24px; color: #FAFAFA; }
+.hb .abk-cap .ln { margin: 0; font-family: ${SERIF}; font-size: 32px; font-weight: 400; line-height: 40px; letter-spacing: -0.01em; color: #FAFAFA; }
+.hb .abk-mind { flex: none; width: 336px; display: flex; flex-direction: column; gap: 8px; }
+.hb .abk-mind ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.hb .abk-mind li { margin: 0; font-family: ${SANS}; font-size: 16px; font-weight: 400; line-height: 24px; color: #FAFAFA; }
 
-/* grid: three across; pointing at one greys the rest and shows its title */
-.hb .ab-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding-top: 80px; }
-.hb .ab-card { position: relative; display: block; width: 100%; aspect-ratio: 888 / 1024; padding: 0; margin: 0; border: 0; overflow: hidden; background: #eee; cursor: pointer; text-align: left; }
-.hb .ab-card img { display: block; width: 100%; height: 100%; object-fit: cover; transition: filter .4s, transform 1s var(--ease); }
-.hb .ab-grid:hover .ab-card:not(:hover) img { filter: grayscale(1); }
-.hb .ab-card:hover img { transform: scale(1.02); }
-.hb .ab-card .cc { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 14px 14px; background: #fff; color: var(--ink); transform: translateY(101%); transition: transform .35s var(--ease); }
-.hb .ab-card:hover .cc, .hb .ab-card:focus-visible .cc { transform: none; }
-.hb .ab-card .cc .t { display: block; font-family: ${SERIF}; font-size: 20px; line-height: 1.2; letter-spacing: -0.01em; }
-.hb .ab-card .cc .k { display: block; margin-top: 4px; font-size: 16px; letter-spacing: .04em; text-transform: uppercase; color: var(--mute); }
+/* ---- 3. Off work ---- */
+.hb .abk-story { padding: 128px 0; overflow-x: clip; }
+.hb .abk-shead { display: flex; justify-content: space-between; align-items: center; padding-bottom: 25px; box-shadow: inset 0 -1px 0 #0F0F0F; }
+.hb .abk-h2 { margin: 0; font-family: ${SERIF}; font-size: 48px; font-weight: 400; line-height: 56px; letter-spacing: -0.02em; color: #0F0F0F; }
+.hb .abk-arrows { display: flex; gap: 8px; }
+.hb .abk-arrow { display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; padding: 0; margin: 0;
+  background: none; border: 0; border-radius: 0; box-shadow: inset 0 0 0 1px rgba(15,15,15,.16); cursor: pointer;
+  font-family: ${SANS}; font-size: 16px; line-height: 24px; color: #0F0F0F; transition: box-shadow .2s ease, background .2s ease; }
+.hb .abk-arrow:hover { box-shadow: inset 0 0 0 1px #0F0F0F; }
+.hb .abk-arrow:focus-visible { outline: 2px solid #0F0F0F; outline-offset: 2px; }
+.hb .abk-cards { display: flex; gap: 24px; margin-top: 40px; margin-right: calc(-1 * max(32px, (100vw - 1440px) / 2));
+  overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; scrollbar-width: none; overscroll-behavior-x: contain; }
+.hb .abk-cards::-webkit-scrollbar { display: none; }
+.hb .abk-card { flex: none; width: 288px; margin: 0; display: flex; flex-direction: column; gap: 16px; scroll-snap-align: start; }
+.hb .abk-card:last-child { margin-right: max(32px, (100vw - 1440px) / 2); }
+.hb .abk-card img { display: block; width: 288px; height: 360px; object-fit: cover; background: #ECECEA; }
+.hb .abk-card figcaption { display: flex; flex-direction: column; gap: 8px; }
+.hb .abk-card .lb, .hb .abk-card .tx { margin: 0; font-family: ${SANS}; font-size: 16px; font-weight: 400; line-height: 24px; }
+.hb .abk-card .lb { color: #595959; }
+.hb .abk-card .tx { color: #0F0F0F; }
 
-@media (max-width: 1200px) {
-  .hb .ab-layout { grid-template-columns: 160px minmax(0, 1fr) 104px; }
-  .hb .ab-item { height: auto; aspect-ratio: 888 / 1024; }
+/* ---- 4. Topics (Kinfolk CategoryList) ---- */
+.hb .abk-topics { padding: 224px 0 160px; }
+.hb .abk-tl { margin: 0 auto; padding: 0; list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 16px; }
+.hb .abk-tp { position: relative; margin: 0; font-family: ${SERIF}; font-size: 40px; font-weight: 400; line-height: 48px; letter-spacing: -0.02em;
+  white-space: nowrap; color: #0F0F0F; cursor: default; outline: none;
+  transition: color .5s cubic-bezier(.25,1,.5,1) .1s; }
+.hb .abk-tl.hov .abk-tp { color: #BDBDBD; }
+.hb .abk-tl.hov .abk-tp.on { color: #0F0F0F; transition-delay: 0s; }
+.hb .abk-tp img { position: absolute; left: 50%; bottom: calc(100% + 24px); width: 160px; height: 200px; object-fit: cover;
+  transform: translateX(-50%); opacity: 0; pointer-events: none; display: block; }
+.hb .abk-tp.on img { opacity: 1; }
+
+@media (max-width: 1100px) {
+  .hb .abk-caprow { flex-direction: column; align-items: flex-start; }
+  .hb .abk-cap .ln { font-size: 24px; line-height: 32px; }
 }
-@media (max-width: 900px) {
-  .hb .ab-layout { grid-template-columns: minmax(0, 1fr); width: calc(100vw - 32px); }
-  .hb .ab-side-in { position: static; height: auto; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px 20px; padding-top: 88px; }
-  .hb .ab-filters, .hb .ab-view { position: static; }
-  .hb .ab-filters { flex-direction: row; flex-wrap: wrap; gap: 0 16px; }
-  .hb .ab-thumbs { display: none; }
-  .hb .ab-list, .hb .ab-grid { padding-top: 16px; }
-  .hb .ab-item { padding: 24px; }
-  .hb .ab-cap h2 { font-size: 40px; line-height: 48px; }
-  .hb .ab-band { height: 24px; }
-  .hb .ab-body { height: auto; }
-  .hb .ab-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 760px) {
+  .hb .abk-wrap { width: calc(100% - 32px); }
+  .hb .abk-band { position: relative; top: 0; height: 640px; padding: 32px 0; }
+  .hb .abk-hero { margin-top: 0; height: auto; min-height: 0; padding: 40px 16px 64px; gap: 40px; }
+  .hb .abk-stack { display: flex; flex-direction: column-reverse; }
+  .hb .abk-spacer { display: none; }
+  .hb .abk-h1 { font-size: 44px; line-height: 52px; }
+  .hb .abk-fig { gap: 40px; }
+  .hb .abk-fig img { width: min(432px, 100%); height: auto; }
+  .hb .abk-mind { width: 100%; }
+  .hb .abk-story { padding: 80px 0; }
+  .hb .abk-h2 { font-size: 36px; line-height: 44px; }
+  .hb .abk-cards { margin-right: -16px; }
+  .hb .abk-card { width: 240px; }
+  .hb .abk-card img { width: 240px; height: 300px; }
+  .hb .abk-topics { padding: 160px 16px 96px; }
+  .hb .abk-tp { font-size: 28px; line-height: 36px; }
 }
 `
 
-const A = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/about/'
-const V = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/6a56c6411f5a62474ed739e5fb9b361e0733428b/assets/about/v2/'
-
-type Cat = 'Work' | 'Drawing' | 'Travel'
-type Item = { id: string; cat: Cat; src: string; label: string; title: string; note?: string; alt: string }
-
-// Copy: the Figma frame (557:27).
-const ITEMS: Item[] = [
-  {
-    id: 'about', cat: 'Work', src: A + 'film-fintech.jpg', label: 'About me', title: 'Harbor Kim',
-    note: 'I’m an AI-native product designer who owns the work end to end, from finding the problem to shipping the fix.',
-    alt: 'Harbor at work with her laptop',
-  },
-  {
-    id: 'fine-art', cat: 'Drawing', src: V + 'fineart-exhibition.jpg', label: 'Where I started', title: 'Fine Art',
-    note: 'I started in Fine Art, painting what I saw. I loved it, but I wanted to make things everyone can use. That brought me to UX.',
-    alt: 'Harbor at her Fine Art exhibition, in front of her watercolour paintings',
-  },
-  {
-    id: 'now', cat: 'Work', src: V + 'sticky-wall.jpg', label: 'What I do now', title: 'Fintech, end to end',
-    note: 'Now I design fintech products, end to end. I test everything with real people.',
-    alt: 'Harbor sorting sticky notes on a research wall',
-  },
-  {
-    id: 'abroad', cat: 'Travel', src: A + 'film-places.jpg', label: 'Australia · UK', title: 'Lived and worked abroad',
-    note: 'Off the clock, I travel and sketch the places I visit.',
-    alt: 'Harbor at afternoon tea, by Sydney Harbour and on the cliffs by the sea',
-  },
-  {
-    id: 'on-location', cat: 'Drawing', src: A + 'drawing-1.jpg', label: 'Off the clock', title: 'Sketching on location',
-    alt: 'A pencil sketch of a tree, held up in front of the place it was drawn',
-  },
-  {
-    id: 'what-i-see', cat: 'Drawing', src: A + 'drawing-3.jpg', label: 'Off the clock', title: 'Drawing what I see',
-    alt: 'A watercolour sketch held up in front of the street it shows',
-  },
+const OFF_WORK = [
+  { src: 'offwork-01-sydney.jpg', label: '01 · SYDNEY, AU', line: 'Lived and worked in Australia.', alt: 'Harbor by Sydney Harbour with the Opera House behind her' },
+  { src: 'offwork-02-london.jpg', label: '02 · LONDON, UK', line: 'Night walks through London.', alt: 'Harbor in Trafalgar Square at night' },
+  { src: 'offwork-03-bath.jpg', label: '03 · BATH, UK', line: 'Weekends exploring the UK.', alt: 'Harbor in front of a Jane Austen flower display in Bath' },
+  { src: 'offwork-04-tea.jpg', label: '04 · TEA LOVER', line: 'Never says no to afternoon tea.', alt: 'Harbor at afternoon tea' },
+  { src: 'offwork-05-hiking.jpg', label: '05 · HIKING', line: 'Staying active on the trail.', alt: 'Harbor on a clifftop walk by the sea' },
+  { src: 'offwork-06-drawing.jpg', label: '06 · DRAWING', line: 'Still sketching what I see.', alt: 'A crayon sketch of a tree held up in front of the street it shows' },
 ]
-const CATS: ('All' | Cat)[] = ['All', 'Work', 'Drawing', 'Travel']
 
-const reducedMotion = () => typeof window !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches
+const TOPICS = [
+  { t: 'UX research', src: 'topic-ux-research.jpg' },
+  { t: 'Design systems', src: 'topic-design-systems.jpg' },
+  { t: 'Prototyping', src: 'topic-prototyping.jpg' },
+  { t: 'Usability testing', src: 'topic-usability-testing.jpg' },
+  { t: 'Fintech', src: 'topic-fintech.jpg' },
+  { t: 'AI design', src: 'topic-ai-design.jpg' },
+]
 
-function Gallery() {
-  const [cat, setCat] = useState<'All' | Cat>('All')
-  const [view, setView] = useState<'list' | 'grid'>('list')
-  const [active, setActive] = useState(ITEMS[0].id)
-  const sec = useRef<HTMLElement>(null)
-  const items = cat === 'All' ? ITEMS : ITEMS.filter(i => i.cat === cat)
-  const count = (c: Cat) => ITEMS.filter(i => i.cat === c).length
-  useReveal(`${cat}-${view}`)
-
-  // the photo in the middle of the screen is the current one in the photo index
-  useEffect(() => {
-    if (view !== 'list' || !('IntersectionObserver' in window)) return
-    const els = Array.from(document.querySelectorAll<HTMLElement>('.ab-item'))
-    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) setActive((e.target as HTMLElement).dataset.id || '') }), { rootMargin: '-45% 0px -54% 0px' })
-    els.forEach(e => io.observe(e))
-    return () => io.disconnect()
-  }, [cat, view])
-
-  // a new filter or view starts from the top of the list
-  const toTop = () => {
-    const s = sec.current
-    if (s && s.getBoundingClientRect().top < 0) scrollTo({ top: s.offsetTop, behavior: 'auto' })
+function OffWork() {
+  const row = useRef<HTMLDivElement>(null)
+  const step = (dir: 1 | -1) => {
+    const el = row.current
+    if (!el) return
+    const card = el.querySelector<HTMLElement>('.abk-card')
+    const w = card ? card.offsetWidth + 24 : 312
+    el.scrollBy({ left: dir * w, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
   }
-  const pickCat = (c: 'All' | Cat) => { setCat(c); setActive((c === 'All' ? ITEMS : ITEMS.filter(i => i.cat === c))[0]?.id ?? ''); toTop() }
-  const pickView = (v: 'list' | 'grid') => { setView(v); toTop() }
-  const goTo = (id: string) => {
-    const el = document.querySelector<HTMLElement>(`.ab-item[data-id="${id}"]`)
-    el?.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start' })
-  }
-  const openFromGrid = (id: string) => {
-    setView('list')
-    setActive(id)
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      const el = document.querySelector<HTMLElement>(`.ab-item[data-id="${id}"]`)
-      el?.scrollIntoView({ behavior: 'auto', block: 'start' })
-    }))
-  }
-
   return (
-    <section className="ab" ref={sec} aria-label="About me">
-      <h1 className="sr-only">About me</h1>
-      <div className="ab-layout">
-        <aside className="ab-side">
-          <div className="ab-side-in">
-            <ul className="ab-filters" aria-label="Filter photos">
-              {CATS.map(c => (
-                <li key={c}>
-                  <button type="button" className="ab-opt" aria-pressed={cat === c} onClick={() => pickCat(c)}>
-                    <span className="sq" aria-hidden="true" /><span className="lab">{c}</span>{c !== 'All' && <span className="n">{count(c)}</span>}
-                  </button>
-                </li>
-              ))}
-            </ul>
-            <div className="ab-view" role="group" aria-label="View">
-              {(['list', 'grid'] as const).map(v => (
-                <button key={v} type="button" className="ab-opt" aria-pressed={view === v} onClick={() => pickView(v)}>
-                  <span className="sq" aria-hidden="true" /><span className="lab">{v}</span>
-                </button>
-              ))}
-            </div>
+    <section className="abk-story" aria-labelledby="abk-off">
+      <div className="abk-wrap">
+        <div className="abk-shead">
+          <h2 className="abk-h2" id="abk-off">Off work</h2>
+          <div className="abk-arrows">
+            <button type="button" className="abk-arrow" aria-label="Previous photo" onClick={() => step(-1)}>←</button>
+            <button type="button" className="abk-arrow" aria-label="Next photo" onClick={() => step(1)}>→</button>
           </div>
-        </aside>
-
-        <div>
-          {view === 'list' ? (
-            <div className="ab-list">
-              {items.map(it => (
-                <article key={it.id} className="ab-item" data-id={it.id} data-reveal>
-                  <img src={it.src} alt={it.alt} loading="lazy" />
-                  <div className="ab-band" aria-hidden="true" />
-                  <div className="ab-cap">
-                    <div className="k">{it.label}</div>
-                    <h2>{it.title}</h2>
-                  </div>
-                  <div className="ab-body">{it.note && <p>{it.note}</p>}</div>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <div className="ab-grid">
-              {items.map((it, i) => (
-                <button key={it.id} type="button" className="ab-card" data-reveal style={{ '--d': i % 3 } as React.CSSProperties} onClick={() => openFromGrid(it.id)} aria-label={`${it.title}, ${it.label}`}>
-                  <img src={it.src} alt="" loading="lazy" />
-                  <span className="cc" aria-hidden="true"><span className="t">{it.title}</span><span className="k">{it.label}</span></span>
-                </button>
-              ))}
-            </div>
-          )}
         </div>
-
-        <nav className="ab-thumbs" aria-label="Photo index">
-          <div className="ab-thumbs-in">
-            {view === 'list' && (
-              <div className="ab-thumbs-col">
-                {items.map(it => (
-                  <button key={it.id} type="button" className={'ab-thumb' + (active === it.id ? ' on' : '')} aria-label={it.title} aria-current={active === it.id || undefined} onClick={() => goTo(it.id)}>
-                    <span className="pl" aria-hidden="true">+</span>
-                    <span className="im"><img src={it.src} alt="" loading="lazy" /></span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </nav>
+        <div className="abk-cards" ref={row}>
+          {OFF_WORK.map(c => (
+            <figure className="abk-card" key={c.src}>
+              <img src={V3 + c.src} alt={c.alt} loading="lazy" />
+              <figcaption>
+                <p className="lb">{c.label}</p>
+                <p className="tx">{c.line}</p>
+              </figcaption>
+            </figure>
+          ))}
+        </div>
       </div>
     </section>
   )
 }
 
-/* ------------------------------------------------------------------ Experience and below (unchanged) */
-
-const WORK = [
-  { co: 'UTrada', domain: 'Trading / fintech platform', period: '2024 – 2026', tag: 'Fintech', img: IMG + 'utrada-logo-square.jpg' },
-  { co: 'ETO Markets', domain: 'Trading / fintech · Sydney', period: 'Nov 2022 – Sep 2023', tag: 'Fintech', img: IMG + 'eto-markets-logo-square.jpg' },
-  { co: 'Pinetree', domain: 'E-learning · Korea', period: 'Aug 2021 – Jun 2022', tag: 'E-learning', img: IMG + 'pinetree.webp' },
-  { co: 'Freelance', domain: 'Upwork & Fiverr clients', period: 'Ongoing', tag: 'Freelance', tile: 'Upwork · Fiverr' },
-]
-const WORK_FILTERS = ['All', 'Fintech', 'E-learning', 'Freelance']
-
-const BACKGROUND = [
-  { big: 'Fine Art', t: 'Where I started', s: 'I trained in Fine Art, drawing what I saw. Observation is still where every project starts.' },
-  { big: '3+ yrs', t: 'Product design', s: 'Fintech, crypto / Web3 wallets, digital banking and e-learning.' },
-  { big: '11', t: 'Languages', s: 'Multilingual and localised product design in up to 11 languages.' },
-  { big: 'AU · UK', t: 'Lived and worked abroad', s: 'Experience living and working in Australia and the UK.' },
-]
-const TOOLS = ['Figma', 'Design systems', 'Prototyping', 'UX research', 'Usability testing', 'Localization', 'AI design tools']
+function Topics() {
+  const [on, setOn] = useState<number | null>(null)
+  const leave = useCallback(() => setOn(null), [])
+  return (
+    <section className="abk-topics" aria-label="What I work on">
+      <ul className={'abk-tl abk-wrap' + (on !== null ? ' hov' : '')} onMouseLeave={leave}>
+        {TOPICS.map((p, i) => (
+          <li key={p.t} className={'abk-tp' + (on === i ? ' on' : '')} tabIndex={0}
+            onMouseEnter={() => setOn(i)} onFocus={() => setOn(i)} onBlur={leave}>
+            <img src={V3 + p.src} alt="" aria-hidden="true" />
+            {p.t}{i < TOPICS.length - 1 ? ',' : ''}
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
 
 export function AboutPage() {
-  const [f, setF] = useState('All')
-  useReveal()
-
+  const hero = useRef<HTMLElement>(null)
+  // warm the topic photos so they appear at once on the first hover
+  useEffect(() => { TOPICS.forEach(p => { const i = new Image(); i.src = V3 + p.src }) }, [])
+  // "My story": scroll until the hero has just gone, so the whole band shows
+  const toStory = (e: React.MouseEvent) => {
+    e.preventDefault()
+    const h = hero.current
+    if (!h) return
+    const top = h.getBoundingClientRect().bottom + window.scrollY - 64
+    window.scrollTo({ top, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
+  }
   return (
-    <div className="hb sub-page" id="top">
-      <style>{CSS + PAGE_CSS + SUB_CSS + AB_CSS}</style>
-      <SiteHeader current="about" solid />
-      <main>
-        <Gallery />
-
-        <section className="sec" aria-label="Where I've worked">
-          <div className="wrap">
-            <div className="sec-head" data-reveal>
-              <div>
-                <div className="eyebrow">(01) Experience</div>
-                <h2 className="h2">Where I’ve worked</h2>
+    <div className="hb abk" id="top">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400&display=swap" />
+      <style>{CSS + AB_CSS}</style>
+      <SiteHeader current="about" />
+      <main className="abk-main">
+        <div className="abk-stack">
+          <section className="abk-band" id="my-story" aria-label="What I do">
+            <img src={V3 + 'band-sticky-wall.jpg'} alt="Harbor sorting sticky notes on a research wall" />
+            <div className="abk-caprow abk-wrap">
+              <div className="abk-cap">
+                <p className="abk-eye">WHAT I DO</p>
+                <p className="ln">3+ years designing fintech products, end to end.</p>
+                <p className="ln">From user research to design systems and shipped, tested UI.</p>
+              </div>
+              <div className="abk-mind">
+                <p className="abk-eye">GLOBAL MINDSET</p>
+                <ul>
+                  <li>Lived and worked in Australia and the UK</li>
+                  <li>Global fintech at ETO Markets, Sydney</li>
+                  <li>Products in up to 11 languages</li>
+                </ul>
               </div>
             </div>
-            <div className="filters" role="group" aria-label="Filter experience" data-reveal>
-              {WORK_FILTERS.map(k => <button key={k} aria-pressed={f === k} onClick={() => setF(k)}>{k}</button>)}
+          </section>
+          <section className="abk-hero" ref={hero} aria-labelledby="abk-title">
+            <div className="abk-head">
+              <h1 className="abk-h1" id="abk-title"><span>From canvas</span><span>to clarity</span></h1>
+              <p className="abk-pitch">
+                <span>From Fine Art to AI-native product design</span>
+                <span>I love art, but I wanted to make things everyone can use.</span>
+              </p>
             </div>
-            <div className="wgrid">
-              {WORK.map((w, i) => (
-                <article className={'wcard' + (f !== 'All' && w.tag !== f ? ' hide' : '')} key={w.co} data-reveal style={{ '--d': i } as React.CSSProperties}>
-                  <div className="logo-box">{w.img ? <img src={w.img} alt={w.co} loading="lazy" /> : <span className="tile">{w.tile}</span>}</div>
-                  <div className="body">
-                    <span className="tag">{w.tag}</span>
-                    <h3>{w.co}</h3>
-                    <p>{w.domain}</p>
-                    <div className="period">{w.period}</div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="band" aria-label="Work together">
-          <div className="wrap band-in" data-reveal>
-            <h2>Ready to work together?<span className="mute">I’m open to product design roles.</span></h2>
-            <div className="sub-ctas" style={{ marginTop: 0 }}>
-              <a className="btn btn-ink" href={LINKS.cal} target="_blank" rel="noreferrer">Book a call</a>
-              <a className="btn btn-line" href="#projects">See projects</a>
-            </div>
-          </div>
-        </section>
-
-        <section className="sec" aria-label="Background">
-          <div className="wrap">
-            <div className="sec-head" data-reveal>
-              <div>
-                <div className="eyebrow">(02) Background</div>
-                <h2 className="h2">What I bring</h2>
-              </div>
-            </div>
-            <div className="bgrid">
-              {BACKGROUND.map((b, i) => (
-                <div className="bcard" key={b.t} data-reveal style={{ '--d': i } as React.CSSProperties}>
-                  <span className="n">{String(i + 1).padStart(2, '0')}</span>
-                  <div className="big">{b.big}</div>
-                  <div className="t">{b.t}</div>
-                  <div className="s">{b.s}</div>
-                </div>
-              ))}
-            </div>
-            <div className="tools" data-reveal>{TOOLS.map(t => <span className="tag" key={t}>{t}</span>)}</div>
-          </div>
-        </section>
-
-        <ClosingCTA />
+            <figure className="abk-fig">
+              <img src={V3 + 'hero-paintings.jpg'} alt="Harbor's paintings leaning against a studio wall" />
+              <figcaption className="abk-links">
+                <a href="#my-story" onClick={toStory}>My story <span className="ar" aria-hidden="true">↓</span></a>
+                <span className="dv" aria-hidden="true">|</span>
+                <a href={RESUME}>Resume <span className="ar" aria-hidden="true">↗</span></a>
+              </figcaption>
+            </figure>
+          </section>
+          <div className="abk-spacer" aria-hidden="true" />
+        </div>
+        <OffWork />
+        <Topics />
       </main>
-      <SiteFooter />
       <VoiceAssistant />
     </div>
   )

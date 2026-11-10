@@ -26,8 +26,15 @@ html, body, button, input, select, textarea, .hb, .hb *, .font-sans, .font-mono,
 /* footer (Footer.tsx): its top line is drawn inside the box, like Figma's inside stroke */
 footer.ft { border-top: 0; box-shadow: inset 0 1px 0 rgba(255,255,255,.08); }
 
-/* About (Pages.tsx): each filter row is exactly 24px, so the four make the Figma 96px block */
-.hb .ab-filters li { display: flex; height: 24px; margin: 0; padding: 0; }
+/* About (Pages.tsx), v99: the 50px strip of the band under the first screen shows only the photo, never a cut-off
+   caption (Kinfolk). The band is pinned with its bottom on the bottom of the window from the very start — on windows
+   shorter than 1016px it is pulled up by the difference, and the hero is pulled up by the same amount less, so it still
+   starts under the header — and the strip is the band's empty bottom 50px (the caption ends 64px above its bottom).
+   The band lets go exactly as the hero's bottom passes its top, so the two stay seamless. */
+@media (min-width: 761px) {
+  .hb.abk .abk-band { top: calc(100vh - 952px); margin-top: min(0px, calc(100vh - 1016px)); }
+  .hb.abk .abk-hero { margin-top: calc(-952px - min(0px, calc(100vh - 1016px))); }
+}
 
 /* main: fix specificity clashes with `.hb a { color: inherit }` */
 .hb .btn-sm, .hb .btn-light { color: #0F0F0F; }

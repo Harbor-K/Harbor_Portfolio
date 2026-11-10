@@ -6,7 +6,7 @@ import { GIFS, GIF_MS, useGifSrc } from './gifPlay'
 //
 // Layout (Figma main frame 530:5259, header.hdrb): 1440 container, 64px tall, three columns — Harbor logo (78×19) |
 // Projects ▾ (96×24, 8px side padding) · 40px · About me | LinkedIn ↗ (8px to the arrow) · 32px · Resume (40px, 16px
-// side padding). Helvetica Neue Regular 16/24. Resume has no file yet, so it opens an email asking for it.
+// side padding). Helvetica Neue Regular 16/24. v108 (Harbor): Resume opens her CV (a Google Doc) in a new tab.
 //
 // Projects menu (Harbor's Figma "Main · Projects menu open" 538:9995): one compact panel, 652×360, centred under
 // the Projects trigger, 8px below the header —
@@ -38,7 +38,7 @@ export type HeaderMode = 'overlay' | 'light' | 'dark'
 
 const LINKS = {
   linkedin: 'https://www.linkedin.com/in/harborkim/',
-  resume: `mailto:harborkim0328@gmail.com?subject=${encodeURIComponent('Resume request')}`,
+  resume: 'https://docs.google.com/document/d/1-Sfn8xfwKDPRoQQdoi24GBm9TF9R4C01V6iAHsh3lVk/edit?usp=sharing',
 }
 const IMG3 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/main-v3/'
 
@@ -278,7 +278,7 @@ export function SiteHeaderB({ mode = 'overlay', current, hidden = false, away = 
           </nav>
           <div className="hd-right">
             <a className="hd-link" href={LINKS.linkedin} target="_blank" rel="noreferrer">LinkedIn <ArrowUpRight /></a>
-            <a className="hd-cta" href={LINKS.resume} aria-label="Resume, request it by email">Resume</a>
+            <a className="hd-cta" href={LINKS.resume} target="_blank" rel="noreferrer" aria-label="Resume (opens in a new tab)">Resume</a>
           </div>
         </div>
       </div>

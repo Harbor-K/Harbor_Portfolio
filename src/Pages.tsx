@@ -25,12 +25,15 @@ import { SiteHeader, VoiceAssistant } from './App'
 // 4. Topics (623:14946) — 224px top / 160px bottom: Human-centered, Observation, Clarity, Accessibility, Evidence-based,
 //    Iteration (Newsreader 40/48, -2%, 16px apart, centred). Pointing at one fades the others to #BDBDBA (Kinfolk
 //    CategoryList timing) and shows its 160×200 photo centred 24px above it.
+//    v106 (Harbor): Observation shows her 2.5s sky-sketch clip instead of a photo — it starts from its first frame each
+//    time the word is pointed at and loops while it stays there (muted; its first frame is the poster; reduced motion
+//    keeps the still).
 // Then the site footer (index.tsx).
 //
 // Sections 1→2 (Kinfolk): the band sits pinned (position: sticky) behind the hero with its bottom on the bottom of
 // the window, and the hero scrolls up over it like a curtain; the band lets go as the hero's bottom passes its top.
 // "My story ↓" scrolls to where the hero has just gone.
-// Photos: Harbor-K/harbor-pf assets/about/v3.
+// Photos and the clip: Harbor-K/harbor-pf assets/about/v3.
 // Note: the site-wide ".hb *" Helvetica rule (index.css) reaches every element, so any span inside a serif or mono line
 // has to name its font itself.
 
@@ -120,9 +123,9 @@ const AB_CSS = `
   transition: color .5s cubic-bezier(.25,1,.5,1) .1s; }
 .hb .abk-tl.hov .abk-tp { color: #BDBDBA; }
 .hb .abk-tl.hov .abk-tp.on { color: #0F0F0F; transition-delay: 0s; }
-.hb .abk-tp img { position: absolute; left: 50%; bottom: calc(100% + 24px); width: 160px; height: 200px; object-fit: cover;
-  transform: translateX(-50%); opacity: 0; pointer-events: none; display: block; }
-.hb .abk-tp.on img { opacity: 1; }
+.hb .abk-tp img, .hb .abk-tp video { position: absolute; left: 50%; bottom: calc(100% + 24px); width: 160px; height: 200px; object-fit: cover;
+  transform: translateX(-50%); opacity: 0; pointer-events: none; display: block; background: #ECECEA; }
+.hb .abk-tp.on img, .hb .abk-tp.on video { opacity: 1; }
 
 @media (max-width: 1100px) {
   .hb .abk-caprow { flex-direction: column; align-items: flex-start; }
@@ -161,10 +164,12 @@ const LIFE = [
   { src: 'life-06-reading.jpg', label: '06 · READING', line: 'Always reading about AI, UX and design psychology.', alt: 'The cover of Laws of UX by Jon Yablonski' },
 ]
 
-// Figma 623:14946 topics; Human-centered uses the Figma hover photo, the rest are picks from her photos
-const TOPICS = [
+// Figma 623:14946 topics; Human-centered uses the Figma hover photo, Observation her clip (v106), the rest are picks
+// from her photos
+type Topic = { t: string; src: string; video?: string }
+const TOPICS: Topic[] = [
   { t: 'Human-centered', src: 'topic-ux-research.jpg' },
-  { t: 'Observation', src: 'topic-observation.jpg' },
+  { t: 'Observation', src: 'topic-observation-poster.jpg', video: 'topic-observation.mp4' },
   { t: 'Clarity', src: 'topic-design-systems.jpg' },
   { t: 'Accessibility', src: 'topic-fintech.jpg' },
   { t: 'Evidence-based', src: 'topic-usability-testing.jpg' },
@@ -254,6 +259,18 @@ function LifeBeyondWork() {
   )
 }
 
+// a topic's clip: from its first frame each time the topic is pointed at, looping while it stays; paused otherwise
+function TopicClip({ src, poster, on }: { src: string; poster: string; on: boolean }) {
+  const ref = useRef<HTMLVideoElement>(null)
+  useEffect(() => {
+    const v = ref.current
+    if (!v) return
+    if (on && !matchMedia('(prefers-reduced-motion: reduce)').matches) { v.currentTime = 0; v.play().catch(() => {}) }
+    else v.pause()
+  }, [on])
+  return <video ref={ref} src={src} poster={poster} muted loop playsInline preload="auto" aria-hidden="true" />
+}
+
 function Topics() {
   const [on, setOn] = useState<number | null>(null)
   const leave = useCallback(() => setOn(null), [])
@@ -263,7 +280,9 @@ function Topics() {
         {TOPICS.map((p, i) => (
           <li key={p.t} className={'abk-tp' + (on === i ? ' on' : '')} tabIndex={0}
             onMouseEnter={() => setOn(i)} onFocus={() => setOn(i)} onBlur={leave}>
-            <img src={V3 + p.src} alt="" aria-hidden="true" />
+            {p.video
+              ? <TopicClip src={V3 + p.video} poster={V3 + p.src} on={on === i} />
+              : <img src={V3 + p.src} alt="" aria-hidden="true" />}
             {p.t}{i < TOPICS.length - 1 ? ',' : ''}
           </li>
         ))}

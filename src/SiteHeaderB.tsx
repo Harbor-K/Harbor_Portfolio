@@ -6,12 +6,12 @@ import { GIFS, GIF_MS, useGifSrc } from './gifPlay'
 //
 // Layout (Figma main frame 530:5259, header.hdrb): 1440 container, 64px tall, three columns — Harbor logo (78×19) |
 // Projects ▾ (96×24, 8px side padding) · 40px · About me | LinkedIn ↗ (8px to the arrow) · 32px · Resume (40px, 16px
-// side padding). Helvetica Neue Regular 16/24. v108 (Harbor): Resume opens her CV (a Google Doc) in a new tab.
+// side padding). 16/24. v108 (Harbor): Resume opens her CV in a new tab — v114: the PDF on Google Drive.
 //
 // Projects menu (Harbor's Figma "Main · Projects menu open" 538:9995): one compact panel, 652×360, centred under
 // the Projects trigger, 8px below the header —
 //   [ project card 320×360 | project list 330 ]
-// - Card: the project's picture filling it; 32px padding; at the top the project name (Newsreader 32/38, -2%) with its
+// - Card: the project's picture filling it; 32px padding; at the top the project name (32/38, -2%) with its
 //   one-line description 8px under it (16/24, 75%); at the bottom "View project" (44px).
 //   Background: Trust Bank and GameCove play Harbor's 320×360 GIFs, which carry their own dark edges for the text, so no
 //   extra shade goes on them; each starts from its first frame when its project comes up. UTrada's screens keep the
@@ -38,7 +38,7 @@ export type HeaderMode = 'overlay' | 'light' | 'dark'
 
 const LINKS = {
   linkedin: 'https://www.linkedin.com/in/harborkim/',
-  resume: 'https://docs.google.com/document/d/1-Sfn8xfwKDPRoQQdoi24GBm9TF9R4C01V6iAHsh3lVk/edit?usp=sharing',
+  resume: 'https://drive.google.com/file/d/1HVj_RZWRWKovvyIbYKPlQfGkQrecxC1B/view?usp=sharing',
 }
 const IMG3 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/main-v3/'
 

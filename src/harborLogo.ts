@@ -7,8 +7,16 @@
 //   wide (it was 50.2), so it still fits the 78×19 box; the mark is untouched.
 // v111 (Harbor: "Harbor sits high next to the icon"): the word is centred on the mark vertically. The mark runs
 //   y 1.870 → 16.995 (centre 9.433); the word's capitals run 2.625 → 14 (centre 8.3125), so the word moves down 1.12
-//   (WORD_DY) and its cap-height centre now sits on the mark's centre. Baseline 15.12; the b's ascender tops out at
-//   3.12 and the o's overshoot at 15.28, all inside the 19-tall box.
+//   (WORD_DY) and its cap-height centre now sits on the mark's centre.
+// v113 (Harbor: "make the icon come alive and spin on hover, something fun"): the mark is its own group (.hb-mark,
+//   turning about its own centre), and pointing at the header or footer logo (.hd-logo / .ft-logo) spins it —
+//   • pointer in (or keyboard focus): one full turn with a pop (it swells to 120% half-way, overshoots a little and
+//     springs back), then, while the pointer stays, a quarter-turn "tick" with a small bounce about every second, like
+//     a windmill catching the wind;
+//   • pointer out: the turn in progress finishes, then it stops. The mark has four-fold symmetry and every move ends on a
+//     quarter turn, so it always comes to rest looking exactly like the logo — no snap back.
+//   One listener on the document handles both logos (and any later copy), so the header and footer need no changes.
+//   Reduced motion: no spin.
 // - HEADER_LOGO_SVG: 78×19 (site header).
 // - FOOTER_LOGO_SVG: the same artwork at 40px tall, 164×40 (site footer).
 
@@ -20,7 +28,73 @@ const WORD = 'M28.188 7.378V8.929H22.149V7.378ZM22.633 2.625V14H20.672V2.625ZM29
 const WORD_DY = 1.12
 
 const logo = (w: number, h: number) =>
-  `<svg width="${w}" height="${h}" viewBox="0 0 78 19" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="${MARK}" fill="currentColor"/><path d="${WORD}" transform="translate(0 ${WORD_DY})" fill="currentColor"/></svg>`
+  `<svg width="${w}" height="${h}" viewBox="0 0 78 19" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" style="overflow:visible"><g class="hb-mark" style="transform-box:fill-box;transform-origin:center"><path d="${MARK}" fill="currentColor"/></g><path d="${WORD}" transform="translate(0 ${WORD_DY})" fill="currentColor"/></svg>`
 
 export const HEADER_LOGO_SVG = logo(78, 19)
 export const FOOTER_LOGO_SVG = logo(164, 40)
+
+/* ---------- hover spin (v113) ---------- */
+// turning: a turn is playing; timer: waiting for the next tick
+type Spin = { on: boolean; turning: boolean; timer: number; angle: number }
+const spins = new WeakMap<Element, Spin>()
+const SPRING = 'cubic-bezier(.34,1.56,.64,1)' // overshoots a little, then settles
+const FIRST_MS = 900  // the first full turn
+const TICK_MS = 560   // each quarter-turn tick while the pointer stays
+const REST_MS = 420   // pause between ticks
+const LOGOS = '.hd-logo, .ft-logo'
+
+function turn(g: SVGGElement, s: Spin, first: boolean) {
+  s.timer = 0
+  if (!s.on) return
+  s.turning = true
+  const from = s.angle
+  const by = first ? 360 : 90
+  const pop = first ? 1.2 : 1.1
+  const a = g.animate([
+    { transform: `rotate(${from}deg) scale(1)` },
+    { transform: `rotate(${from + by * 0.55}deg) scale(${pop})`, offset: 0.5 },
+    { transform: `rotate(${from + by}deg) scale(1)` },
+  ], { duration: first ? FIRST_MS : TICK_MS, easing: SPRING })
+  a.onfinish = () => {
+    s.turning = false
+    s.angle = (from + by) % 360
+    g.style.transform = s.angle ? `rotate(${s.angle}deg)` : ''
+    if (s.on) s.timer = window.setTimeout(() => turn(g, s, false), REST_MS)
+  }
+}
+
+function start(el: Element) {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  const g = el.querySelector<SVGGElement>('.hb-mark')
+  if (!g || typeof g.animate !== 'function') return
+  let s = spins.get(g)
+  if (!s) { s = { on: false, turning: false, timer: 0, angle: 0 }; spins.set(g, s) }
+  s.on = true
+  // already turning or waiting for its next tick: just keep going
+  if (!s.turning && !s.timer) turn(g, s, true)
+}
+
+function stop(el: Element) {
+  const g = el.querySelector('.hb-mark')
+  const s = g && spins.get(g)
+  if (!s) return
+  s.on = false
+  // resting between ticks: stop now; mid-turn: the turn finishes (on a quarter turn), then it stops
+  if (s.timer) { window.clearTimeout(s.timer); s.timer = 0 }
+}
+
+// one set of listeners on the document for every logo on the page
+const logoOf = (t: EventTarget | null) => (t instanceof Element ? t.closest(LOGOS) : null)
+if (typeof document !== 'undefined' && !(window as any).__hbLogoSpin) {
+  ;(window as any).__hbLogoSpin = true
+  document.addEventListener('mouseover', e => {
+    const a = logoOf(e.target)
+    if (a && !a.contains(e.relatedTarget as Node | null)) start(a)
+  })
+  document.addEventListener('mouseout', e => {
+    const a = logoOf(e.target)
+    if (a && !a.contains(e.relatedTarget as Node | null)) stop(a)
+  })
+  document.addEventListener('focusin', e => { const a = logoOf(e.target); if (a) start(a) })
+  document.addEventListener('focusout', e => { const a = logoOf(e.target); if (a) stop(a) })
+}

@@ -1,6 +1,6 @@
 /* @import url() FONT IMPORTS MUST ALWAYS BE AT THE VERY TOP OF THIS FILE, ABOVE THE TAILWIND IMPORTS — DO NOT DELETE THIS COMMENT */
-/* No web-font import here: the site is set in Helvetica Neue (Harbor's rule). Newsreader and Geist are loaded where they
-   are used (Home.tsx, SiteHeaderB.tsx, ClosingCTAB.tsx, Footer.tsx — the footer is on every page). */
+/* v109 (Harbor, Nov 12): one typeface for the whole site — Roboto (Google Fonts, variable 100–900, with italics). */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
 
 /* CRITICAL: THE FOLLOWING TAILWIND IMPORTS MUST NEVER BE DELETED OR REORDERED — DO NOT DELETE THIS COMMENT */
 @import 'tailwindcss/base';
@@ -10,39 +10,38 @@
 /* END TAILWIND IMPORTS — ALL OTHER CSS MUST GO BELOW THIS LINE */
 /* Page styles live in each page file; the header, Closing CTA and footer bring their own. Overrides below. */
 
-/* One typeface everywhere: Helvetica Neue, including form controls, buttons and Tailwind's sans / mono / serif utilities.
-   Elements that set their own font keep it on purpose: the handwriting on the Trust Bank Define whiteboard (Caveat /
-   Kalam), the Lato specimen in GameCove's design-system section, and the Figma fonts in the hero and Closing CTA. */
-html, body, button, input, select, textarea, .hb, .hb *, .font-sans, .font-mono, .font-serif {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+/* ================= Typeface: Roboto everywhere (v109, Harbor: "모든 폰트 Roboto") =================
+   Every text on every page — body, headings (formerly Newsreader), the Closing CTA (formerly Geist / SF Pro), the
+   About arrows (formerly Geist Mono), header, footer, form controls, chart labels (SVG text) and placeholders — is set
+   in Roboto. The page files still name their old fonts; this rule wins over all of them (including inline styles).
+   Weights stay as they were (Regular 400 for the former serif headings, Medium 500 where Geist Medium was used).
+   Kept on purpose, because they show something rather than set text:
+   - the handwriting on the Trust Bank Define whiteboard (Caveat / Kalam), which imitates handwritten sticky notes;
+   - the Lato specimen in GameCove's design-system section, which shows that product's typeface by name.
+   The Harbor logos are drawn shapes (SVG paths), not text, so they keep their lettering. */
+html, body, button, input, select, textarea,
+body *:not([style*="Caveat"]):not([style*="Kalam"]):not([style*="Lato"]),
+body *::before, body *::after, body *::placeholder {
+  font-family: "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif !important;
 }
-/* Exception (Harbor's Figma hero, Nov 8): the main hero's quote and headline, and the project name on the Projects menu
-   card, are set in Newsreader, like rox.com's serif headline and menu title. */
-.hb .hx .serif, .hb .hx .serif *, .hb .mm .mm-name {
-  font-family: "Newsreader", Georgia, "Times New Roman", serif;
-  font-weight: 400;
-}
+/* former serif display / headings keep the Regular weight they had in Newsreader */
+.hb .hx .serif, .hb .hx .serif *, .hb .mm .mm-name { font-weight: 400; }
 
-/* ================= Project pages: the main page's type system (v104, Harbor, Nov 10) =================
-   The main page's design system (Figma page "Design System"): Newsreader Regular for display and headings, Helvetica Neue
-   (Arimo in Figma) for everything else; no bold display type.
+/* ================= Project pages: the main page's type system (v104, Harbor, Nov 10; typeface Roboto since v109) =================
    - page title → Display/Hero 64/72, -2% (Trust Bank, GameCove); UTrada's title is the project name alone →
      Display/Project 96/96, -3%, like the names in Selected work
    - section headings (h2) → Heading/Section 48/56, -2%
-   - sub-headings and card titles (h3, GameCove's h4 / "The problem" labels, Trust Bank's 23px card titles) → Newsreader 24/32
-   - large statements and big numbers (Trust Bank's 50px insight line, the 52–56px stats) → Newsreader Regular, 48/56 or
-     56/64
+   - sub-headings and card titles (h3, GameCove's h4 / "The problem" labels, Trust Bank's 23px card titles) → 24/32
+   - large statements and big numbers (Trust Bank's 50px insight line, the 52–56px stats) → Regular, 48/56 or 56/64
    - "Next case study" project name → Display/Project (clamp 64–96px), like Selected work
-   Body copy, labels, chips, buttons and the small bold UI labels stay in Helvetica Neue. */
+   Body copy, labels, chips, buttons and the small bold UI labels keep their own weights. */
 .hb.tb main h1, .hb.gc .gc4 .g-h1, .hb.ut .ut-hero h1,
 .hb.tb main h2, .hb.gc .gc4 .g-h2, .hb.ut .ut-main h2,
 .hb.tb main h3, .hb.gc .gc4 .g-h3, .hb.gc .gc4 .g-h4, .hb.gc .gc4 .g-ov-k,
 .hb.tb main [class*="text-[23px]"], .hb.tb main [class*="md:text-[50px]"], .hb.tb main [class*="text-[52px]"], .hb.gc .gc4 .g-num,
 .hb.tb .next-name, .hb.gc .next-name, .hb.ut .next-name {
-  font-family: "Newsreader", Georgia, "Times New Roman", serif !important;
   font-weight: 400 !important;
 }
-.hb.tb .next-name *, .hb.gc .next-name *, .hb.ut .next-name * { font-family: inherit !important; }
 /* Display/Hero */
 .hb.tb main h1 { font-size: 64px !important; line-height: 72px !important; letter-spacing: -0.02em !important; }
 .hb.gc .gc4 .g-h1 { font-size: clamp(44px, 4.4vw, 64px); line-height: 1.125; letter-spacing: -0.02em; }
@@ -66,8 +65,7 @@ html, body, button, input, select, textarea, .hb, .hb *, .font-sans, .font-mono,
 /* ================= GameCove hero video bar = Trust Bank's (v104, Harbor: "too square") =================
    GameCove's body squares every corner (GameCove.tsx). The video's controls are let off that rule so they match the
    Trust Bank hero exactly: 4px rounded progress / volume track, round 12px thumb, round 36px buttons with a soft white
-   hover, pause bars with rounded ends, Helvetica Neue 16px time. */
-.hb.gc .gc4 .hv-controls, .hb.gc .gc4 .hv-controls * { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+   hover, pause bars with rounded ends, 16px time. */
 .hb.gc .gc4 .hv-controls .g-range { height: 4px; border-radius: 9999px !important; }
 .hb.gc .gc4 .hv-controls input[type=range]::-webkit-slider-thumb { width: 12px; height: 12px; border-radius: 9999px !important; }
 .hb.gc .gc4 .hv-controls input[type=range]::-moz-range-thumb { width: 12px; height: 12px; border-radius: 9999px !important; }

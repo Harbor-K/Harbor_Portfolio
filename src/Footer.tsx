@@ -7,10 +7,11 @@ import { AI_ICONS } from './aiIcons'
 // footers (class "foot") are hidden.
 // - #0A0809, a 1px rgba(255,255,255,.08) line drawn inside the top, 80px top / 40px bottom padding.
 // - 1440 container, 64px between the top row and the bottom row.
-// - Top row: the Harbor logo (mark + "Harbor" in Newsreader Medium, Figma 569:10674, at 164×40) in a 432px column, then
-//   three link columns — Explore 336px (Home, Projects, About me, Resume), Projects 432px (Trust Bank, GameCove, UTrada),
-//   Contact 240px (LinkedIn, Instagram, Email, Book a call). Column headings in Newsreader Regular 16/24 #FAFAFA; links in
-//   Helvetica Neue Regular 16/24 #8C8C8C; 16px under a heading, 8px between links.
+// - Top row: the Harbor logo (mark + "Harbor", 164×40) in a 432px column, then three link columns — Explore 336px (Home,
+//   Projects, About me, Resume), Projects 432px (Trust Bank, GameCove, UTrada), Contact 240px (LinkedIn, Instagram, Email,
+//   Chat with me). Column headings 16/24 #FAFAFA; links 16/24 #8C8C8C; 16px under a heading, 8px between links.
+//   v112 (Harbor): the last Contact link reads "Chat with me" (was "Book a call"); it still opens her 30-minute
+//   cal.com page in a new tab.
 // - v105 (Harbor, Nov 10, from her reference screenshot): under the logo, 32px down —
 //   • "Ask AI about Harbor" 16/24 #8C8C8C (v107, Harbor: sentence case, no brackets — so no caps tracking either);
 //   • 16px; five 40×40 square buttons, 8px apart (6% white fill with an 8% white line inside; the mark at 72% white,
@@ -22,7 +23,7 @@ import { AI_ICONS } from './aiIcons'
 //     "Tuesday, Nov 10, 2026 (GMT +09)" (Asia/Seoul, whatever the visitor's own time zone).
 //   The top row grows to fit this column (the link columns stay at the top).
 // - Bottom row (48px): a 1px rgba(250,250,250,.16) line inside its top, 24px padding, then "© 2026 Harbor (Jihyun) Kim.
-//   All rights reserved." on the left and "Back to top ↑" on the right, Helvetica Neue 16/24 #8C8C8C.
+//   All rights reserved." on the left and "Back to top ↑" on the right, 16/24 #8C8C8C.
 // Lines are drawn inside boxes (inset shadows), like Figma's inside strokes, so no line adds to a size.
 // Interactions: links and the logo brighten on hover; the logo and "Home" go to the top of the main page;
 // "Resume" opens her CV (a Google Doc) in a new tab, like the header's Resume button (v108);
@@ -66,7 +67,7 @@ footer.ft { position: relative; display: flex; justify-content: center; padding:
 .ft *, .ft *::before, .ft *::after { box-sizing: border-box; }
 .ft .ft-in { display: flex; flex-direction: column; gap: 64px; width: min(1440px, calc(100vw - 64px)); }
 
-/* text: links, copyright and "Back to top" in Helvetica Neue Regular 16/24; column headings in Newsreader Regular 16/24 */
+/* text: links, copyright and "Back to top" 16/24; column headings 16/24 (typeface: Roboto, index.css) */
 .ft .ft-links a, .ft .ft-copy, .ft .ft-top-btn { font-family: ${SANS}; font-size: 16px; font-weight: 400; line-height: 24px;
   letter-spacing: 0; text-transform: none; white-space: nowrap; }
 .ft .ft-h { margin: 0; font-family: ${SERIF}; font-size: 16px; font-weight: 400; line-height: 24px; letter-spacing: 0; color: #FAFAFA; white-space: nowrap; }
@@ -205,7 +206,7 @@ export function Footer() {
               <li><a href={F.linkedin} target="_blank" rel="noreferrer">LinkedIn</a></li>
               <li><a href={F.instagram} target="_blank" rel="noreferrer">Instagram</a></li>
               <li><a href={F.email}>Email</a></li>
-              <li><a href={F.cal} target="_blank" rel="noreferrer">Book a call</a></li>
+              <li><a href={F.cal} target="_blank" rel="noreferrer">Chat with me</a></li>
             </ul>
           </nav>
         </div>

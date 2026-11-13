@@ -24,12 +24,20 @@ import { GIFS, GIF_MS, useGifSrc } from './gifPlay'
 //   end; a still stays 2.8s. Pointing at a project shows it in the card, Esc / click outside / page change closes it.
 //   The card's pictures load on the first open.
 //
+// Phones and small tablets (≤ 900px, v119 — Harbor: "responsive, good enough on mobile"): Projects, About me and
+// LinkedIn don't fit the bar, so they move into a menu. The bar keeps the logo, Resume and a 40×40 Menu button
+// (two lines that turn into an ×). The menu covers the page under the bar in #0F0F0F (the bar turns the same black
+// with light text while it is open): "Projects" label, the four projects (28/36, each with its one-line description
+// 16/24 at 60%), a line, then About me and LinkedIn ↗ (28/36) — 32px side padding on the 8-grid, 16px under the
+// label, 24px between projects. Rows rise in one after another (40ms apart). A link, Esc, or a page change closes it;
+// the page under it doesn't scroll while it is open. Reduced motion: no rise.
+//
 // mode — how the header sits on the page under it:
 // - 'overlay' (main page): transparent with light text over the dark hero; the light bar with ink text once scrolled.
 // - 'light' (About, Trust Bank, UTrada, ETO Markets): ink text on the white page; the light bar once scrolled.
 // - 'dark' (GameCove): light text on the dark page; a dark bar once scrolled.
 // hidden: the case studies' full-screen intro (the header stays out of the way until it ends).
-// away: the case studies' headroom — slides up while scrolling down, back when scrolling up.
+// away: the case studies' headroom — slides up while scrolling down, back when scrolling up (not while the menu is open).
 // The bar's blur sits on a ::before layer so the Projects panel's own glass blur still reaches the page (a blurred
 // parent would stop it).
 
@@ -63,14 +71,17 @@ const HDR_CSS = `
   --hd-pill: rgba(12,10,9,.06); }
 /* dark page (GameCove): light text, dark bar */
 .hdrb.m-dark { --hd-bar: rgba(17,17,20,.86); --hd-line: #2A2D31; }
+/* mobile menu open: the bar joins the black sheet under it */
+.hdrb.is-menu { --hd-fg: #FAFAFA; --hd-dim: rgba(250,250,250,.8); --hd-cta-bg: #FAFAFA; --hd-cta-fg: #0F0F0F; --hd-cta-hover: #E7E5E4;
+  --hd-bar: #0F0F0F; --hd-line: rgba(250,250,250,.12); }
 .hdrb.is-away { transform: translateY(calc(-100% - 4px)); }
 .hdrb.is-hidden { transform: translateY(calc(-100% - 4px)); opacity: 0; visibility: hidden; pointer-events: none;
   transition: transform .45s cubic-bezier(.22,1,.36,1), opacity .3s ease, visibility 0s .45s; }
 
 .hdrb .hdrb-bar { position: relative; }
-.hdrb .hdrb-bar::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: 0; transition: opacity .35s ease;
+.hdrb .hdrb-bar::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: 0; transition: opacity .35s ease, background-color .3s ease;
   background: var(--hd-bar); -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px); border-bottom: 1px solid var(--hd-line); }
-.hdrb.is-scrolled .hdrb-bar::before { opacity: 1; }
+.hdrb.is-scrolled .hdrb-bar::before, .hdrb.is-menu .hdrb-bar::before { opacity: 1; }
 
 .hdrb .hd { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 24px;
   width: min(1440px, calc(100vw - 64px)); height: 64px; margin: 0 auto; }
@@ -140,13 +151,47 @@ const HDR_CSS = `
 .hdrb .mm-list a.on { background: rgba(236,236,234,.16); color: #FAFAFA; }
 .hdrb .mm-list a:focus-visible { outline: 2px solid #FAFAFA; outline-offset: -2px; }
 
+/* ---- mobile menu (≤ 900px, v119) ---- */
+.hdrb .hd-burger { display: none; position: relative; width: 40px; height: 40px; padding: 0; margin: 0; background: transparent; border: 0; border-radius: 0;
+  color: var(--hd-fg); cursor: pointer; }
+.hdrb .hd-burger i { position: absolute; left: 10px; width: 20px; height: 2px; background: currentColor;
+  transition: transform .35s cubic-bezier(.22,1,.36,1), top .35s cubic-bezier(.22,1,.36,1); }
+.hdrb .hd-burger i:nth-child(1) { top: 15px; }
+.hdrb .hd-burger i:nth-child(2) { top: 23px; }
+.hdrb.is-menu .hd-burger i:nth-child(1) { top: 19px; transform: rotate(45deg); }
+.hdrb.is-menu .hd-burger i:nth-child(2) { top: 19px; transform: rotate(-45deg); }
+.hdrb .hd-burger:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+
+.hdrb .mnav { position: fixed; left: 0; right: 0; top: 64px; bottom: 0; z-index: 49; overflow-y: auto; overscroll-behavior: contain;
+  background: #0F0F0F; color: #FAFAFA; padding: 32px 32px 48px; opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity .25s ease, visibility 0s .25s; }
+.hdrb .mnav.open { opacity: 1; visibility: visible; pointer-events: auto; transition: opacity .25s ease, visibility 0s; }
+.hdrb .mnav-k { margin: 0 0 16px; font-family: ${SANS}; font-size: 16px; line-height: 24px; color: rgba(250,250,250,.6); }
+.hdrb .mnav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 24px; }
+.hdrb .mnav a { display: flex; flex-direction: column; gap: 4px; color: #FAFAFA; text-decoration: none; }
+.hdrb .mnav .nm { display: inline-flex; align-items: center; gap: 8px; font-family: ${SANS}; font-size: 28px; font-weight: 400; line-height: 36px; letter-spacing: -0.01em; }
+.hdrb .mnav .nm .ico-arrow { width: 20px; height: 20px; }
+.hdrb .mnav .sb { font-family: ${SANS}; font-size: 16px; line-height: 24px; color: rgba(250,250,250,.6); }
+.hdrb .mnav a:focus-visible { outline: 2px solid #FAFAFA; outline-offset: 4px; }
+.hdrb .mnav a[aria-current] .nm { text-decoration: underline; text-underline-offset: 6px; text-decoration-thickness: 1px; }
+.hdrb .mnav-line { height: 1px; margin: 40px 0; background: rgba(250,250,250,.12); }
+.hdrb .mnav li { opacity: 0; transform: translateY(8px); }
+.hdrb .mnav.open li { animation: mnav-in .45s cubic-bezier(.22,1,.36,1) var(--d, 0s) forwards; }
+@keyframes mnav-in { to { opacity: 1; transform: none; } }
+
 @media (max-width: 900px) {
   .hdrb .hd { width: calc(100vw - 32px); grid-template-columns: auto minmax(0, 1fr); }
   .hdrb .hd-nav, .hdrb .hd-right .hd-link { display: none; }
+  .hdrb .hd-right { gap: 8px; }
+  .hdrb .hd-burger { display: block; }
+}
+@media (min-width: 901px) {
+  .hdrb .mnav { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .hdrb .mm-t { animation: none; }
   .hdrb .mm-card .layer { transition: none; }
+  .hdrb .mnav li, .hdrb .mnav.open li { opacity: 1; transform: none; animation: none; }
 }
 `
 
@@ -247,6 +292,34 @@ function ProjectsMenu() {
   )
 }
 
+/** phones / small tablets: the full menu under the bar */
+function MobileNav({ open, close, current }: { open: boolean; close: () => void; current?: 'about' }) {
+  const here = typeof window !== 'undefined' ? window.location.hash : ''
+  const tab = open ? 0 : -1
+  let k = 0
+  const d = () => ({ '--d': `${(k++ * 0.04).toFixed(2)}s` } as React.CSSProperties)
+  return (
+    <nav id="hd-mnav" className={'mnav' + (open ? ' open' : '')} aria-label="Menu" aria-hidden={!open}>
+      <p className="mnav-k">Projects</p>
+      <ul>
+        {MENU.map(m => (
+          <li key={m.name} style={d()}>
+            <a href={m.href} tabIndex={tab} onClick={close} aria-current={here.startsWith(m.href) ? 'page' : undefined}>
+              <span className="nm">{m.name}</span>
+              <span className="sb">{m.sub}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+      <div className="mnav-line" aria-hidden="true" />
+      <ul>
+        <li style={d()}><a href="#/about" tabIndex={tab} onClick={close} aria-current={current === 'about' ? 'page' : undefined}><span className="nm">About me</span></a></li>
+        <li style={d()}><a href={LINKS.linkedin} tabIndex={tab} target="_blank" rel="noreferrer" onClick={close}><span className="nm">LinkedIn <ArrowUpRight /></span></a></li>
+      </ul>
+    </nav>
+  )
+}
+
 /** the logo: on the main page it scrolls back to the top; on any other page it opens the main page */
 const goHome = (e: React.MouseEvent) => {
   e.preventDefault()
@@ -258,6 +331,7 @@ export function SiteHeaderB({ mode = 'overlay', current, hidden = false, away = 
   mode?: HeaderMode; current?: 'about'; hidden?: boolean; away?: boolean
 }) {
   const [scrolled, setScrolled] = useState(false)
+  const [menu, setMenu] = useState(false)
   useEffect(() => {
     let raf = 0
     const run = () => { raf = 0; setScrolled(scrollY > 40) }
@@ -266,14 +340,34 @@ export function SiteHeaderB({ mode = 'overlay', current, hidden = false, away = 
     addEventListener('scroll', on, { passive: true })
     return () => { if (raf) cancelAnimationFrame(raf); removeEventListener('scroll', on) }
   }, [])
-  const cls = 'hdrb m-' + mode + (scrolled ? ' is-scrolled' : '') + (hidden ? ' is-hidden' : away ? ' is-away' : '')
+  // the mobile menu: Esc / page change / widening past 900px closes it; the page under it stays still
+  useEffect(() => {
+    if (!menu) return
+    const close = () => setMenu(false)
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close() }
+    const onWide = () => { if (innerWidth > 900) close() }
+    const root = document.documentElement
+    const prev = root.style.overflow
+    root.style.overflow = 'hidden'
+    addEventListener('keydown', onKey)
+    addEventListener('hashchange', close)
+    addEventListener('resize', onWide)
+    return () => {
+      root.style.overflow = prev
+      removeEventListener('keydown', onKey)
+      removeEventListener('hashchange', close)
+      removeEventListener('resize', onWide)
+    }
+  }, [menu])
+  const cls = 'hdrb m-' + mode + (scrolled ? ' is-scrolled' : '') + (menu ? ' is-menu' : '') +
+    (hidden && !menu ? ' is-hidden' : away && !menu ? ' is-away' : '')
   return (
-    <header className={cls} aria-hidden={hidden || undefined}>
+    <header className={cls} aria-hidden={(hidden && !menu) || undefined}>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" />
       <style>{HDR_CSS}</style>
       <div className="hdrb-bar">
         <div className="hd">
-          <a className="hd-logo" href="#" aria-label="Harbor, main page" onClick={goHome} dangerouslySetInnerHTML={{ __html: HEADER_LOGO_SVG }} />
+          <a className="hd-logo" href="#" aria-label="Harbor, main page" onClick={e => { setMenu(false); goHome(e) }} dangerouslySetInnerHTML={{ __html: HEADER_LOGO_SVG }} />
           <nav className="hd-nav" aria-label="Main">
             <ProjectsMenu />
             <a className="hd-link" href="#/about" aria-current={current === 'about' ? 'page' : undefined}>About me</a>
@@ -281,9 +375,14 @@ export function SiteHeaderB({ mode = 'overlay', current, hidden = false, away = 
           <div className="hd-right">
             <a className="hd-link" href={LINKS.linkedin} target="_blank" rel="noreferrer">LinkedIn <ArrowUpRight /></a>
             <a className="hd-cta" href={LINKS.resume} target="_blank" rel="noreferrer" aria-label="Resume (opens in a new tab)">Resume</a>
+            <button type="button" className="hd-burger" aria-label={menu ? 'Close menu' : 'Open menu'} aria-expanded={menu} aria-controls="hd-mnav"
+              onClick={() => setMenu(v => !v)}>
+              <i aria-hidden="true" /><i aria-hidden="true" />
+            </button>
           </div>
         </div>
       </div>
+      <MobileNav open={menu} close={() => setMenu(false)} current={current} />
     </header>
   )
 }

@@ -31,6 +31,11 @@ body *::before, body *::after, body *::placeholder {
    `img, video { max-width: 100% }` would squeeze it to the word's width on short words ("Clarity," → 112px). v115 */
 .hb .abk-tp img, .hb .abk-tp video { max-width: none; }
 
+/* Selected work (Home.tsx): the ETO Markets logo stacks its mark beside two lines of type, so at the 40px every other
+   logo uses it read far smaller than UTrada's (Harbor, v118). It takes its Figma size instead — 775:8, the 312×125
+   logo fitted into 182×70 → 175×70 — which puts it level with UTrada's wordmark. */
+.pl-logo[src*="/eto/eto-logo"] { height: 70px; }
+
 /* ================= Project pages: the main page's type system (v104, Harbor, Nov 10; typeface Roboto since v109) =================
    - page title → Display/Hero 64/72, -2% (Trust Bank, GameCove); UTrada's title is the project name alone →
      Display/Project 96/96, -3%, like the names in Selected work
@@ -64,6 +69,24 @@ body *::before, body *::after, body *::placeholder {
 @media (max-width: 767px) {
   .hb.tb main h1 { font-size: 44px !important; line-height: 52px !important; }
   .hb.tb main h2, .hb.gc .gc4 .g-h2, .hb.ut .ut-main h2, .hb.tb main [class*="md:text-[50px]"] { font-size: 36px !important; line-height: 44px !important; }
+}
+
+/* ================= Responsive pass (v119, Harbor: "good enough on mobile") =================
+   Checked page by page at 390px (phone) and 768px (tablet); the desktop (1920) layout is untouched.
+   - Main hero: the quote ticker is one 32px line that slides; at 20px the longer quotes ran past a phone's edge and
+     were cut, so phones set it in 16px (still one line, same slide).
+   - "Next case study": the 64px minimum pushed the arrow onto its own line on phones → 48/56 on phones, one line.
+   - GameCove hero: on desktop the dashboard grows to fill the screen as you scroll; on a phone that zoom (×4.8) only
+     showed a blurred corner of it, so phones keep the picture still at its size in the column.
+   - The header's menu for phones lives in SiteHeaderB.tsx; Trust Bank's affinity board scrolls shorter on phones
+     (AffinityScroll.tsx). */
+@media (max-width: 600px) {
+  .hb .hx-quote, .hb .qt-line { font-size: 16px !important; }
+  .hb .qt-line { white-space: nowrap !important; }
+  .hb.tb .next-name, .hb.gc .next-name, .hb.ut .next-name { font-size: 48px !important; line-height: 56px !important; letter-spacing: -0.02em !important; white-space: nowrap; }
+}
+@media (max-width: 760px) {
+  .hb.gc .gc4 .g-banner.g-video { transform: none !important; }
 }
 
 /* ================= GameCove hero video bar = Trust Bank's (v104, Harbor: "too square") =================

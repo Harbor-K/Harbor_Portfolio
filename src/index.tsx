@@ -21,6 +21,7 @@ import { useScreenInit } from "./useScreenInit.js";
 // Any other hash (#projects, #contact…) is a section of the main page. An old "#/projects" link lands on Selected work.
 // Opening a page always jumps to its top instantly (not the site's smooth scroll), so a case study's full-screen intro
 // starts from the top even when you arrive from the bottom of another page.
+// Screens view (v119): the "Footer" screen ({ section: 'footer' }) opens the main page scrolled to the footer.
 const fixOld = () => {
   if (window.location.hash === "#/projects") {
     history.replaceState(null, "", "#projects");
@@ -30,7 +31,7 @@ const fixOld = () => {
 const jumpTop = () => window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
 
 function Root() {
-  const screen = useScreenInit() as { page?: string } | undefined;
+  const screen = useScreenInit() as { page?: string; section?: string } | undefined;
   const [hash, setHash] = useState(fixOld);
   useEffect(() => {
     const on = () => setHash(fixOld());
@@ -57,6 +58,16 @@ function Root() {
     });
     return () => cancelAnimationFrame(raf);
   }, [page, hash]);
+
+  // Screens view: the Footer screen
+  useEffect(() => {
+    if (screen?.section !== "footer") return;
+    const t = window.setTimeout(() => {
+      const el = document.querySelector<HTMLElement>("footer.ft");
+      if (el) window.scrollTo({ top: el.offsetTop, behavior: "instant" as ScrollBehavior });
+    }, 400);
+    return () => clearTimeout(t);
+  }, [screen]);
 
   let view: React.ReactNode;
   if (page === "main") view = <Home key="main" />;

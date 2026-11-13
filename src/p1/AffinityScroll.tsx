@@ -6,6 +6,8 @@ import React, { useEffect, useRef, useState } from 'react';
  * Built from Figma "Whiteboard · Affinity (designed)" (1072:165) and the 3-pattern board (1068:16738).
  * Scroll: the board pins, the 5 group headings and unrelated notes fade out,
  * 12 notes slide into the 3 circles, the circles are drawn, then the captions are written in.
+ * v119 (responsive): on phones (≤ 760px) the board is only ~350px wide, so the pinned stretch is 120vh instead of
+ * 300vh — the same story in less than half the scrolling, instead of three screens of empty space around a small board.
  */
 
 const FRAME_W = 1440;
@@ -102,6 +104,7 @@ export function AffinityScroll() {
   const box = useRef<HTMLDivElement>(null);
   const [p, setP] = useState(0);
   const [scale, setScale] = useState(1);
+  const [narrow, setNarrow] = useState(false);
 
   // scale the 1440 frame to the column, and to the viewport height while pinned
   useEffect(() => {
@@ -110,6 +113,7 @@ export function AffinityScroll() {
       const byWidth = w / FRAME_W;
       const byHeight = (window.innerHeight - 120) / 1000;
       setScale(Math.min(1, byWidth, Math.max(byHeight, 0.4)));
+      setNarrow(window.innerWidth <= 760);
     };
     fit();
     const ro = new ResizeObserver(fit);
@@ -161,7 +165,7 @@ export function AffinityScroll() {
   const done = p > 0.5;
 
   return (
-    <div ref={outer} className="relative" style={{ height: `calc(${Math.round(943 * scale)}px + 300vh)` }}>
+    <div ref={outer} className="relative" style={{ height: `calc(${Math.round(943 * scale)}px + ${narrow ? 120 : 300}vh)` }}>
       <div className="sticky" style={{ top: `max(80px, calc(50vh - ${Math.round((943 * scale) / 2 + 20)}px))` }}>
         <div ref={box} className="relative w-full bg-white overflow-hidden rounded-[20px]" style={{ height: Math.round(frameH * scale) }}>
           <div

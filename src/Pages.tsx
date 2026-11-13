@@ -4,7 +4,7 @@ import { SiteHeader, VoiceAssistant } from './App'
 
 // About me page — Harbor's Figma "About · Kinfolk style · default (11/10)" (44기 김지현 4차 PF; latest frame 645:316),
 // on a 1440 grid inside a 1920 frame, page #FAFAF9:
-// 1. Hero (657:971) — 56px under the header: "Designer now, / once a painter" (Newsreader 64/72, -2%; the first line
+// 1. Hero (657:971) — 56px under the header: "Designer now, / once a painter" (64/72, -2%; the first line
 //    #0F0F0F, the second #8C8C8C) with the pitch (18/24, -2%, #595959) 24px under it; 64px; the 432×504 photo (her two
 //    self-portraits behind an easel, 2x from Figma); 104px; "My story ↓" alone (v103, Harbor: Resume and the bar
 //    removed); 32px. 1000 tall in Figma.
@@ -15,7 +15,7 @@ import { SiteHeader, VoiceAssistant } from './App'
 //    (45% → 0 in 1.2s) and drifts with the scroll (parallax, kept inside its frame); the title rises in word by word from
 //    0.3s (0.07s apart, 0.7s each); the pitch comes in at 1s like the main quote; "My story" fades in at 0.7s.
 // 2. Band (613:14784) — unchanged: 952 tall, sticky-wall photo under a shade, WHAT I DO / GLOBAL MINDSET caption row.
-// 3. Life beyond work (645:367; v103) — 128px padding; "Life beyond work" (Newsreader 48/56, -2%) with 24px under it and
+// 3. Life beyond work (645:367; v103) — 128px padding; "Life beyond work" (48/56, -2%) with 24px under it and
 //    no rule, no arrows; 40px; six 288×360 photo cards, 24px apart (label #595959, line #0F0F0F, 16/24, 8px apart).
 //    Harbor: "when you scroll, it moves sideways on its own; once you've seen them all, carry on down." The section
 //    pins in the middle of the window and the page's scroll moves the row to the left, one pixel per pixel, until the
@@ -23,19 +23,19 @@ import { SiteHeader, VoiceAssistant } from './App'
 //    motion, or a window wide enough to show all six: no pin, the row just sits there (swipeable on touch).
 //    v104 (Harbor): the tea card reads "My go-to tea? Always Yorkshire Tea."
 // 4. Topics (623:14946) — 224px top / 160px bottom: Human-centered, Observation, Clarity, Accessibility, Evidence-based,
-//    Iteration (Newsreader 40/48, -2%, 16px apart, centred). Pointing at one fades the others to #BDBDBA (Kinfolk
-//    CategoryList timing) and shows its 160×200 photo centred 24px above it.
-//    v106 (Harbor): Observation shows her 2.5s sky-sketch clip instead of a photo — it starts from its first frame each
-//    time the word is pointed at and loops while it stays there (muted; its first frame is the poster; reduced motion
-//    keeps the still).
+//    Iteration (40/48, -2%, 16px apart, centred). Pointing at one fades the others to #BDBDBA (Kinfolk
+//    CategoryList timing) and shows its 160×200 picture centred 24px above it.
+//    Harbor's clips (320×400, 15fps, muted, 2.5–5s) instead of photos: Observation (v106, the sky sketch), and v115
+//    Human-centered (at the laptop), Clarity (a blur that comes into focus, on pink) and Accessibility (a wave hello).
+//    Each starts from its first frame every time the word is pointed at and loops while it stays there; its first frame
+//    is the poster (also what reduced motion shows). Evidence-based and Iteration keep their photos.
 // Then the site footer (index.tsx).
 //
 // Sections 1→2 (Kinfolk): the band sits pinned (position: sticky) behind the hero with its bottom on the bottom of
 // the window, and the hero scrolls up over it like a curtain; the band lets go as the hero's bottom passes its top.
 // "My story ↓" scrolls to where the hero has just gone.
-// Photos and the clip: Harbor-K/harbor-pf assets/about/v3.
-// Note: the site-wide ".hb *" Helvetica rule (index.css) reaches every element, so any span inside a serif or mono line
-// has to name its font itself.
+// Photos and clips: Harbor-K/harbor-pf assets/about/v3.
+// Typeface: Roboto everywhere since v109 (index.css); the font names below are the earlier ones, overridden there.
 
 const SANS = '"Helvetica Neue", Helvetica, Arial, sans-serif'
 const SERIF = '"Newsreader", Georgia, "Times New Roman", serif'
@@ -164,14 +164,13 @@ const LIFE = [
   { src: 'life-06-reading.jpg', label: '06 · READING', line: 'Always reading about AI, UX and design psychology.', alt: 'The cover of Laws of UX by Jon Yablonski' },
 ]
 
-// Figma 623:14946 topics; Human-centered uses the Figma hover photo, Observation her clip (v106), the rest are picks
-// from her photos
+// Figma 623:14946 topics. src = the still (a clip's first frame when there is a clip); video = Harbor's clip
 type Topic = { t: string; src: string; video?: string }
 const TOPICS: Topic[] = [
-  { t: 'Human-centered', src: 'topic-ux-research.jpg' },
+  { t: 'Human-centered', src: 'topic-human-centered-poster.jpg', video: 'topic-human-centered.mp4' },
   { t: 'Observation', src: 'topic-observation-poster.jpg', video: 'topic-observation.mp4' },
-  { t: 'Clarity', src: 'topic-design-systems.jpg' },
-  { t: 'Accessibility', src: 'topic-fintech.jpg' },
+  { t: 'Clarity', src: 'topic-clarity-poster.jpg', video: 'topic-clarity.mp4' },
+  { t: 'Accessibility', src: 'topic-accessibility-poster.jpg', video: 'topic-accessibility.mp4' },
   { t: 'Evidence-based', src: 'topic-usability-testing.jpg' },
   { t: 'Iteration', src: 'topic-prototyping.jpg' },
 ]
@@ -294,7 +293,7 @@ function Topics() {
 export function AboutPage() {
   const hero = useRef<HTMLElement>(null)
   const phBg = useRef<HTMLDivElement>(null)
-  // warm the topic photos so they appear at once on the first hover
+  // warm the topic stills so they appear at once on the first hover
   useEffect(() => { TOPICS.forEach(p => { const i = new Image(); i.src = V3 + p.src }) }, [])
   // the photo drifts with the scroll inside its frame (the main hero's parallax, scaled to the frame)
   useEffect(() => {

@@ -18,7 +18,7 @@
    Kept on purpose, because they show something rather than set text:
    - the handwriting on the Trust Bank Define whiteboard (Caveat / Kalam), which imitates handwritten sticky notes;
    - the Lato specimen in GameCove's design-system section, which shows that product's typeface by name.
-   The Harbor logos are drawn shapes (SVG paths), not text, so they keep their lettering. */
+   The Harbor logos are drawn shapes (SVG paths), not text; their wordmark is outlined Roboto since v110. */
 html, body, button, input, select, textarea,
 body *:not([style*="Caveat"]):not([style*="Kalam"]):not([style*="Lato"]),
 body *::before, body *::after, body *::placeholder {
@@ -26,6 +26,10 @@ body *::before, body *::after, body *::placeholder {
 }
 /* former serif display / headings keep the Regular weight they had in Newsreader */
 .hb .hx .serif, .hb .hx .serif *, .hb .mm .mm-name { font-weight: 400; }
+
+/* About topics (Pages.tsx): the 160×200 hover picture / clip sits over its word, so Tailwind's
+   `img, video { max-width: 100% }` would squeeze it to the word's width on short words ("Clarity," → 112px). v115 */
+.hb .abk-tp img, .hb .abk-tp video { max-width: none; }
 
 /* ================= Project pages: the main page's type system (v104, Harbor, Nov 10; typeface Roboto since v109) =================
    - page title → Display/Hero 64/72, -2% (Trust Bank, GameCove); UTrada's title is the project name alone →

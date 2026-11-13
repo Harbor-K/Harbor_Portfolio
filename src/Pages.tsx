@@ -24,11 +24,11 @@ import { SiteHeader, VoiceAssistant } from './App'
 //    v104 (Harbor): the tea card reads "My go-to tea? Always Yorkshire Tea."
 // 4. Topics (623:14946) — 224px top / 160px bottom: Human-centered, Observation, Clarity, Accessibility, Evidence-based,
 //    Iteration (40/48, -2%, 16px apart, centred). Pointing at one fades the others to #BDBDBA (Kinfolk
-//    CategoryList timing) and shows its 160×200 picture centred 24px above it.
-//    Harbor's clips (320×400, 15fps, muted, 2.5–5s) instead of photos: Observation (v106, the sky sketch), and v115
-//    Human-centered (at the laptop), Clarity (a blur that comes into focus, on pink) and Accessibility (a wave hello).
-//    Each starts from its first frame every time the word is pointed at and loops while it stays there; its first frame
-//    is the poster (also what reduced motion shows). Evidence-based and Iteration keep their photos.
+//    CategoryList timing) and shows its 160×200 clip centred 24px above it.
+//    All six are Harbor's clips (320×400, muted, 2.5–7s): Observation (v106, the sky sketch); v115 Human-centered (at
+//    the laptop), Clarity (a blur that comes into focus, on pink), Accessibility (a wave hello); v116 Evidence-based
+//    and Iteration (a circle on white). Each starts from its first frame every time the word is pointed at and loops
+//    while it stays there; its first frame is the poster (also what reduced motion shows).
 // Then the site footer (index.tsx).
 //
 // Sections 1→2 (Kinfolk): the band sits pinned (position: sticky) behind the hero with its bottom on the bottom of
@@ -164,15 +164,15 @@ const LIFE = [
   { src: 'life-06-reading.jpg', label: '06 · READING', line: 'Always reading about AI, UX and design psychology.', alt: 'The cover of Laws of UX by Jon Yablonski' },
 ]
 
-// Figma 623:14946 topics. src = the still (a clip's first frame when there is a clip); video = Harbor's clip
+// Figma 623:14946 topics. src = the clip's first frame (poster); video = Harbor's clip
 type Topic = { t: string; src: string; video?: string }
 const TOPICS: Topic[] = [
   { t: 'Human-centered', src: 'topic-human-centered-poster.jpg', video: 'topic-human-centered.mp4' },
   { t: 'Observation', src: 'topic-observation-poster.jpg', video: 'topic-observation.mp4' },
   { t: 'Clarity', src: 'topic-clarity-poster.jpg', video: 'topic-clarity.mp4' },
   { t: 'Accessibility', src: 'topic-accessibility-poster.jpg', video: 'topic-accessibility.mp4' },
-  { t: 'Evidence-based', src: 'topic-usability-testing.jpg' },
-  { t: 'Iteration', src: 'topic-prototyping.jpg' },
+  { t: 'Evidence-based', src: 'topic-evidence-based-poster.jpg', video: 'topic-evidence-based.mp4' },
+  { t: 'Iteration', src: 'topic-iteration-poster.jpg', video: 'topic-iteration.mp4' },
 ]
 
 // words that rise in one after another (the main hero's timing)

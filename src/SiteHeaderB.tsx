@@ -2,32 +2,31 @@ import React, { useEffect, useRef, useState } from 'react'
 import { HEADER_LOGO_SVG } from './harborLogo'
 import { GIFS, GIF_MS, useGifSrc } from './gifPlay'
 
-// The site header, shared by every page (main, About, Trust Bank, GameCove, UTrada).
+// The site header, shared by every page (main, About, Trust Bank, GameCove, UTrada, ETO Markets).
 //
 // Layout (Figma main frame 530:5259, header.hdrb): 1440 container, 64px tall, three columns — Harbor logo (78×19) |
 // Projects ▾ (96×24, 8px side padding) · 40px · About me | LinkedIn ↗ (8px to the arrow) · 32px · Resume (40px, 16px
 // side padding). 16/24. v108 (Harbor): Resume opens her CV in a new tab — v114: the PDF on Google Drive.
 //
-// Projects menu (Harbor's Figma "Main · Projects menu open" 538:9995): one compact panel, 652×360, centred under
-// the Projects trigger, 8px below the header —
+// Projects menu (Harbor's Figma "Main · Projects menu open" 538:9995; with ETO Markets 776:92): one compact panel,
+// 652×360, centred under the Projects trigger, 8px below the header —
 //   [ project card 320×360 | project list 330 ]
 // - Card: the project's picture filling it; 32px padding; at the top the project name (32/38, -2%) with its
 //   one-line description 8px under it (16/24, 75%); at the bottom "View project" (44px).
 //   Background: Trust Bank and GameCove play Harbor's 320×360 GIFs, which carry their own dark edges for the text, so no
 //   extra shade goes on them; each starts from its first frame when its project comes up. UTrada's screens keep the
-//   dark gradient.
-// - List: 32px top / 16px sides; "Projects" label (16/24, 60%), 12px, then the three projects as 44px rows (12px
+//   dark gradient. ETO Markets (v117) shows its red logo picture with no shade, as in Figma 776:92.
+// - List: 32px top / 16px sides; "Projects" label (16/24, 60%), 12px, then the four projects as 44px rows (12px
 //   side padding). Label and project names share one left edge (28px in), and the label's top lines up with the card's
 //   project name (32px down), so the panel reads as two groups: the shown project, and the choice of project.
 // - Interactions: opens on hover / click / focus and moves through the projects by itself while open (pointing at the
 //   list holds it). v94: a GIF project stays up for its whole GIF (5.3s) before the next one, so its story plays to the
-//   end — at 2.8s GameCove moved on before its chat panel ever slid in, and looked frozen; UTrada's still stays 2.8s.
-//   Pointing at a project shows it in the card, Esc / click outside / page change closes it. The card's pictures load
-//   on the first open.
+//   end; a still stays 2.8s. Pointing at a project shows it in the card, Esc / click outside / page change closes it.
+//   The card's pictures load on the first open.
 //
 // mode — how the header sits on the page under it:
 // - 'overlay' (main page): transparent with light text over the dark hero; the light bar with ink text once scrolled.
-// - 'light' (About, Trust Bank, UTrada): ink text on the white page; the light bar once scrolled.
+// - 'light' (About, Trust Bank, UTrada, ETO Markets): ink text on the white page; the light bar once scrolled.
 // - 'dark' (GameCove): light text on the dark page; a dark bar once scrolled.
 // hidden: the case studies' full-screen intro (the header stays out of the way until it ends).
 // away: the case studies' headroom — slides up while scrolling down, back when scrolling up.
@@ -41,6 +40,7 @@ const LINKS = {
   resume: 'https://drive.google.com/file/d/1HVj_RZWRWKovvyIbYKPlQfGkQrecxC1B/view?usp=sharing',
 }
 const IMG3 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/main-v3/'
+const ETO = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/eto/'
 
 function ArrowUpRight() {
   return (
@@ -119,7 +119,7 @@ const HDR_CSS = `
   overflow: hidden; background: #0C0A09; color: #FAFAFA; text-decoration: none; }
 .hdrb .mm-card .layer { position: absolute; inset: 0; transition: opacity .45s ease, transform .7s cubic-bezier(.22,1,.36,1); }
 .hdrb .mm-card .layer img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 0; }
-/* the dark gradient for the text, only on pictures that don't carry their own (the GIFs do) */
+/* the dark gradient for the text, only on pictures that need it (not the GIFs, not ETO's plain red) */
 .hdrb .mm-card .layer.shade::after { content: ""; position: absolute; inset: 0; pointer-events: none;
   background: linear-gradient(180deg, rgba(12,10,9,.72) 0%, rgba(12,10,9,.25) 42%, rgba(12,10,9,.2) 62%, rgba(12,10,9,.7) 100%); }
 .hdrb .mm-card > .mm-t, .hdrb .mm-card > .mm-go { position: relative; z-index: 1; }
@@ -151,11 +151,13 @@ const HDR_CSS = `
 `
 
 /* ---------- Projects menu ---------- */
-type MenuItem = { name: string; sub: string; href: string; gif?: string; img?: string }
+// plain: a still that needs no dark gradient behind the white text (ETO's red)
+type MenuItem = { name: string; sub: string; href: string; gif?: string; img?: string; plain?: boolean }
 const MENU: MenuItem[] = [
   { name: 'Trust Bank', sub: 'Rewards UX revamp', href: '#/trust-bank', gif: GIFS.trustBankMenu },
   { name: 'GameCove', sub: 'AI analytics dashboard', href: '#/gamecove', gif: GIFS.gameCoveMenu },
   { name: 'UTrada', sub: 'Trading platform design system', href: '#/utrada', img: IMG3 + 'utrada-screens.webp' },
+  { name: 'ETO Markets', sub: 'CRM dashboard', href: '#/eto-markets', img: ETO + 'eto-cover.jpg', plain: true },
 ]
 // how long each project stays up while the menu moves through them: a GIF plays to its end (plus a beat), a still 2.8s
 const STILL_MS = 2800
@@ -165,7 +167,7 @@ const dwell = (m: MenuItem) => (m.gif ? GIF_MS + 200 : STILL_MS)
 function MenuLayer({ m, active }: { m: MenuItem; active: boolean }) {
   const gif = useGifSrc(m.gif, active)
   return (
-    <div className={'layer' + (m.gif ? '' : ' shade')} style={{ opacity: active ? 1 : 0, transform: active ? 'scale(1)' : 'scale(1.04)' }}>
+    <div className={'layer' + (m.gif || m.plain ? '' : ' shade')} style={{ opacity: active ? 1 : 0, transform: active ? 'scale(1)' : 'scale(1.04)' }}>
       <img src={m.gif ? gif : m.img} alt="" width={320} height={360} />
     </div>
   )

@@ -3,13 +3,14 @@ import { FOOTER_LOGO_SVG } from './harborLogo'
 import { AI_ICONS } from './aiIcons'
 
 // Site footer — Harbor's Figma "footer.ft" in the main page frame (44기 김지현 4차 PF, node 538:6543 / 671:1071), built to the
-// frame exactly. index.tsx renders it under every page (main, About, Trust Bank, GameCove, UTrada); the pages' older
-// footers (class "foot") are hidden.
+// frame exactly. index.tsx renders it under every page (main, About, Trust Bank, GameCove, UTrada, ETO Markets); the
+// pages' older footers (class "foot") are hidden.
 // - #0A0809, a 1px rgba(255,255,255,.08) line drawn inside the top, 80px top / 40px bottom padding.
 // - 1440 container, 64px between the top row and the bottom row.
 // - Top row: the Harbor logo (mark + "Harbor", 164×40) in a 432px column, then three link columns — Explore 336px (Home,
-//   Projects, About me, Resume), Projects 432px (Trust Bank, GameCove, UTrada), Contact 240px (LinkedIn, Instagram, Email,
-//   Chat with me). Column headings 16/24 #FAFAFA; links 16/24 #8C8C8C; 16px under a heading, 8px between links.
+//   Projects, About me, Resume), Projects 432px (Trust Bank, GameCove, UTrada, ETO Markets — v117, Figma 778:158),
+//   Contact 240px (LinkedIn, Instagram, Email, Chat with me). Column headings 16/24 #FAFAFA; links 16/24 #8C8C8C;
+//   16px under a heading, 8px between links.
 //   v112 (Harbor): the last Contact link reads "Chat with me" (was "Book a call"); it still opens her 30-minute
 //   cal.com page in a new tab.
 // - v105 (Harbor, Nov 10, from her reference screenshot): under the logo, 32px down —
@@ -198,6 +199,7 @@ export function Footer() {
               <li><a href="#/trust-bank">Trust Bank</a></li>
               <li><a href="#/gamecove">GameCove</a></li>
               <li><a href="#/utrada">UTrada</a></li>
+              <li><a href="#/eto-markets">ETO Markets</a></li>
             </ul>
           </nav>
           <nav className="ft-col c3" aria-label="Contact">

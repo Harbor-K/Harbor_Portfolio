@@ -11,23 +11,24 @@ import { GIFS, useGifSrc } from './gifPlay'
 // Header: the shared site header (SiteHeaderB.tsx, mode 'overlay').
 // Hero (1080 at 1920×1080):
 // - Harbor's typing video, same slow zoom-in, parallax and gradient as before; #0F0F0F behind it.
-// - Copy 80px from the bottom: quote ticker (Newsreader 20/32, 90%), 16px, headline (Newsreader 64/72, -2%; two 68px
+// - Copy 80px from the bottom: quote ticker (20/32, 90%), 16px, headline (64/72, -2%; two 68px
 //   lines, words 16px apart, 8px between the lines (v93, Harbor), second line 60%), 32px, two 192×48 buttons 8px apart
-//   (Helvetica Neue 16/24). The copy is pinned to the bottom, so the line gap pushes the first line and the quote up;
+//   (16/24). The copy is pinned to the bottom, so the line gap pushes the first line and the quote up;
 //   the second line and the buttons stay where they were.
 // - Interactions: quote ticker every 2.5s, words rise in one by one, buttons fade in, dark layer lifts.
 // Selected work (#FBFAF9, 160px top and bottom):
-// - "Selected work" Newsreader 48/56 -2%, 64px above the list.
-// - Rows 320px (48px padding) in the 1440 column: 240px description (Helvetica Neue 18/24; /0.n 16/24 #595959),
-//   48px, 384×224 media, 48px, project name (Newsreader 96/96 -3%). 1px #DBDBD9 line between rows (hidden next to a
+// - "Selected work" 48/56 -2%, 64px above the list.
+// - Rows 320px (48px padding) in the 1440 column: 240px description (18/24; /0.n 16/24 #595959),
+//   48px, 384×224 media, 48px, project name (96/96 -3%). 1px #DBDBD9 line between rows (hidden next to a
 //   hovered row), all lines drawn inside so rows stay 320.
 // - Logos at rest: 40px tall, black at 10%.
 // - Hover: the row turns #F0F0EE, the logo gives way to the project's media; the other rows step back (description
 //   48%, name 24%).
 // - Media: Trust Bank and GameCove show Harbor's 384×224 GIFs (gifPlay.ts), started from their first frame each time
-//   the row is pointed at; UTrada shows its screens.
+//   the row is pointed at; UTrada shows its screens; ETO Markets (v117, Figma 775:2 / hover 776:37, /0.4) its red logo
+//   picture, filled into the 384×224 box like Figma's Fill.
 // Footer: Footer.tsx, rendered by index.tsx under every page.
-// Type: Helvetica Neue for UI (Figma's Arimo stands in for it), Newsreader for the hero and Selected work titles.
+// Type: Roboto everywhere (index.css).
 
 const LINKS = {
   cal: 'https://cal.com/harbor-kim-wqsmkt/30min',
@@ -47,6 +48,7 @@ const HERO_VIDEO = IMG3 + 'hero-typing.mp4'
 const HERO_POSTER = IMG3 + 'hero-typing-poster.jpg'
 
 const TB = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/trust-bank/'
+const ETO = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/eto/'
 
 // Selected work rows
 type Project = { title: string; sub: string; href: string; logo: string; gif?: string; img?: string }
@@ -62,6 +64,10 @@ const PROJECTS: Project[] = [
   {
     title: 'UTrada', sub: 'Product design for a trading platform.', href: '#/utrada',
     logo: svgUri(UTRADA_LOGO_SVG), img: IMG3 + 'utrada-screens.webp',
+  },
+  {
+    title: 'ETO Markets', sub: 'A CRM dashboard for a Sydney-based trading broker.', href: '#/eto-markets',
+    logo: ETO + 'eto-logo.png', img: ETO + 'eto-cover.jpg',
   },
 ]
 

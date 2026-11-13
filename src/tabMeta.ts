@@ -21,6 +21,7 @@ export const TITLES: Record<string, string> = {
   tb: `Trust Bank · ${NAME}`,
   gc: `GameCove · ${NAME}`,
   ut: `UTrada · ${NAME}`,
+  eto: `ETO Markets · ${NAME}`,
 }
 export const AWAY_TITLE = 'Still here?'
 

@@ -4,14 +4,15 @@ import ReactDOM from "react-dom/client";
 import { Home } from "./Home";
 import { TrustBank } from "./TrustBank";
 import { GameCove } from "./GameCove";
-import { UTrada } from "./UTrada";
+import { UTrada, EtoMarkets } from "./UTrada";
 import { AboutPage } from "./Pages";
 import { CursorTrail } from "./cursor";
 import { Footer } from "./Footer";
 import { useTabMeta } from "./tabMeta";
 import { useScreenInit } from "./useScreenInit.js";
 
-// Pages: the main page (Home.tsx); "#/about" the About page; "#/trust-bank", "#/gamecove" and "#/utrada" the case studies.
+// Pages: the main page (Home.tsx); "#/about" the About page; "#/trust-bank", "#/gamecove", "#/utrada" and (v117)
+// "#/eto-markets" the case studies.
 // Every page has the same header (SiteHeaderB.tsx) and, since v79, the same footer — Harbor's Figma footer (Footer.tsx),
 // rendered here under whichever page is open (the main page included).
 // The line cursor (cursor.tsx) runs on every page — since v81 the main page too (Harbor, Nov 9). It is mounted once here
@@ -40,8 +41,9 @@ function Root() {
   const isTB = is("#/trust-bank", "trust-bank");
   const isGC = is("#/gamecove", "gamecove");
   const isUT = is("#/utrada", "utrada");
+  const isETO = is("#/eto-markets", "eto-markets");
   const isAB = is("#/about", "about");
-  const page = isTB ? "tb" : isGC ? "gc" : isUT ? "ut" : isAB ? "ab" : "main";
+  const page = isTB ? "tb" : isGC ? "gc" : isUT ? "ut" : isETO ? "eto" : isAB ? "ab" : "main";
   useTabMeta(page);
 
   useEffect(() => {
@@ -61,6 +63,7 @@ function Root() {
   else if (page === "tb") view = <TrustBank key="tb" />;
   else if (page === "gc") view = <GameCove key="gc" />;
   else if (page === "ut") view = <UTrada key="ut" />;
+  else if (page === "eto") view = <EtoMarkets key="eto" />;
   else view = <AboutPage key="ab" />;
 
   return (

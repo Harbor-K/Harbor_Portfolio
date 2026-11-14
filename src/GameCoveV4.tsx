@@ -26,6 +26,13 @@ import React, { useEffect, useRef, useState } from 'react'
  * Prototype section is gone (Figma): "Prototype · Final design" is one light section; its tour keeps every caption in
  * the top-left corner on a solid card with more contrast (Palantir AIP "Beyond Chat"). Test and Reflection unchanged.
  * New images: Harbor-K/harbor-pf assets/gamecove/v5/.
+ *
+ * v125 (Harbor, Nov 14 evening, Figma 1921 red-box notes): Process rings run faster (4.2s loop). Research question box
+ * now says where it started (Roblox). Interview step 03 gets the "both sides on purpose" line and the new panel. Define
+ * insights are 3 cards (icon, label, title, one quote); Lucas caption updated; spacing in Empathize/Define follows
+ * Figma. Final design: step 02·B shows the rebuilt Retention screen so the charts read; the design system is the
+ * Primitive → Semantic → Component map. New Iterate section after Test (round 2 with P2) — no session video and no
+ * card sort yet (Harbor will add the video later).
  */
 
 const L = 'https://raw.githubusercontent.com/Harbor-K/landing_page/main/gamecove/assets/'
@@ -45,15 +52,18 @@ const IMG = {
 const V5 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/gamecove/v5/'
 const IMG5 = {
   process: V5 + 'process.webp',
-  emp: [V5 + 'emp-1.webp', V5 + 'emp-2.webp', V5 + 'emp-3.webp'],
+  emp: [V5 + 'emp-1.webp', V5 + 'emp-2.webp', V5 + 'emp-3b.webp'],
   affinity: V5 + 'affinity-strip.webp',
   insight: [V5 + 'insight-1.png', V5 + 'insight-2.png', V5 + 'insight-3.png'],
   story: V5 + 'story.webp',
   sketch: [1, 2, 3, 4, 5, 6, 7, 8].map(n => V5 + `sketch-${n}.webp`),
   photo: V5 + 'photo.webp',
+  retention: V5 + 'retention.webp',
+  dsMap: V5 + 'ds-map.webp',
+  iterBefore: V5 + 'iter-before.webp', iterAfter: V5 + 'iter-after.webp',
 }
 
-export const GC4_CHAPTERS = ['Overview', 'Process', 'Empathize', 'Define', 'Ideate', 'Prototype', 'Test', 'Reflection']
+export const GC4_CHAPTERS = ['Overview', 'Process', 'Empathize', 'Define', 'Ideate', 'Prototype', 'Test', 'Iterate', 'Reflection']
 
 /* ---------- helpers ---------- */
 
@@ -295,7 +305,7 @@ function Process() {
             <img src={IMG5.process} alt="Design thinking process: Empathize, Define, Ideate, Prototype and Test. Define and Ideate were turning points; an Iterate arrow loops from Test back to Prototype: fix, then test again." loading="lazy" />
             <svg className="g-proc-fx" viewBox="0 0 920 480" aria-hidden="true">
               {STAGE_RINGS.map(([cx, cy], i) => (
-                <g key={i} className="ring" style={{ animationDelay: `${i * 1.2}s` }}>
+                <g key={i} className="ring" style={{ animationDelay: `${i * 0.7}s` }}>
                   <ellipse cx={cx} cy={cy} rx={53} ry={29} />
                   <ellipse className="o" cx={cx} cy={cy} rx={70} ry={39} />
                 </g>
@@ -303,7 +313,7 @@ function Process() {
               <g className="loop">
                 <circle r={12} className="halo" />
                 <circle r={5} />
-                <animateMotion dur="7.2s" repeatCount="indefinite" path="M802 178 Q707 48 611 175" keyPoints="0;0;1;1" keyTimes="0;0.82;0.97;1" calcMode="linear" />
+                <animateMotion dur="4.2s" repeatCount="indefinite" path="M802 178 Q707 48 611 175" keyPoints="0;0;1;1" keyTimes="0;0.82;0.97;1" calcMode="linear" />
               </g>
             </svg>
           </figure>
@@ -315,13 +325,15 @@ function Process() {
 
 /* ---------- empathize: sticky scroll, 01 / 02 / 03 open one at a time ---------- */
 
-const EMP = [
+const EMP: { t: string; h: React.ReactNode; lead?: string; p: string; img: number; cap: string; alt: string }[] = [
   { t: 'What game creators wrote', h: <>They know something is wrong,<br />but not where</>, p: 'Game creators saw their numbers drop but couldn’t tell why. So they asked the community and changed many things at once.',
     img: 0, cap: 'Our analysis board of the 27 game creator posts.', alt: 'Analysis board of 27 game creator posts: what they want, how they read data today, what they still want to know and what they asked on the forum, with quotes and an insight note' },
   { t: 'What players wrote', h: <>Players leave before saying why</>, p: 'Players decide in the first few minutes. Their reviews rarely say where or why they quit.',
     img: 1, cap: 'Our analysis board of the player posts.', alt: 'A player’s forum review: the game feels dull and there is no reason to stay, but it doesn’t say where they quit' },
-  { t: 'What interviews showed', h: <>They fix first, and check later</>, p: 'They have a goal, but can’t turn it into a question. A game developer linked the goal, the question, the behaviour to watch, and the data to log from the start.',
-    img: 2, cap: '', alt: 'Remote interview video calls with 2 teen game creators and 1 game developer; the participants’ faces are blurred' },
+  { t: 'What interviews showed', h: <>They fix first, and check later</>,
+    lead: 'We talked to both sides on purpose. The teens showed us what beginners don’t know. The game developer knows what data matters, so we asked what a beginner needs first.',
+    p: 'They have a goal, but can’t turn it into a question. A game developer linked the goal, the question, the behaviour to watch, and the data to log from the start.',
+    img: 2, cap: '', alt: 'Remote interview video calls: 2 teen game creators, who show what beginners miss, and 1 game developer, who knows what data to check. Participants’ faces are blurred' },
 ]
 
 function EmpItem({ i, on, onPick, narrow = false }: { i: number; on: boolean; onPick?: () => void; narrow?: boolean }) {
@@ -333,6 +345,7 @@ function EmpItem({ i, on, onPick, narrow = false }: { i: number; on: boolean; on
       </button>
       <div className="emp-body"><div>
         <h3 className="emp-h">{e.h}</h3>
+        {e.lead && <p className="emp-lead">{e.lead}</p>}
         <p className="emp-p">{e.p}</p>
         {narrow && <div className="emp-panel mt-24"><EmpVisual i={i} /></div>}
       </div></div>
@@ -372,7 +385,7 @@ function EmpScroll() {
   }
   return (
     <>
-      <div ref={outer} className="emp-outer mt-80" style={{ height: `calc(560px + ${N * 70}vh)` }}>
+      <div ref={outer} className="emp-outer mt-56" style={{ height: `calc(560px + ${N * 70}vh)` }}>
         <div ref={pin} className="emp-pin">
           <div className="emp-list">
             {EMP.map((_, i) => <EmpItem key={i} i={i} on={i === step} onPick={() => jump(i)} />)}
@@ -399,9 +412,10 @@ function Empathize() {
           <H2 className="mt-40">Making a game got easy.<br />Fixing it didn’t.</H2>
           <p className="g-body mt-24">AI tools made it easy for anyone to build a game. We wanted to know what gets hard after launch, when real players arrive.</p>
         </div>
-        <div className="g-rq mt-40" data-r>
+        <div className="g-rq mt-56" data-r>
           <div className="g-k cyan">RESEARCH QUESTION</div>
           <p className="rq-q">What stops beginner game creators from improving their game after launch?</p>
+          <p className="rq-origin">It started on <b>Roblox</b>, where anyone can make games. Its creator forum kept asking: <b>players leave, but why?</b></p>
         </div>
         <EmpScroll />
       </div>
@@ -412,9 +426,9 @@ function Empathize() {
 /* ---------- define ---------- */
 
 const INSIGHTS = [
-  { t: 'Dashboards only tell them something is wrong', notes: ['Saw an 80% drop-off on the dashboard and knew the game had a problem.', 'Checked player count and when players left in the game’s analytics.', 'Used badges as a stand-in to see where players stopped.'] },
-  { t: 'Once a cause looks likely, they fix it first', notes: ['Added a tutorial to cut early drop-off.', 'Felt the tutorial helped, and guessed why.', 'Two years later, still not sure why players leave early.'] },
-  { t: 'They can’t ask the players who left', notes: ['No chance to ask players why they left.', 'A thumbs-down with no reason is the hardest to act on.', 'AI reports explained the numbers, but missed the context.'] },
+  { t: 'Dashboards only tell them something is wrong', q: 'Saw an 80% drop-off and knew the game had a problem.', notes: ['Saw an 80% drop-off on the dashboard and knew the game had a problem.', 'Checked player count and when players left in the game’s analytics.', 'Used badges as a stand-in to see where players stopped.'] },
+  { t: 'Once a cause looks likely, they fix it first', q: 'Two years later, still not sure why players leave early.', notes: ['Added a tutorial to cut early drop-off.', 'Felt the tutorial helped, and guessed why.', 'Two years later, still not sure why players leave early.'] },
+  { t: 'They can’t ask the players who left', q: 'A thumbs-down with no reason is the hardest to act on.', notes: ['No chance to ask players why they left.', 'A thumbs-down with no reason is the hardest to act on.', 'AI reports explained the numbers, but missed the context.'] },
 ]
 
 const QUESTIONS = [
@@ -433,33 +447,30 @@ function Define() {
           <p className="g-body mt-24">Roblox already lets creators track each stage with funnels and custom events. Beginners didn’t use them. Not because the tool was missing, but because they didn’t know what to track.</p>
         </div>
 
-        <h3 className="g-h3l mt-80" data-r>Interview affinity map</h3>
+        <h3 className="g-h3l mt-40" data-r>Interview affinity map</h3>
         <div className="g-aff mt-40" data-r>
           <img src={IMG5.affinity} alt="Interview affinity map: sticky notes from our interviews, grouped into 3 insights" loading="lazy" />
         </div>
-        <div className="g-ins mt-40">
+        <div className="g-insc mt-40">
           {INSIGHTS.map((s, i) => (
-            <div className="ins-row" key={i} data-r style={d(i)}>
-              <div className="ins-k">
-                <img src={IMG5.insight[i]} alt="" aria-hidden="true" />
-                <div><div className="g-k cyan">INSIGHT 0{i + 1}</div><h4 className="ins-t">{s.t}</h4></div>
-              </div>
-              <div className="ins-notes">
-                {s.notes.map(n => <p className="ins-note" key={n}>{n}</p>)}
-              </div>
+            <div className="insc" key={i} data-r style={d(i)}>
+              <img src={IMG5.insight[i]} alt="" aria-hidden="true" />
+              <div className="insc-k">INSIGHT 0{i + 1}</div>
+              <h4 className="insc-t">{s.t}</h4>
+              <p className="insc-q">“{s.q}”</p>
             </div>
           ))}
         </div>
 
-        <div className="mt-80" data-r>
+        <div className="mt-40" data-r>
           <h3 className="g-h3">Where Lucas gets stuck</h3>
-          <p className="g-cap mt-16">A user story built from our research. Lucas and his numbers are made up.</p>
+          <p className="g-cap mt-8">Lucas is our persona, built from our interviews with 2 teen game creators. His game and numbers are examples.</p>
         </div>
-        <div className="g-story mt-24" data-r>
+        <div className="g-story mt-40" data-r>
           <img src={IMG5.story} alt="User story in 6 panels: 1 Launch day — my game is live. 2 Players leave — players left 62%. 3 Only totals — average playtime 4 min, drop-off 62%; it doesn’t say where. 4 Asking around — everyone says something different. 5 Fix everything — lower difficulty, new music, faster ball. 6 Nothing changed — players left 61%; what should I fix first?" loading="lazy" data-gzoom="true" />
         </div>
 
-        <div className="g-hmw5 mt-80" data-r>
+        <div className="g-hmw5 mt-40" data-r>
           <div className="g-k sky">HOW MIGHT WE</div>
           <p className="hmw5-q mt-16">Help game creators who are new to data find evidence fast,<br />and make better update decisions?</p>
           <p className="hmw5-p mt-16">We tackled one problem first: game creators can’t see what players actually do in their game. Asking players why comes later.</p>
@@ -611,10 +622,11 @@ function Ideate() {
 /* ---------- final design: live prototype tour + one labelled design-system screen ---------- */
 
 // Screens captured from the live prototype (VIBE_URL) at 1440×900.
-type Shot = 'map' | 'ask' | 'goal' | 'board' | 'agent' | 'overview'
+type Shot = 'map' | 'ask' | 'goal' | 'board' | 'retention' | 'agent' | 'overview'
 const F = V + 'final/'
 const SHOTS: Record<Shot, string> = {
   map: F + 'map.webp', ask: F + 'ask.webp', goal: F + 'goal.webp', board: F + 'board.webp', agent: F + 'agent.webp', overview: F + 'overview.webp',
+  retention: IMG5.retention, // v125: rebuilt Retention screen, so the charts are visible (Figma 880:52)
 }
 
 const PW = 1440, PH = 900
@@ -624,7 +636,7 @@ const TOUR: { tab: number; shot: Shot; r: [number, number, number, number]; cap:
   { tab: 0, shot: 'map', r: [283, 428, 1126, 125], cap: 'AI reads the game script and draws it as a map: Lobby → Stage 1–4. The creator checks it before anything is tracked.', alt: 'Tracking: the AI map of Lobby and Stage 1–4, with Stage 3 flagged for review' },
   { tab: 0, shot: 'ask', r: [1022, 477, 405, 284], cap: 'When the AI can’t tell how a stage ends, it asks instead of guessing. The creator picks the answer.', alt: 'Stage 3 detail panel asking which part is the end point' },
   { tab: 1, shot: 'goal', r: [636, 390, 566, 143], cap: 'A new board starts from a goal in plain words, not from a blank chart.', alt: 'New analysis board: What would you like to analyze? with three suggested goals' },
-  { tab: 1, shot: 'board', r: [990, 62, 436, 826], cap: 'GameCove builds the board for that goal, says what each chart answers, and flags what isn’t tracked yet.', alt: 'Analysis board for stage difficulty and drop-off, with the AI explaining each chart' },
+  { tab: 1, shot: 'retention', r: [235, 160, 1182, 734], cap: 'GameCove builds the board for that goal, so you see which day’s players come back.', alt: 'Retention board: Day 1 retention falls from about 22% to 6% over a week, and a date-cohort table shows D1 to D7 return rates for each start day' },
   { tab: 2, shot: 'agent', r: [990, 62, 436, 806], cap: 'Ask about any page in plain words. The agent explains each chart and suggests the next question.', alt: 'Overview with the AI agent explaining the daily charts' },
 ]
 const TOUR_SHOTS = Array.from(new Set(TOUR.map(s => s.shot)))
@@ -712,47 +724,6 @@ function Tour() {
   )
 }
 
-// Labels read from the live Overview screen (computed styles), mapped to the GameCove tokens.
-const AW = 1000, AH = 337.5, SX = 230, SW = 540 // annotation canvas; the screen fills 230–770
-const DS_LABELS: { side: 'l' | 'r'; y: number; x: number; dy: number; t: string; v: string }[] = [
-  { side: 'l', y: 8, x: 289, dy: 114, t: 'Display/Page', v: 'Lato Bold 40 / 110%' },
-  { side: 'l', y: 28, x: 289, dy: 151, t: 'Body/Default', v: 'Regular 16 / 160% · sand/300 #A7A9B0' },
-  { side: 'l', y: 48, x: 310, dy: 281, t: 'KPI number', v: 'Lato Bold 40 · sand/100 #F2F0EC' },
-  { side: 'l', y: 68, x: 311, dy: 334, t: 'Drop badge', v: 'Red #E28B8B on a 14% red tint' },
-  { side: 'l', y: 90, x: 470, dy: 770, t: 'Area chart', v: 'chart-area-primary gradient' },
-  { side: 'r', y: 8, x: 1296, dy: 25, t: 'AI accent', v: 'blue/200 #B3D1FF, only on AI features' },
-  { side: 'r', y: 32, x: 880, dy: 165, t: 'color/bg/canvas', v: 'neutral/900 #111114' },
-  { side: 'r', y: 56, x: 559, dy: 209, t: 'Card', v: 'neutral/850 #17171B · radius lg 16' },
-]
-
-function LabelledScreen() {
-  const [ref, shown] = useShownOnce<HTMLDivElement>(0.35)
-  return (
-    <div ref={ref} className={'g-anno mt-40' + (shown ? ' in' : '')}>
-      <svg className="g-anno-lines" viewBox={`0 0 ${AW} ${AH}`} preserveAspectRatio="none" aria-hidden="true">
-        {DS_LABELS.map((l, i) => {
-          const X = SX + (SW * l.x) / PW, Y = (AH * l.dy) / PH, Ly = (AH * l.y) / 100
-          const a = l.side === 'l' ? 214 : 786, b = l.side === 'l' ? 226 : 774
-          return <polyline key={i} points={`${a},${Ly} ${b},${Ly} ${X},${Y}`} pathLength={1} style={{ transitionDelay: `${0.3 + i * 0.08}s` }} />
-        })}
-      </svg>
-      <div className="g-anno-screen">
-        <img src={SHOTS.overview} alt="GameCove Overview screen with its design tokens labelled" loading="lazy" />
-        {DS_LABELS.map((l, i) => (
-          <span key={i} className="dot" style={{ left: pc(l.x, PW), top: pc(l.dy, PH), transitionDelay: `${0.2 + i * 0.08}s` }} aria-hidden="true">{i + 1}</span>
-        ))}
-      </div>
-      <ol className="g-anno-labs">
-        {DS_LABELS.map((l, i) => (
-          <li key={i} className={l.side} style={{ top: `${l.y}%`, transitionDelay: `${0.4 + i * 0.08}s` }}>
-            <b><span>{i + 1}</span>{l.t}</b><em>{l.v}</em>
-          </li>
-        ))}
-      </ol>
-    </div>
-  )
-}
-
 function FinalDesign() {
   const [ref, p] = useCountProgress<HTMLDivElement>()
   return (
@@ -773,7 +744,9 @@ function FinalDesign() {
             ))}
           </div>
         </div>
-        <LabelledScreen />
+        <figure className="g-dsmap mt-40" data-r>
+          <img src={IMG5.dsMap} alt="Design system map. 01 Primitive, raw colours: red/300 #E28B8B, sand/100 #F2F0EC, blue/500 #3898F8, neutral/850 #17171B. 02 Semantic, named by their job: color/status/drop (drops), color/text/strong (key numbers), color/chart/primary (chart line and area), color/bg/card (cards). 03 Component: lines lead from each token to where it is used on the live Overview screen of Tower Escape." loading="lazy" data-gzoom="true" />
+        </figure>
       </div>
     </section>
   )
@@ -900,6 +873,68 @@ function Test() {
   )
 }
 
+/* ---------- iterate: round 2 with P2 (v125; session video and card sort come later) ---------- */
+
+const FINDINGS = [
+  { q: 'Give me the base info first.', t: '38:05 · “Adding and removing is fine.” 47:58', a: 'Ready-made default boards. Charts can be turned on, off or added. No blank start.' },
+  { q: 'AI just has to tell me the facts, accurately.', t: '33:35 · the decision is his', a: 'Every AI line shows the number behind it and where it came from.' },
+  { q: 'Give me the answer in one line.', t: '30:40 · question titles took time to read', a: 'Each question-style chart title gets a one-line summary.' },
+  { q: 'There’s no info on what it does, or how far.', t: '16:01 · during tracking setup', a: 'Show which chart each tracked event feeds, so the reason to collect is visible.' },
+]
+
+function Iterate() {
+  return (
+    <section className="g-sec" data-chapter="Iterate">
+      <div className="g-wrap">
+        <div data-r className="w-900">
+          <Eyebrow label="ITERATE" sq="blue" />
+          <H2 className="mt-40">We fixed it, then asked again:<br />is this data really needed?</H2>
+          <p className="g-body mute mt-24">After round 1, we added a Mapping guide, a check that logging really worked, and more metrics on the dashboard. Then we tested again with P2, a hobby game creator in his mid-30s, and talked mostly about the data.</p>
+        </div>
+
+        <h3 className="g-h3 mt-64" data-r>What we changed after round 1: the Mapping guide</h3>
+        <div className="g-two mt-24">
+          <figure className="it-shot" data-r style={d(0)}>
+            <img src={IMG5.iterBefore} alt="Before: the Mapping screen shows the game map with a small tip, “Review the details of each structure and edit anything that looks wrong”" loading="lazy" />
+            <figcaption><b>BEFORE</b>A tip on what to do, but not why</figcaption>
+          </figure>
+          <figure className="it-shot" data-r style={d(1)}>
+            <img src={IMG5.iterAfter} alt="After: a purpose guide on the Mapping screen, “Step 1 · Check your game map. AI read your game and drew its stages. Check they’re right. We’ll track and analyse along this map.” with a Looks right button" loading="lazy" />
+            <figcaption><b className="on">AFTER</b>Says why: this map decides what we track (redrawn)</figcaption>
+          </figure>
+        </div>
+
+        <div className="mt-64" data-r>
+          <div className="it-round"><span className="g-k blue">ROUND 2</span><span className="it-tag">P2 · hobby game creator, mid-30s</span></div>
+          <h3 className="g-h3l mt-16">What he told us about the data</h3>
+          <p className="g-body mute mt-8">Task 3 (finding a problem in the data) and a card sort of every metric on the dashboard.</p>
+        </div>
+        <div className="it-take mt-32" data-r>
+          <div className="g-k sky">WHAT IT MEANS FOR GAMECOVE</div>
+          <p className="it-take-h mt-16">Not a blank board to build. A finished screen he can switch on, off, or add to.</p>
+          <p className="it-take-p mt-16">He was fine adding charts. He just didn’t want to start from nothing.</p>
+        </div>
+        <div className="it-finds mt-32">
+          {FINDINGS.map((f, i) => (
+            <div className="it-find" key={f.q} data-r style={d(i)}>
+              <p className="q">“{f.q}”</p>
+              <p className="t">{f.t}</p>
+              <hr />
+              <div className="g-k blue">SO WE</div>
+              <p className="a">{f.a}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="g-note mt-64" data-r>
+          <div className="g-k">NOTE</div>
+          <p>One participant, so this is a direction, not proof. Quotes are translated from Korean; times are from the session recording. He had done round 1, so Tasks 1 and 2 felt familiar and he didn’t notice the changes.</p>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 /* ---------- reflection ---------- */
 
 function Reflection() {
@@ -954,6 +989,7 @@ export function GameCoveV4Body() {
       <Ideate />
       <FinalDesign />
       <Test />
+      <Iterate />
       <Reflection />
     </div>
   )
@@ -1155,12 +1191,12 @@ export const GC4_CSS = `
 .gc4 .g-proc-map { position: relative; aspect-ratio: 920 / 480; background: #0B0C0F; }
 .gc4 .g-proc-map img { width: 100%; height: 100%; object-fit: cover; }
 .gc4 .g-proc-fx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
-.gc4 .g-proc-fx .ring { opacity: 0; transform-box: fill-box; transform-origin: center; animation: gpRing 7.2s ease-in-out infinite both; }
+.gc4 .g-proc-fx .ring { opacity: 0; transform-box: fill-box; transform-origin: center; animation: gpRing 4.2s ease-in-out infinite both; }
 .gc4 .g-proc-fx .ring ellipse { fill: none; stroke: #7DD3FC; stroke-width: 2; }
 .gc4 .g-proc-fx .ring ellipse.o { opacity: .4; }
-.gc4 .g-proc-fx .loop { fill: #7DD3FC; opacity: 0; animation: gpLoop 7.2s linear infinite; }
+.gc4 .g-proc-fx .loop { fill: #7DD3FC; opacity: 0; animation: gpLoop 4.2s linear infinite; }
 .gc4 .g-proc-fx .loop .halo { fill: rgba(125,211,252,.3); }
-@keyframes gpRing { 0% { opacity: 0; transform: scale(.88); } 4% { opacity: 1; transform: scale(1); } 14% { opacity: 1; transform: scale(1); } 18%, 100% { opacity: 0; transform: scale(1.04); } }
+@keyframes gpRing { 0% { opacity: 0; transform: scale(.88); } 5% { opacity: 1; transform: scale(1); } 16% { opacity: 1; transform: scale(1); } 21%, 100% { opacity: 0; transform: scale(1.04); } }
 @keyframes gpLoop { 0%, 80% { opacity: 0; } 83%, 95% { opacity: 1; } 99%, 100% { opacity: 0; } }
 
 /* empathize: research question + sticky 01/02/03 */
@@ -1301,6 +1337,47 @@ export const GC4_CSS = `
   .gc4 .g-sk { grid-template-columns: minmax(0, 1fr); }
   .gc4 .g-final { margin-top: 88px; padding-bottom: 88px; }
   .gc4 .g-capcard { top: 12px; left: 12px; max-width: 70%; padding: 12px 14px; }
+}
+
+/* ================= v125 ================= */
+.gc4 .mt-32 { margin-top: 32px; } .gc4 .mt-56 { margin-top: 56px; } .gc4 .mt-64 { margin-top: 64px; }
+.gc4 .g-rq .rq-origin { margin-top: 24px; font-size: 18px; line-height: 1.55; color: #B3C3DC; }
+.gc4 .g-rq .rq-origin b { font-weight: 400; color: var(--sand); }
+.gc4 .emp-lead { margin-top: 16px; font-size: 18px; line-height: 1.6; color: var(--sand); }
+.gc4 .g-insc { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.gc4 .insc { display: flex; flex-direction: column; padding: 48px; background: var(--card); }
+.gc4 .insc img { width: 80px; height: 72px; }
+.gc4 .insc-k { margin-top: 16px; font-size: 16px; font-weight: 700; letter-spacing: .06em; color: #6FC3FF; }
+.gc4 .insc-t { margin-top: 16px; font-size: 28px; font-weight: 400; line-height: 40px; color: var(--sand); }
+.gc4 .insc-q { margin-top: auto; padding-top: 16px; border-top: 1px solid #2A2B31; font-size: 18px; line-height: 1.55; color: var(--mute); }
+.gc4 .insc-t + .insc-q { margin-top: 16px; }
+.gc4 .g-dsmap img { width: 100%; height: auto; }
+.gc4 .it-shot img { width: 100%; aspect-ratio: 744 / 500; object-fit: cover; border: 1px solid var(--line); }
+.gc4 .it-shot figcaption { display: flex; gap: 12px; margin-top: 16px; font-size: 16px; line-height: 1.5; color: var(--mute); }
+.gc4 .it-shot figcaption b { font-weight: 500; letter-spacing: .06em; color: var(--dim); }
+.gc4 .it-shot figcaption b.on { color: #6FB2FA; }
+.gc4 .it-round { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.gc4 .it-tag { padding: 4px 12px; border: 1px solid var(--blue); background: var(--skybg); font-size: 16px; color: var(--sky); }
+.gc4 .it-take { padding: 56px 40px; border: 1px solid var(--blue); background: var(--skybg); }
+.gc4 .it-take-h { max-width: 760px; font-size: 28px; line-height: 40px; color: var(--sand); }
+.gc4 .it-take-p { font-size: 18px; line-height: 1.55; color: #C9D6EA; }
+.gc4 .it-finds { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
+.gc4 .it-find { display: flex; flex-direction: column; padding: 32px 28px; background: var(--card); border: 1px solid var(--line); }
+.gc4 .it-find .q { font-size: 20px; line-height: 1.5; color: var(--sand); }
+.gc4 .it-find .t { margin-top: 16px; font-size: 16px; line-height: 1.5; color: var(--dim); }
+.gc4 .it-find hr { width: 100%; height: 1px; margin: 16px 0; border: 0; background: var(--line); }
+.gc4 .it-find .a { margin-top: 16px; font-size: 18px; line-height: 1.55; color: var(--mute); }
+@media (max-width: 1280px) {
+  .gc4 .it-finds { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 1023px) {
+  .gc4 .g-insc { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .gc4 .insc-q { margin-top: 16px; }
+}
+@media (max-width: 700px) {
+  .gc4 .insc { padding: 32px 24px; }
+  .gc4 .it-finds { grid-template-columns: minmax(0, 1fr); }
+  .gc4 .it-take { padding: 32px 24px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .gc4 [data-r] { opacity: 1 !important; transform: none !important; transition: none !important; }

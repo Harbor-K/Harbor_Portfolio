@@ -44,6 +44,12 @@ import { Ideate, Iterate, Reflection, PARTS_CSS } from './GameCoveParts'
  * (32/40). Lucas's 6-panel story is Harbor's motion version (Figma user-story · motion v2 · 960, her GIF), shown at
  * 960×640 so it reads at a glance; it plays as a looping muted MP4 (1.5 MB instead of the 9.8 MB GIF), the last frame
  * (all 6 panels) is the poster, and with reduced motion it stays on that frame.
+ *
+ * v130 (Harbor, Nov 14 23:07): the story starts from panel 1 the moment it comes into view (again each time it comes
+ * back; it pauses when it leaves). Final design tour: the prototype screen fills the page width (1440) instead of being
+ * sized by the screen height; when the full screen is taller than the space left, it slides so the lit area stays in
+ * view. Design system copy and numbers from Figma (108 colour tokens, 38 just for charts, 2 themes, 4px base) and the
+ * new Value → Token → On screen map.
  */
 
 const L = 'https://raw.githubusercontent.com/Harbor-K/landing_page/main/gamecove/assets/'
@@ -71,6 +77,7 @@ const IMG5 = {
   photo: V5 + 'photo.webp',
   retention: V5 + 'retention.webp',
   dsMap: V5 + 'ds-map.webp',
+  dsMap2: V5 + 'ds-map-2.webp', // v130: Value → Token → On screen (Figma 910:2648)
   iterBefore: V5 + 'iter-before.webp', iterAfter: V5 + 'iter-after.webp',
 }
 
@@ -417,6 +424,22 @@ function Empathize() {
 
 /* ---------- define ---------- */
 
+/** Lucas's story: plays from panel 1 the moment it comes into view (again each time it comes back), pauses when it leaves */
+function StoryVideo({ label }: { label: string }) {
+  const ref = useRef<HTMLVideoElement>(null)
+  useEffect(() => {
+    const v = ref.current; if (!v) return
+    if (reducedMotion() || !('IntersectionObserver' in window)) return
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { v.currentTime = 0; v.play().catch(() => {}) }
+      else v.pause()
+    }, { threshold: 0.6 })
+    io.observe(v)
+    return () => io.disconnect()
+  }, [])
+  return <video ref={ref} src={IMG5.storyVideo} poster={IMG5.storyPoster} muted loop playsInline preload="auto" aria-label={label} />
+}
+
 const INSIGHTS = [
   { t: 'Dashboards only tell them something is wrong', q: 'Saw an 80% drop-off and knew the game had a problem.', notes: ['Saw an 80% drop-off on the dashboard and knew the game had a problem.', 'Checked player count and when players left in the game’s analytics.', 'Used badges as a stand-in to see where players stopped.'] },
   { t: 'Once a cause looks likely, they fix it first', q: 'Two years later, still not sure why players leave early.', notes: ['Added a tutorial to cut early drop-off.', 'Felt the tutorial helped, and guessed why.', 'Two years later, still not sure why players leave early.'] },
@@ -459,7 +482,7 @@ function Define() {
           <p className="g-cap mt-8">Lucas is our persona, built from our interviews with 2 teen game creators. His game and numbers are examples.</p>
         </div>
         <div className="g-story mt-40" data-r>
-          <video src={IMG5.storyVideo} poster={IMG5.storyPoster} autoPlay={!reducedMotion()} muted loop playsInline preload="metadata" aria-label="User story in 6 panels: 1 Launch day — my game is live. 2 Players leave — players left 62%. 3 Only totals — average playtime 4 min, drop-off 62%; it doesn’t say where. 4 Asking around — everyone says something different. 5 Fix everything — lower difficulty, new music, faster ball. 6 Nothing changed — players left 61%; what should I fix first?" />
+          <StoryVideo label="User story in 6 panels: 1 Launch day — my game is live. 2 Players leave — players left 62%. 3 Only totals — average playtime 4 min, drop-off 62%; it doesn’t say where. 4 Asking around — everyone says something different. 5 Fix everything — lower difficulty, new music, faster ball. 6 Nothing changed — players left 61%; what should I fix first?" />
         </div>
 
         <div className="g-hmw5 mt-40" data-r>
@@ -543,12 +566,44 @@ function TourStage({ step, lit, single = false }: { step: number; lit: boolean; 
   )
 }
 
+/** wide tour: the screen fills the page width; if it is taller than the space left, it slides so the lit area stays in view */
+function TourScreen({ step, lit, view }: { step: number; lit: boolean; view: { w: number; h: number } }) {
+  const s = TOUR[step]
+  const ih = (view.w * PH) / PW
+  const vh = Math.min(view.h, ih)
+  const top = (s.r[1] / PH) * ih, hh = (s.r[3] / PH) * ih
+  const y = clamp(hh > vh - 48 ? top - 24 : top + hh / 2 - vh / 2, 0, Math.max(0, ih - vh))
+  return (
+    <div className="g-stage g-screen" style={vh ? { height: vh } : undefined}>
+      <div className="g-pan" style={{ transform: `translate3d(0, ${(-y).toFixed(1)}px, 0)` }}>
+        {TOUR_SHOTS.map(k => (
+          <img key={k} src={SHOTS[k]} alt={k === s.shot ? s.alt : ''} aria-hidden={k !== s.shot} className={k === s.shot ? 'on' : ''} />
+        ))}
+        <div className={'g-spot' + (lit ? ' lit' : '')} style={{ left: pc(s.r[0], PW), top: pc(s.r[1], PH), width: pc(s.r[2], PW), height: pc(s.r[3], PH) }} aria-hidden="true">
+          <b>{letterOf(step)}</b>
+        </div>
+      </div>
+      <div key={step} className={'g-capcard' + (lit ? ' lit' : '')}>
+        <b>{letterOf(step)}</b><p>{s.cap}</p>
+      </div>
+    </div>
+  )
+}
+
 /**
  * Pinned like the reference: the screen stays put while scrolling; tabs 01–03 run across the top,
  * each step dims the screen and lights one area with a short caption.
  */
 function Tour() {
   const outer = useRef<HTMLDivElement>(null)
+  const box = useRef<HTMLDivElement>(null)
+  const [view, setView] = useState({ w: 0, h: 0 })
+  useEffect(() => {
+    const el = box.current; if (!el || !('ResizeObserver' in window)) return
+    const ro = new ResizeObserver(() => setView({ w: el.clientWidth, h: el.clientHeight }))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
   const [st, setSt] = useState({ step: 0, local: 0 })
   useOnScroll(() => {
     const el = outer.current; if (!el) return
@@ -586,7 +641,7 @@ function Tour() {
               ))}
             </div>
           </div>
-          <div className="g-stage-box"><TourStage step={step} lit={lit} /></div>
+          <div className="g-stage-box" ref={box}><TourScreen step={step} lit={lit} view={view} /></div>
         </div>
       </div>
       {/* small screens: one step after another */}
@@ -616,15 +671,15 @@ function FinalDesign() {
         <Tour />
         <div className="g-ds" data-r>
           <h3 className="g-h3">Built on one design system</h3>
-          <p className="g-body mt-16 w-760">Three layers: raw colours, tokens named by their job, and components. Here is one live screen with its tokens labelled.</p>
+          <p className="g-body mt-16 w-760">Every colour in the code is a token named by its job. 38 of the 108 are just for charts, because reading data is what GameCove is for. Here is one live screen with its tokens labelled.</p>
           <div className="g-sys mt-24" ref={ref}>
-            {[[19, 'core colours'], [31, 'semantic tokens'], [24, 'spacing, radius & size tokens'], [6, 'text styles']].map(([n, l]) => (
-              <div key={l as string}><div className="g-num light">{count(n as number, p)}</div><div className="g-cap">{l}</div></div>
+            {([[108, 'colour tokens', ''], [38, 'just for charts', ''], [2, 'themes: light and dark', ''], [4, 'spacing base', 'px']] as [number, string, string][]).map(([n, l, u]) => (
+              <div key={l}><div className="g-num light">{count(n, p)}{u}</div><div className="g-cap">{l}</div></div>
             ))}
           </div>
         </div>
         <figure className="g-dsmap mt-40" data-r>
-          <img src={IMG5.dsMap} alt="Design system map. 01 Primitive, raw colours: red/300 #E28B8B, sand/100 #F2F0EC, blue/500 #3898F8, neutral/850 #17171B. 02 Semantic, named by their job: color/status/drop (drops), color/text/strong (key numbers), color/chart/primary (chart line and area), color/bg/card (cards). 03 Component: lines lead from each token to where it is used on the live Overview screen of Tower Escape." loading="lazy" data-gzoom="true" />
+          <img src={IMG5.dsMap2} alt="Design system map. 01 Value, the hex in the code: #E28B8B, #F2F0EC, #3898F8, #17171B. 02 Token, named by its job: text-critical (drops), text-primary (key numbers), chart-series-primary (chart line and area), bg-surface (cards). 03 On screen: lines lead from each token to where it is used on the live Overview screen of Tower Escape." loading="lazy" data-gzoom="true" />
         </figure>
       </div>
     </section>
@@ -987,6 +1042,12 @@ export const GC4_CSS = `
 .gc4 .insc-q { margin-top: auto; padding-top: 16px; border-top: 1px solid #2A2B31; font-size: 18px; line-height: 1.55; color: var(--mute); }
 .gc4 .insc-t + .insc-q { margin-top: 16px; }
 .gc4 .g-dsmap img { width: 100%; height: auto; }
+
+/* ================= v130 ================= */
+/* final design tour: the screen fills the page width; it slides (pans) to keep the lit area in view */
+.gc4 .g-stage-box { display: block; container-type: normal; }
+.gc4 .g-stage-box .g-stage.g-screen { width: 100%; aspect-ratio: auto; }
+.gc4 .g-pan { position: absolute; left: 0; top: 0; width: 100%; aspect-ratio: 1440 / 900; transition: transform .8s var(--ease); }
 @media (max-width: 1023px) {
   .gc4 .g-insc { grid-template-columns: minmax(0, 1fr); gap: 16px; }
   .gc4 .insc-q { margin-top: 16px; }
@@ -996,6 +1057,6 @@ export const GC4_CSS = `
 }
 @media (prefers-reduced-motion: reduce) {
   .gc4 [data-r] { opacity: 1 !important; transform: none !important; transition: none !important; }
-  .gc4 .fix-inner, .gc4 .g-stage img, .gc4 .g-spot, .gc4 .g-spot b, .gc4 .g-capcard, .gc4 .g-tab i, .gc4 .g-anno *, .gc4 .g-anno-lines polyline, .gc4 .emp-body, .gc4 .emp-layer { transition: none !important; }
+  .gc4 .fix-inner, .gc4 .g-stage img, .gc4 .g-spot, .gc4 .g-spot b, .gc4 .g-capcard, .gc4 .g-tab i, .gc4 .g-anno *, .gc4 .g-anno-lines polyline, .gc4 .emp-body, .gc4 .emp-layer, .gc4 .g-pan { transition: none !important; }
 }
 `

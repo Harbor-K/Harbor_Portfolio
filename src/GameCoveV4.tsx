@@ -10,15 +10,22 @@ import React, { useEffect, useRef, useState } from 'react'
  * Scroll interactions follow the Trust Bank page:
  *  - soft block reveal as each block enters (1.2s, staggered)
  *  - numbers count up as they scroll in (impact, design-system stats, SUS)
- *  - Process: looping orbit motion (design thinking stages, with the Test → Define iteration loops)
- *  - HMW callout pops on like the Trust Bank HMW notes; question / rule cards bounce in one after another
- *  - Prototype: the design flow lights up step by step
+ *  - HMW questions bounce in one after another
  *  - Final design: pinned tour of the live prototype — tabs 01–03 across the top, each scroll step dims the screen,
  *    lights one area and shows a short caption; then one live screen with its design tokens labelled
  *  - What we're fixing: each fix card flips Before → After in 3D as it reaches the middle of the screen
  *  - hover magnifier on dense boards (journey map, reviews, affinity map, components)
  * Text: Helvetica Neue everywhere, 16px minimum.
  * Hero media: the 15s ad video (HERO_VIDEO) — autoplays muted with Trust Bank-style controls (unmute, volume, progress).
+ *
+ * v124 (Harbor, Nov 14): copy, buttons and images from Figma "04 GameCove — 1921" (869:3104, file 44기 김지현-4차 PF);
+ * the page keeps its own spacing. Hero video unchanged. Process = title on the left + isometric stage map (each stage
+ * rings in turn, then a dot runs the Iterate arc). Empathize = sticky scroll: 01 / 02 / 03 open one at a time with the
+ * matching board on the right. Define = affinity strip → 3 insight rows → Lucas's story → HMW with 3 questions.
+ * Ideate = user flow + lo-fi wireframes + team photo (photo is a stand-in until Harbor's drawing video). The separate
+ * Prototype section is gone (Figma): "Prototype · Final design" is one light section; its tour keeps every caption in
+ * the top-left corner on a solid card with more contrast (Palantir AIP "Beyond Chat"). Test and Reflection unchanged.
+ * New images: Harbor-K/harbor-pf assets/gamecove/v5/.
  */
 
 const L = 'https://raw.githubusercontent.com/Harbor-K/landing_page/main/gamecove/assets/'
@@ -31,15 +38,22 @@ export const VIBE_URL = 'https://game-cove.vercel.app/projects/bouncebounce/over
 const IMG = {
   logo: L + 'logo.png',
   poster: V + 'hero-ad-poster.jpg',
-  process: V + 'process-orbit.gif',
-  accEmpathize: V + 'acc-empathize.webp', accDefine: V + 'acc-define.webp', accIdeate: V + 'acc-ideate.webp',
-  journey: V + 'journey.webp', players: V + 'players.webp', affinity: V + 'affinity.webp',
-  story: V + 'story.webp', sketch: V + 'sketch.webp', photo1: L + 'photo-1.webp', photo2: L + 'photo-2.webp',
-  midfi: V + 'midfi.webp', hifi: V + 'hifi.webp',
   before: V + 'before-mapping.webp',
 }
 
-export const GC4_CHAPTERS = ['Overview', 'Process', 'Empathize', 'Define', 'Ideate', 'Prototype', 'Final design', 'Test', 'Reflection']
+// v124 images (Figma 04 GameCove — 1921, exported at 2x)
+const V5 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/gamecove/v5/'
+const IMG5 = {
+  process: V5 + 'process.webp',
+  emp: [V5 + 'emp-1.webp', V5 + 'emp-2.webp', V5 + 'emp-3.webp'],
+  affinity: V5 + 'affinity-strip.webp',
+  insight: [V5 + 'insight-1.png', V5 + 'insight-2.png', V5 + 'insight-3.png'],
+  story: V5 + 'story.webp',
+  sketch: [1, 2, 3, 4, 5, 6, 7, 8].map(n => V5 + `sketch-${n}.webp`),
+  photo: V5 + 'photo.webp',
+}
+
+export const GC4_CHAPTERS = ['Overview', 'Process', 'Empathize', 'Define', 'Ideate', 'Prototype', 'Test', 'Reflection']
 
 /* ---------- helpers ---------- */
 
@@ -216,17 +230,17 @@ function Hero() {
       <div className="g-wrap">
         <div data-r>
           <img className="g-logo" src={IMG.logo} alt="GameCove" />
-          <h1 className="g-h1">Helping first-time game creators<br />decide what to fix next</h1>
-          <p className="g-lead">An AI analytics dashboard that reads your game first<br />GameCove · Product design case study</p>
-          {VIBE_URL && <a className="g-btn" href={VIBE_URL} target="_blank" rel="noreferrer">View dashboard<span className="g-btn-arrow" aria-hidden="true">↗</span></a>}
+          <h1 className="g-h1">Helping beginner game creators<br />decide what to fix next</h1>
+          <p className="g-lead">An AI analytics dashboard that maps the game, then shows where players quit<br />GameCove · Product design case study</p>
+          {VIBE_URL && <a className="g-btn5" href={VIBE_URL} target="_blank" rel="noreferrer">View dashboard<span className="sr-only"> (opens in a new tab)</span></a>}
         </div>
         {HERO_VIDEO
           ? <SoundMotion />
           : <div className="g-banner" data-r><img src={IMG.poster} alt="GameCove Overview dashboard: new players dropped 61.3% this week, daily active users falling to 134" /></div>}
         <div className="g-meta">
           <div data-r style={d(0)}><div className="g-k">TIMELINE</div><p>9 weeks<br />August – October 2026</p></div>
-          <div data-r style={d(1)}><div className="g-k">TEAM &amp; ROLE</div><p>2 product designers<br />My part: UI design, data visualisation, design system, test plan and scoring<br />Together: AI agent design</p></div>
-          <div data-r style={d(2)}><div className="g-k">PLATFORM</div><p>Desktop web · Game analytics (B2B)<br />AI agent</p></div>
+          <div data-r style={d(1)}><div className="g-k">TEAM &amp; ROLE</div><p>2 product designers<br />I designed the UI and charts, built the design system, and planned and scored the usability test.<br />Together: AI agent design</p></div>
+          <div data-r style={d(2)}><div className="g-k">PLATFORM</div><p>Desktop web · Game analytics<br />AI agent</p></div>
         </div>
       </div>
     </section>
@@ -243,18 +257,18 @@ function Overview() {
         <div data-r><Eyebrow label="OVERVIEW" /></div>
         <div className="g-ov" data-r>
           <h3 className="g-ov-k">The problem</h3>
-          <p className="g-body">AI made it easy to build a game. Fixing it after launch is still hard. The Roblox dashboard shows how many players left, but not where or why. Creators can set up their own tracking, but beginners don’t know what to track. So they guess.</p>
+          <p className="g-body">Beginner game creators can now build a game with AI. But when players start leaving, they can’t tell why. Dashboards show how many left, not where. They could record any moment, but don’t know which ones matter. So they guess, fix the wrong part, and players keep leaving. All they want to know is what to fix.</p>
         </div>
         <div className="g-ov" data-r>
           <h3 className="g-ov-k">Solution</h3>
-          <p className="g-body">GameCove reads the game first and draws its structure as a map. The creator checks the map, picks a goal, and GameCove suggests what to track. Then the dashboard opens with the 2–3 changes worth a look, and an AI agent answers follow-up questions.</p>
+          <p className="g-body">GameCove’s AI reads the game and maps its levels. The game creator checks the map and picks a goal, and GameCove suggests what to record. The dashboard then shows the 2–3 changes that matter most, so the game creator knows what to fix first. An AI agent explains anything unclear in plain words.</p>
         </div>
         <div className="g-ov" data-r>
           <h3 className="g-ov-k">Impact</h3>
           <div className="g-stats" ref={ref}>
-            <div><div className="g-num">{count(85.5, p)}</div><div className="g-cap">ease-of-use score (SUS, A+)</div></div>
-            <div><div className="g-num">{Math.round(2 * p)} of 3</div><div className="g-cap">hidden problems found by users</div></div>
-            <div><div className="g-num">{Math.round(3 * p)} of 3</div><div className="g-cap">used the data to form a hypothesis</div></div>
+            <div><div className="g-num">{count(85.5, p)}</div><div className="g-cap">Ease of use · 5 testers (A+)</div></div>
+            <div><div className="g-num">{Math.round(2 * p)} of 3</div><div className="g-cap">Hidden test problems found</div></div>
+            <div><div className="g-num">{Math.round(3 * p)} of 3</div><div className="g-cap">Main testers suggested a fix</div></div>
           </div>
         </div>
       </div>
@@ -262,26 +276,119 @@ function Overview() {
   )
 }
 
-/* ---------- process (accordion) ---------- */
+/* ---------- process: title left, isometric stage map right ---------- */
+
+// stage rings on the 920×480 map (Figma 869:3180–3189), lit one after another, then a dot runs the Iterate arc
+const STAGE_RINGS: [number, number][] = [[122, 228], [286, 231], [450, 234], [620, 237], [802, 242]]
 
 function Process() {
   return (
     <section className="g-sec" data-chapter="Process">
       <div className="g-wrap">
-        <div data-r><Eyebrow label="PROCESS" /><H2 className="mt-40">5 stages, 2 turning points</H2></div>
-        <figure className="g-process mt-40" data-r>
-          <img src={IMG.process} alt="Design thinking process: Empathize, Define, Ideate, Prototype and Test in order, then loops back from Test to Define, Define to Prototype and Prototype to Test" loading="lazy" />
-        </figure>
-        <div className="g-turns mt-40" data-r>
-          <p><span aria-hidden="true">↺</span>We narrowed the idea from “explain player behaviour” to “give creators the information they need”</p>
-          <p><span aria-hidden="true">↺</span>After teacher feedback, we moved from solo users (B2C) to teams sharing one game (B2B)</p>
+        <div className="g-proc">
+          <div data-r>
+            <Eyebrow label="PROCESS" />
+            <H2 className="mt-40">5 stages,<br />2 turning points</H2>
+            <p className="g-body mt-24 mute">We changed direction twice and tested twice. Each step shows what we did and what changed.</p>
+          </div>
+          <figure className="g-proc-map" data-r style={d(1)}>
+            <img src={IMG5.process} alt="Design thinking process: Empathize, Define, Ideate, Prototype and Test. Define and Ideate were turning points; an Iterate arrow loops from Test back to Prototype: fix, then test again." loading="lazy" />
+            <svg className="g-proc-fx" viewBox="0 0 920 480" aria-hidden="true">
+              {STAGE_RINGS.map(([cx, cy], i) => (
+                <g key={i} className="ring" style={{ animationDelay: `${i * 1.2}s` }}>
+                  <ellipse cx={cx} cy={cy} rx={53} ry={29} />
+                  <ellipse className="o" cx={cx} cy={cy} rx={70} ry={39} />
+                </g>
+              ))}
+              <g className="loop">
+                <circle r={12} className="halo" />
+                <circle r={5} />
+                <animateMotion dur="7.2s" repeatCount="indefinite" path="M802 178 Q707 48 611 175" keyPoints="0;0;1;1" keyTimes="0;0.82;0.97;1" calcMode="linear" />
+              </g>
+            </svg>
+          </figure>
         </div>
       </div>
     </section>
   )
 }
 
-/* ---------- empathize ---------- */
+/* ---------- empathize: sticky scroll, 01 / 02 / 03 open one at a time ---------- */
+
+const EMP = [
+  { t: 'What game creators wrote', h: <>They know something is wrong,<br />but not where</>, p: 'Game creators saw their numbers drop but couldn’t tell why. So they asked the community and changed many things at once.',
+    img: 0, cap: 'Our analysis board of the 27 game creator posts.', alt: 'Analysis board of 27 game creator posts: what they want, how they read data today, what they still want to know and what they asked on the forum, with quotes and an insight note' },
+  { t: 'What players wrote', h: <>Players leave before saying why</>, p: 'Players decide in the first few minutes. Their reviews rarely say where or why they quit.',
+    img: 1, cap: 'Our analysis board of the player posts.', alt: 'A player’s forum review: the game feels dull and there is no reason to stay, but it doesn’t say where they quit' },
+  { t: 'What interviews showed', h: <>They fix first, and check later</>, p: 'They have a goal, but can’t turn it into a question. A game developer linked the goal, the question, the behaviour to watch, and the data to log from the start.',
+    img: 2, cap: '', alt: 'Remote interview video calls with 2 teen game creators and 1 game developer; the participants’ faces are blurred' },
+]
+
+function EmpItem({ i, on, onPick, narrow = false }: { i: number; on: boolean; onPick?: () => void; narrow?: boolean }) {
+  const e = EMP[i]
+  return (
+    <div className={'emp-item' + (on ? ' on' : '')}>
+      <button type="button" className="emp-head" onClick={onPick} aria-expanded={on} tabIndex={narrow ? -1 : 0}>
+        <span className="n">0{i + 1}</span><span className="t">{e.t}</span>
+      </button>
+      <div className="emp-body"><div>
+        <h3 className="emp-h">{e.h}</h3>
+        <p className="emp-p">{e.p}</p>
+        {narrow && <div className="emp-panel mt-24"><EmpVisual i={i} /></div>}
+      </div></div>
+    </div>
+  )
+}
+
+function EmpVisual({ i }: { i: number }) {
+  const e = EMP[i]
+  return (
+    <figure className="emp-vis">
+      <img src={IMG5.emp[e.img]} alt={e.alt} loading="lazy" />
+      {e.cap && <figcaption className="g-cap">{e.cap}</figcaption>}
+    </figure>
+  )
+}
+
+function EmpScroll() {
+  const outer = useRef<HTMLDivElement>(null)
+  const pin = useRef<HTMLDivElement>(null)
+  const [step, setStep] = useState(0)
+  const N = EMP.length
+  useOnScroll(() => {
+    const el = outer.current, p = pin.current; if (!el || !p) return
+    const top = parseFloat(getComputedStyle(p).top) || 0
+    const travel = el.offsetHeight - p.offsetHeight
+    if (travel <= 0) return
+    const f = clamp((top - el.getBoundingClientRect().top) / travel)
+    const s = Math.min(N - 1, Math.floor(f * N))
+    setStep(v => (v === s ? v : s))
+  })
+  const jump = (i: number) => {
+    const el = outer.current, p = pin.current; if (!el || !p) return
+    const top = parseFloat(getComputedStyle(p).top) || 0
+    const travel = el.offsetHeight - p.offsetHeight
+    scrollTo({ top: el.getBoundingClientRect().top + scrollY - top + travel * ((i + 0.5) / N), behavior: reducedMotion() ? 'auto' : 'smooth' })
+  }
+  return (
+    <>
+      <div ref={outer} className="emp-outer mt-80" style={{ height: `calc(560px + ${N * 70}vh)` }}>
+        <div ref={pin} className="emp-pin">
+          <div className="emp-list">
+            {EMP.map((_, i) => <EmpItem key={i} i={i} on={i === step} onPick={() => jump(i)} />)}
+          </div>
+          <div className="emp-panel">
+            {EMP.map((_, i) => <div key={i} className={'emp-layer' + (i === step ? ' on' : '')} aria-hidden={i !== step}><EmpVisual i={i} /></div>)}
+          </div>
+        </div>
+      </div>
+      {/* small screens: all three open, one after another */}
+      <div className="emp-narrow mt-40">
+        {EMP.map((_, i) => <div key={i} data-r><EmpItem i={i} on narrow /></div>)}
+      </div>
+    </>
+  )
+}
 
 function Empathize() {
   return (
@@ -290,83 +397,85 @@ function Empathize() {
         <div data-r className="w-760">
           <Eyebrow label="EMPATHIZE" />
           <H2 className="mt-40">Making a game got easy.<br />Fixing it didn’t.</H2>
-          <p className="g-body mt-16">Roblox Studio and AI tools let beginners launch a game in a few months. But the basic dashboard only shows results, like playtime and drop-off rate. It doesn’t show which stage or obstacle makes players quit.</p>
+          <p className="g-body mt-24">AI tools made it easy for anyone to build a game. We wanted to know what gets hard after launch, when real players arrive.</p>
         </div>
-        <div className="g-two mt-40">
-          <figure className="g-fig" data-r style={d(0)}>
-            <div className="g-board"><img src={IMG.journey} alt="Creator journey board from 27 Roblox forum posts (FigJam)" loading="lazy" data-gzoom="true" /></div>
-            <h3 className="g-h3 mt-24">What creators wrote</h3>
-            <div className="g-cap mt-8">27 posts from Roblox forums</div>
-            <p className="g-body mt-16">Creators knew something was wrong, but not where. They asked the community, changed many things at once, and lost track of what worked.</p>
-          </figure>
-          <figure className="g-fig" data-r style={d(1)}>
-            <div className="g-board"><img src={IMG.players} alt="Player review analysis: 47 reviews and 39 feedback posts (FigJam)" loading="lazy" data-gzoom="true" /></div>
-            <h3 className="g-h3 mt-24">What players wrote</h3>
-            <div className="g-cap mt-8">47 reviews + 39 requested feedback posts</div>
-            <p className="g-body mt-16">Players decide in the first few minutes. If something feels off, they leave before seeing the rest. Reviews rarely show what happened in between, so we needed behaviour data.</p>
-          </figure>
+        <div className="g-rq mt-40" data-r>
+          <div className="g-k cyan">RESEARCH QUESTION</div>
+          <p className="rq-q">What stops beginner game creators from improving their game after launch?</p>
         </div>
-        <hr className="g-hair" />
-        <div data-r className="w-760">
-          <H2>Creators want a fast fix,<br />not a perfect answer</H2>
-          <p className="g-body mt-16">We interviewed 3 creators, then held a second interview with a professional game developer. Creators fixed things as soon as a cause looked likely, then checked the numbers. The expert linked four things from the start. Beginners had the goal, but couldn’t turn it into a question.</p>
-        </div>
-        <Chain />
-        <p className="g-cap mt-24" data-r>Beginners stop after “Goal”. Experts connect all four.</p>
-        <div className="g-table-wrap mt-40 w-900" data-r>
-          <table className="g-table">
-            <thead><tr><th>Who</th><th>Experience</th><th>Where</th></tr></thead>
-            <tbody>
-              <tr><td className="b">Student creator</td><td>Game high school, teen</td><td>Korea</td></tr>
-              <tr><td className="b">Game developer</td><td>Works at a game company, 20s</td><td>Korea</td></tr>
-              <tr><td className="b">Hobby creator</td><td>Makes games for fun, teen</td><td>Belgium</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <p className="g-cap mt-24" data-r>Minors joined with guardian consent. Names and faces are not shown.</p>
-        <div className="g-board wide mt-40" data-r><img src={IMG.affinity} alt="Interview affinity map (FigJam)" loading="lazy" data-gzoom="true" /></div>
-        <div className="g-scenario mt-40" data-r>
-          <div><div className="g-k">PROBLEM SCENARIO</div><div className="g-sc-name">Meet Lucas</div></div>
-          <div>
-            <p className="g-body">Lucas built a ball-rolling stage game in 3 months with help from AI. Two weeks after launch, he wants to add Stage 5. His dashboard shows playtime and drop-off rate, but not which obstacle is too hard or too easy.</p>
-            <p className="g-body mt-16">The data keeps piling up. It just doesn’t help him decide.</p>
-          </div>
-        </div>
+        <EmpScroll />
       </div>
     </section>
   )
 }
 
-/** Goal → Question → Behaviour → Data: the expert's chain lights up link by link */
-function Chain() {
-  const [ref, shown] = useShownOnce<HTMLDivElement>(0.6)
-  const steps = ['Goal', 'Question', 'Behaviour to watch', 'Data to log']
-  return (
-    <div ref={ref} className="g-chain mt-40">
-      {steps.map((s, i) => (
-        <React.Fragment key={s}>
-          {i > 0 && <span className={'arr' + (shown ? ' on' : '')} style={{ transitionDelay: `${i * 0.35 - 0.15}s` }} aria-hidden="true">→</span>}
-          <span className={'pill' + (i === 0 ? ' first' : '') + (shown ? ' on' : '')} style={{ transitionDelay: `${i * 0.35}s` }}>{s}</span>
-        </React.Fragment>
-      ))}
-    </div>
-  )
-}
-
 /* ---------- define ---------- */
 
-/** the HMW callout pops on like the Trust Bank HMW notes */
-function Hmw() {
-  const [ref, shown] = useShownOnce<HTMLDivElement>(0.4)
+const INSIGHTS = [
+  { t: 'Dashboards only tell them something is wrong', notes: ['Saw an 80% drop-off on the dashboard and knew the game had a problem.', 'Checked player count and when players left in the game’s analytics.', 'Used badges as a stand-in to see where players stopped.'] },
+  { t: 'Once a cause looks likely, they fix it first', notes: ['Added a tutorial to cut early drop-off.', 'Felt the tutorial helped, and guessed why.', 'Two years later, still not sure why players leave early.'] },
+  { t: 'They can’t ask the players who left', notes: ['No chance to ask players why they left.', 'A thumbs-down with no reason is the hardest to act on.', 'AI reports explained the numbers, but missed the context.'] },
+]
+
+const QUESTIONS = [
+  { k: 'A', t: 'How do we collect data?', p: 'Lucas didn’t know which moments in Ball Rush to track.', a: 'AI Mapping + goal-based tracking' },
+  { k: 'B', t: 'How do we show it?', p: 'Deaths, resets, progress, clicks… Lucas would see it all at once.', a: 'Goal-based analysis board' },
+  { k: 'C', t: 'How do we help them read it?', p: 'Lucas saw “61% left” but couldn’t tell what to fix first.', a: 'AI briefing + AI agent' },
+]
+
+function Define() {
   return (
-    <div ref={ref} className="g-hmw mt-40" style={{
-      opacity: shown ? 1 : 0,
-      transform: shown ? 'scale(1)' : 'scale(0.9) translateY(30px)',
-      transition: 'opacity .5s ease, transform .9s cubic-bezier(0.34, 1.56, 0.64, 1)',
-    }}>
-      <div className="g-k sky">HOW MIGHT WE</div>
-      <p className="hmw-q">Help creators who are new to data find evidence fast,<br />and make better update decisions?</p>
-    </div>
+    <section className="g-sec" data-chapter="Define">
+      <div className="g-wrap">
+        <div data-r className="w-760">
+          <Eyebrow label="DEFINE" sq="blue" />
+          <H2 className="mt-40">The problem wasn’t reading data.<br />It was knowing what to check.</H2>
+          <p className="g-body mt-24">Roblox already lets creators track each stage with funnels and custom events. Beginners didn’t use them. Not because the tool was missing, but because they didn’t know what to track.</p>
+        </div>
+
+        <h3 className="g-h3l mt-80" data-r>Interview affinity map</h3>
+        <div className="g-aff mt-40" data-r>
+          <img src={IMG5.affinity} alt="Interview affinity map: sticky notes from our interviews, grouped into 3 insights" loading="lazy" />
+        </div>
+        <div className="g-ins mt-40">
+          {INSIGHTS.map((s, i) => (
+            <div className="ins-row" key={i} data-r style={d(i)}>
+              <div className="ins-k">
+                <img src={IMG5.insight[i]} alt="" aria-hidden="true" />
+                <div><div className="g-k cyan">INSIGHT 0{i + 1}</div><h4 className="ins-t">{s.t}</h4></div>
+              </div>
+              <div className="ins-notes">
+                {s.notes.map(n => <p className="ins-note" key={n}>{n}</p>)}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-80" data-r>
+          <h3 className="g-h3">Where Lucas gets stuck</h3>
+          <p className="g-cap mt-16">A user story built from our research. Lucas and his numbers are made up.</p>
+        </div>
+        <div className="g-story mt-24" data-r>
+          <img src={IMG5.story} alt="User story in 6 panels: 1 Launch day — my game is live. 2 Players leave — players left 62%. 3 Only totals — average playtime 4 min, drop-off 62%; it doesn’t say where. 4 Asking around — everyone says something different. 5 Fix everything — lower difficulty, new music, faster ball. 6 Nothing changed — players left 61%; what should I fix first?" loading="lazy" data-gzoom="true" />
+        </div>
+
+        <div className="g-hmw5 mt-80" data-r>
+          <div className="g-k sky">HOW MIGHT WE</div>
+          <p className="hmw5-q mt-16">Help game creators who are new to data find evidence fast,<br />and make better update decisions?</p>
+          <p className="hmw5-p mt-16">We tackled one problem first: game creators can’t see what players actually do in their game. Asking players why comes later.</p>
+          <hr />
+          <Bounce className="hmw5-qs" step={0.2}>
+            {QUESTIONS.map(q => (
+              <div className="hmw5-c" key={q.k}>
+                <h4 className="hq-t"><b>{q.k}</b>{q.t}</h4>
+                <p>{q.p}</p>
+                <div className="hq-a">→ {q.a}</div>
+              </div>
+            ))}
+          </Bounce>
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -386,54 +495,51 @@ function Bounce({ children, className, step = 0.3 }: { children: React.ReactNode
   )
 }
 
-const QUESTIONS = [
-  { k: 'A', t: 'How do we collect data?', p: 'Beginners shouldn’t have to write tracking code.', a: 'AI Mapping + goal-based tracking' },
-  { k: 'B', t: 'How do we show it?', p: 'Once tracked, there’s too much to look at.', a: 'Goal-based analysis board' },
-  { k: 'C', t: 'How do we help them read it?', p: '“Stage 4 clear rate 57%”. Is that a problem?', a: 'AI briefing + AI agent' },
+/* ---------- ideate: user flow, lo-fi wireframes, photo ---------- */
+
+type Nd = { k: 'end' | 'ai' | 'user' | 'q'; t: string; sub?: string; yes?: boolean } | { k: 'paths'; items: string[] }
+const FLOWS: { t: string; nodes: Nd[] }[] = [
+  { t: 'Set up a project', nodes: [
+    { k: 'end', t: 'New project' },
+    { k: 'ai', t: 'Reads the game scripts and maps the stages' },
+    { k: 'user', t: 'Checks the map and writes a goal' },
+    { k: 'ai', t: 'Suggests what to track for that goal' },
+    { k: 'q', t: 'Does it fit the goal?', sub: 'No: edit it in plain words' },
+    { k: 'ai', t: 'Turns tracking on in the game', yes: true },
+    { k: 'end', t: 'Dashboard overview' },
+  ] },
+  { t: 'From a problem to a decision', nodes: [
+    { k: 'end', t: 'Dashboard overview' },
+    { k: 'user', t: 'Notices more players quit on Day 4' },
+    { k: 'q', t: 'How do I find the cause?' },
+    { k: 'paths', items: ['1  Explore the charts myself', '2  Ask AI about a chart', '3  Open the AI agent'] },
+    { k: 'ai', t: 'Builds a chart, explains it and suggests a next step' },
+    { k: 'q', t: 'Do I know what to fix?', sub: 'No: keep asking' },
+    { k: 'end', t: 'Explains the cause and the fix', yes: true },
+  ] },
 ]
 
-function Define() {
+const Arrow = ({ yes }: { yes?: boolean }) => (
+  <span className="fl-arr" aria-hidden="true">
+    {yes && <span className="yes">Yes</span>}
+    <svg width="28" height="16" viewBox="0 0 28 16" fill="none"><path d="M1 8h24M19 2l6 6-6 6" stroke="#8A8D96" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+  </span>
+)
+
+function FlowNode({ n }: { n: Nd }) {
+  if (n.k === 'paths') return <div className="fl-paths">{n.items.map(t => <div key={t} className="nd user">{t}</div>)}</div>
   return (
-    <section className="g-sec" data-chapter="Define">
-      <div className="g-wrap">
-        <div data-r className="w-760">
-          <Eyebrow label="DEFINE" sq="blue" />
-          <H2 className="mt-40">The problem wasn’t reading data.<br />It was knowing what to check.</H2>
-          <p className="g-body mt-16">Roblox already lets creators track each stage with funnels and custom events. Beginners didn’t use them. Not because the tool was missing, but because they didn’t know what to track.</p>
-        </div>
-        <Hmw />
-        <h3 className="g-h3 mt-40" data-r>We picked one problem to solve first</h3>
-        <Bounce className="g-pick mt-40" step={0.25}>
-          {[
-            <div className="g-card now" key="now"><div className="g-k blue">SOLVE NOW</div><h4 className="g-h4">No behaviour data</h4><p>Creators want to fix fast and check the result. Behaviour data feeds that loop directly.</p></div>,
-            <div className="g-card" key="later"><div className="g-k blue">LATER</div><h4 className="g-h4">No reasons from players</h4><p>Important, but it fills gaps that behaviour data can’t explain. We kept it as a next step.</p></div>,
-          ]}
-        </Bounce>
-        <h3 className="g-h3 mt-40" data-r>3 questions to design for</h3>
-        <Bounce className="g-qs mt-40">
-          {QUESTIONS.map(q => (
-            <div className="g-card q" key={q.k}>
-              <div className="q-k">{q.k}</div>
-              <h4 className="g-h4">{q.t}</h4>
-              <p>{q.p}</p>
-              <div className="q-a">→ <span>{q.a}</span></div>
-            </div>
-          ))}
-        </Bounce>
-      </div>
-    </section>
+    <div className={'nd ' + n.k}>
+      {n.k === 'ai' && <b className="ai">AI</b>}
+      <span>{n.t}</span>
+      {n.sub && <span className="sub">{n.sub}</span>}
+    </div>
   )
 }
 
-/* ---------- ideate ---------- */
-
-const RULES = [
-  ['Start from a question', 'Show pages built around what the creator wants to check, plus a page of basic metrics.'],
-  ['Suggest, don’t lock in', 'AI builds a bundle of charts. The creator can pick, mix and edit it.'],
-  ['Go step by step', 'Overview → problem signal → comparison → player evidence.'],
-  ['Keep ideas next to evidence', 'Link each hypothesis to the data for and against it. AI offers other explanations too.'],
-  ['Explain inside the chart', 'Short titles and notes on the chart, not long AI reports.'],
-  ['The creator makes the call', 'AI starts and widens the analysis. The direction and final decision stay with the creator.'],
+const SKETCHES = [
+  ['Pick a game project', 'AI reads the game and maps the stages', 'Write what you want to check', 'AI suggests what to track'],
+  ['Overview opens with an AI briefing', 'Explore a chart, with Ask AI on hand', 'Find the cause together with AI', 'Or ask the AI agent directly'],
 ]
 
 function Ideate() {
@@ -443,61 +549,60 @@ function Ideate() {
         <div data-r className="w-760">
           <Eyebrow label="IDEATE" sq="blue" />
           <H2 className="mt-40">6 rules from research:<br />AI goes first, the creator decides</H2>
-          <p className="g-body mt-16">Research on sensemaking showed that beginners need a starting point, not more charts. So the AI should act as a guide, not a judge. Its suggestions must be easy to check and change.</p>
+          <p className="g-body mt-24">Research on sensemaking showed that beginners need a starting point, not more charts. So the AI should act as a guide, not a judge. Its suggestions must be easy to check and change.</p>
         </div>
-        <Bounce className="g-rules mt-40" step={0.15}>
-          {RULES.map(([t, p], i) => (
-            <div className="g-rule" key={t}>
-              <span className="n">0{i + 1}</span>
-              <div><h4 className="g-h4">{t}</h4><p>{p}</p></div>
+
+        <div className="mt-80" data-r>
+          <h3 className="g-h3l">User flow</h3>
+          <p className="g-body mute mt-16">We mapped two flows before sketching: setting up a project, then going from a problem to a decision.</p>
+        </div>
+        <div className="g-flowc mt-40" data-r>
+          <div className="fl-legend">
+            <span><i className="lg user" />Game creator does</span>
+            <span><i className="lg ai" />AI does</span>
+            <span><i className="lg q" />Decision</span>
+            <span><i className="lg end" />Start / end</span>
+          </div>
+          {FLOWS.map((f, fi) => (
+            <div className="fl" key={f.t}>
+              <h4 className="fl-t"><span>0{fi + 1}</span>{f.t}</h4>
+              <div className="fl-scroll">
+                <div className="fl-row">
+                  {f.nodes.map((n, i) => (
+                    <React.Fragment key={i}>
+                      {i > 0 && <Arrow yes={'yes' in n && n.yes} />}
+                      <FlowNode n={n} />
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
             </div>
           ))}
-        </Bounce>
-        <div className="g-two mt-40">
-          <div className="g-board" data-r style={d(0)}><img src={IMG.story} alt="User story: sensemaking dashboard concept in 6 panels" loading="lazy" data-gzoom="true" /></div>
-          <div className="g-board" data-r style={d(1)}><img src={IMG.sketch} alt="Low-fi sketch of metric groups" loading="lazy" /></div>
         </div>
-        <div className="g-two mt-40">
-          <img className="g-photo" data-r style={d(0)} src={IMG.photo1} alt="Harbor working on the GameCove ideas with her teammate" loading="lazy" />
-          <img className="g-photo" data-r style={d(1)} src={IMG.photo2} alt="Harbor discussing the GameCove sketches" loading="lazy" />
-        </div>
-      </div>
-    </section>
-  )
-}
 
-/* ---------- prototype ---------- */
-
-/** the design flow lights up step by step as it scrolls in */
-function Flow() {
-  const [ref, shown] = useShownOnce<HTMLDivElement>(0.6)
-  const steps = ['Low-fi sketch', 'Wireflow (teacher review)', 'Mid-fi', 'Metrics locked', 'Page hierarchy', 'Hi-fi', 'Vibe-coded prototype']
-  return (
-    <div ref={ref} className="g-flow mt-40" data-r>
-      {steps.map((s, i) => (
-        <React.Fragment key={s}>
-          {i > 0 && <span className="arr" aria-hidden="true">→</span>}
-          <span className={'step' + (i >= 5 ? ' hi' : '') + (shown ? ' on' : '')} style={{ transitionDelay: `${i * 0.18}s` }}>{s}</span>
-        </React.Fragment>
-      ))}
-    </div>
-  )
-}
-
-function Prototype() {
-  return (
-    <section className="g-sec" data-chapter="Prototype">
-      <div className="g-wrap">
-        <div data-r className="w-760">
-          <Eyebrow label="PROTOTYPE" sq="blue" />
-          <H2 className="mt-40">From sketch to a coded prototype</H2>
-          <p className="g-body mt-40">We locked the metrics and page order before hi-fi. Then we built a clickable prototype with a sample game, BounceBounce (Lobby and Stage 1–4), filled with 3 weeks of Roblox-style data and 1 week of GameCove tracking data for the test.</p>
+        <div className="mt-80" data-r>
+          <h3 className="g-h3l">Lo-fi wireframes</h3>
+          <p className="g-body mute mt-16">Hand sketches of the same two flows, drawn before the coded prototype.</p>
         </div>
-        <Flow />
-        <div className="g-two mt-40">
-          <div className="g-board" data-r style={d(0)}><img src={IMG.midfi} alt="Mid-fi revision board" loading="lazy" data-gzoom="true" /></div>
-          <div className="g-board" data-r style={d(1)}><img src={IMG.hifi} alt="Hi-fi Retention screen" loading="lazy" data-gzoom="true" /></div>
-        </div>
+        {SKETCHES.map((row, ri) => (
+          <div key={ri} className="mt-40">
+            <h4 className="fl-t" data-r><span>0{ri + 1}</span>{FLOWS[ri].t}</h4>
+            <div className="g-sk mt-24">
+              {row.map((c, i) => {
+                const n = ri * 4 + i
+                return (
+                  <figure key={c} data-r style={d(i)}>
+                    <img src={IMG5.sketch[n]} alt={`Lo-fi sketch ${n + 1}: ${c}`} loading="lazy" data-gzoom="true" />
+                    <figcaption><span>0{n + 1}</span>{c}</figcaption>
+                  </figure>
+                )
+              })}
+            </div>
+          </div>
+        ))}
+
+        {/* stand-in until Harbor's drawing video */}
+        <img className="g-photo5 mt-40" data-r src={IMG5.photo} alt="Harbor talking through the GameCove sketches with her teammate" loading="lazy" />
       </div>
     </section>
   )
@@ -526,10 +631,9 @@ const TOUR_SHOTS = Array.from(new Set(TOUR.map(s => s.shot)))
 const pc = (v: number, of: number) => `${(v / of) * 100}%`
 const letterOf = (i: number) => String.fromCharCode(65 + TOUR.slice(0, i).filter(s => s.tab === TOUR[i].tab).length)
 
-/** one screen with the dimmed spotlight + caption card (caption sits on the side away from the highlight) */
+/** one screen with the dimmed spotlight + caption card (v124: always the top-left corner, like Palantir AIP) */
 function TourStage({ step, lit, single = false }: { step: number; lit: boolean; single?: boolean }) {
   const s = TOUR[step]
-  const capLeft = s.r[0] + s.r[2] / 2 > PW / 2
   const list = single ? [s.shot] : TOUR_SHOTS
   return (
     <div className="g-stage">
@@ -540,7 +644,7 @@ function TourStage({ step, lit, single = false }: { step: number; lit: boolean; 
         <b>{letterOf(step)}</b>
       </div>
       {!single && (
-        <div key={step} className={'g-capcard ' + (capLeft ? 'at-l' : 'at-r') + (lit ? ' lit' : '')}>
+        <div key={step} className={'g-capcard' + (lit ? ' lit' : '')}>
           <b>{letterOf(step)}</b><p>{s.cap}</p>
         </div>
       )}
@@ -652,12 +756,12 @@ function LabelledScreen() {
 function FinalDesign() {
   const [ref, p] = useCountProgress<HTMLDivElement>()
   return (
-    <section className="g-sec" data-chapter="Final design">
+    <section className="g-sec g-final" data-chapter="Prototype">
       <div className="g-wrap">
         <div data-r className="w-760">
           <Eyebrow label="PROTOTYPE · FINAL DESIGN" sq="blue" />
           <H2 className="mt-40">The final design: 3 features</H2>
-          <p className="g-body mt-16">Feature 1 is what makes GameCove different from other dashboards. Features 2 and 3 build on the map it creates. Scroll through the live prototype.</p>
+          <p className="g-body mt-24">Feature 1 is what makes GameCove different from other dashboards. Features 2 and 3 build on the map it creates. Scroll through the live prototype.</p>
         </div>
         <Tour />
         <div className="g-ds" data-r>
@@ -848,7 +952,6 @@ export function GameCoveV4Body() {
       <Empathize />
       <Define />
       <Ideate />
-      <Prototype />
       <FinalDesign />
       <Test />
       <Reflection />
@@ -895,19 +998,6 @@ export const GC4_CSS = `
 /* hero */
 .gc4 .g-hero { padding: 160px 0 0; }
 .gc4 .g-logo { height: 40px; width: auto; }
-.gc4 .g-btn { position: relative; display: inline-flex; align-items: center; gap: 10px; margin-top: 36px; padding: 15px 28px; border-radius: 999px; color: #F2F0EC; font-size: 16px; font-weight: 500; text-decoration: none;
-  background: linear-gradient(180deg, rgba(255,255,255,.10) 0%, rgba(255,255,255,.02) 55%, rgba(0,0,0,.25) 100%), #141417;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.22), inset 0 -1px 0 rgba(0,0,0,.6), 0 10px 30px rgba(0,0,0,.45);
-  transition: transform .35s var(--ease), box-shadow .35s var(--ease), background .35s; }
-.gc4 .g-btn::before { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
-  background: linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,.12) 45%, rgba(255,255,255,.28));
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
-.gc4 .g-btn:hover { transform: translateY(-2px); box-shadow: inset 0 1px 0 rgba(255,255,255,.3), inset 0 -1px 0 rgba(0,0,0,.6), 0 14px 36px rgba(0,0,0,.5), 0 0 28px rgba(56,152,248,.25); }
-.gc4 .g-btn:focus-visible { outline: 2px solid var(--sky); outline-offset: 3px; }
-.gc4 .g-btn-arrow { font-size: 16px; color: var(--sky); transition: transform .35s var(--ease); }
-.gc4 .g-btn:hover .g-btn-arrow { transform: translate(2px, -2px); }
-.gc4 .g-process { overflow: hidden; border-radius: 12px; border: 1px solid var(--line); background: #0B0B0D; }
-.gc4 .g-process img { display: block; width: 100%; height: auto; }
 .gc4 .g-banner { margin-top: 64px; overflow: hidden; border-radius: 16px; background: #fff; aspect-ratio: 2 / 1; }
 .gc4 .g-banner img, .gc4 .g-banner video { display: block; width: 100%; height: 100%; object-fit: cover; }
 .gc4 .g-video { position: relative; }
@@ -934,77 +1024,27 @@ export const GC4_CSS = `
 .gc4 .g-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px; }
 .gc4 .g-stats .g-cap { margin-top: 12px; }
 
-/* process accordion */
-.gc4 .acc { display: flex; gap: 16px; height: 560px; }
-.gc4 .acc-card { position: relative; flex: 220 1 0; min-width: 0; overflow: hidden; display: flex; flex-direction: column; align-items: flex-start; padding: 32px 28px; text-align: left; cursor: pointer;
-  background: var(--card); border: 1px solid var(--line); border-radius: 12px; color: var(--sand); font: inherit;
-  transition: flex .45s var(--ease), background-color .35s, border-color .35s, box-shadow .35s; }
-.gc4 .acc-card.on { flex-grow: 480; background: var(--raised); border-color: var(--strong); box-shadow: 0 24px 48px rgba(0,0,0,.35); }
-.gc4 .acc-card:focus-visible { outline: 2px solid var(--sky); outline-offset: 2px; }
-.gc4 .acc-stage { font-size: 24px; font-weight: 700; letter-spacing: .02em; }
-.gc4 .acc-title { display: flex; gap: 12px; margin-top: 20px; width: 100%; max-width: 180px; font-size: 18px; font-weight: 700; line-height: 1.45; color: var(--sand); transition: max-width .45s var(--ease); }
-.gc4 .acc-title b { color: var(--blue); font-weight: 700; }
-.gc4 .acc-card.on .acc-title { max-width: 440px; }
-.gc4 .acc-body { position: absolute; left: 28px; top: 150px; width: 440px; max-width: calc(100% - 56px); opacity: 0; transition: opacity .12s; pointer-events: none; }
-.gc4 .acc-card.on .acc-body { opacity: 1; transition: opacity .3s ease .18s; pointer-events: auto; }
-.gc4 .acc-body ul { margin: 0; padding: 0; list-style: none; }
-.gc4 .acc-body li { padding: 6px 0; font-size: 16px; color: var(--text); }
-.gc4 .acc-body img { width: 100%; margin-top: 20px; border-radius: 8px; object-fit: cover; object-position: top left; }
-.gc4 .acc-narrow { display: none; }
-.gc4 .g-turns p { display: flex; gap: 12px; padding: 6px 0; font-size: 18px; line-height: 1.5; color: #6FB2FA; }
 
 /* boards / images */
 .gc4 .g-two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; }
 .gc4 .g-board { overflow: hidden; border-radius: 12px; background: var(--raised); }
 .gc4 .g-board img { width: 100%; height: auto; }
-.gc4 .g-photo { width: 100%; aspect-ratio: 700 / 467; object-fit: cover; border-radius: 12px; }
 .gc4 .g-slot { display: flex; align-items: center; justify-content: center; width: 100%; padding: 24px; text-align: center; border-radius: 12px; border: 1px dashed var(--strong); background: var(--card); color: var(--dim); font-size: 16px; }
-.gc4 .g-hair { height: 1px; margin: 40px 0; border: 0; background: var(--line); }
 
-/* empathize */
-.gc4 .g-chain { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
-.gc4 .g-chain .pill { padding: 14px 24px; border-radius: 999px; font-size: 18px; font-weight: 700; background: var(--card); color: var(--sand); opacity: .35; transform: scale(.94);
-  transition: opacity .5s ease, transform .7s cubic-bezier(0.34, 1.56, 0.64, 1), background-color .5s, color .5s; }
-.gc4 .g-chain .pill.on { opacity: 1; transform: scale(1); }
-.gc4 .g-chain .pill.on:not(.first) { background: var(--sky); color: #111114; }
-.gc4 .g-chain .arr { font-size: 20px; color: var(--mute); opacity: 0; transition: opacity .4s ease; }
-.gc4 .g-chain .arr.on { opacity: 1; }
 .gc4 .g-table-wrap { overflow-x: auto; }
 .gc4 .g-table { width: 100%; border-collapse: collapse; }
 .gc4 .g-table th { padding: 14px 24px 14px 0; text-align: left; font-size: 16px; font-weight: 400; color: var(--dim); border-bottom: 1px solid var(--line); }
 .gc4 .g-table td { padding: 16px 24px 16px 0; font-size: 17px; line-height: 1.5; color: var(--text); border-bottom: 1px solid var(--line); vertical-align: top; }
 .gc4 .g-table td.b { font-weight: 700; color: var(--sand); white-space: nowrap; }
 .gc4 .g-table td.ok { color: var(--ok); font-weight: 700; } .gc4 .g-table td.no { color: var(--coral); font-weight: 700; }
-.gc4 .g-scenario { display: grid; grid-template-columns: 370px minmax(0, 1fr); gap: 40px; padding: 56px 56px; border-radius: 12px; background: var(--card); }
-.gc4 .g-sc-name { margin-top: 12px; font-size: 36px; font-weight: 700; letter-spacing: -0.01em; }
 
-/* define */
-.gc4 .g-hmw { padding: 88px 40px; border-radius: 12px; background: var(--skybg); text-align: center; }
-.gc4 .g-hmw .hmw-q { margin-top: 24px; font-size: clamp(28px, 2.4vw, 38px); font-weight: 700; line-height: 1.25; color: var(--sand); }
-.gc4 .g-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
-.gc4 .g-qs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px; }
 .gc4 .bounce { display: flex; }
 .gc4 .bounce > * { flex: 1; }
 .gc4 .g-card { display: flex; flex-direction: column; gap: 12px; padding: 32px; border-radius: 12px; background: var(--card); border: 1px solid transparent; transition: border-color .3s, box-shadow .4s, transform .4s var(--ease); }
 .gc4 .g-card:hover { border-color: var(--strong); box-shadow: 0 18px 40px rgba(0,0,0,.3); }
-.gc4 .g-card.now { background: var(--skybg); }
 .gc4 .g-card p { font-size: 17px; line-height: 1.6; color: var(--text); }
-.gc4 .g-card.q { min-height: 280px; }
-.gc4 .q-k { font-size: 40px; font-weight: 700; line-height: 1; color: var(--blue); }
-.gc4 .q-a { margin-top: auto; padding-top: 12px; font-size: 16px; font-weight: 700; color: #6FB2FA; }
 
-/* ideate */
-.gc4 .g-rules { display: grid; grid-template-columns: 1fr 1fr; column-gap: 40px; }
-.gc4 .g-rule { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px; padding: 28px 0; border-top: 1px solid var(--line); }
-.gc4 .g-rule .n { font-size: 16px; color: var(--blue); padding-top: 3px; }
-.gc4 .g-rule p { margin-top: 10px; font-size: 17px; line-height: 1.6; color: var(--text); }
 
-/* prototype flow */
-.gc4 .g-flow { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-.gc4 .g-flow .step { padding: 12px 20px; border-radius: 999px; font-size: 17px; color: var(--sand); opacity: .3; transition: opacity .5s ease, background-color .5s, color .5s; }
-.gc4 .g-flow .step.on { opacity: 1; }
-.gc4 .g-flow .step.hi.on { background: var(--sky); color: #111114; font-weight: 700; }
-.gc4 .g-flow .arr { color: var(--mute); }
 
 /* final design: pinned live-prototype tour */
 .gc4 .g-tour-outer { position: relative; }
@@ -1031,16 +1071,16 @@ export const GC4_CSS = `
 .gc4 .g-stage img.on { opacity: 1; }
 .gc4 .g-spot { position: absolute; z-index: 2; border-radius: 12px; border: 1.5px solid rgba(179,209,255,0); box-shadow: 0 0 0 200vmax rgba(8,8,11,0); pointer-events: none;
   transition: left .7s var(--ease), top .7s var(--ease), width .7s var(--ease), height .7s var(--ease), box-shadow .6s ease, border-color .6s ease; }
-.gc4 .g-spot.lit { border-color: var(--sky); box-shadow: 0 0 0 200vmax rgba(8,8,11,.66), 0 0 32px rgba(56,152,248,.25); }
+.gc4 .g-spot.lit { border-color: var(--sky); box-shadow: 0 0 0 200vmax rgba(8,8,11,.74), 0 0 32px rgba(56,152,248,.25); }
 .gc4 .g-spot b { position: absolute; left: -14px; top: -14px; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%;
   background: var(--sky); color: #111114; font-size: 16px; font-weight: 700; opacity: 0; transform: scale(.6); transition: opacity .4s ease .2s, transform .5s cubic-bezier(0.34, 1.56, 0.64, 1) .2s; }
 .gc4 .g-spot.lit b { opacity: 1; transform: none; }
-.gc4 .g-capcard { position: absolute; z-index: 3; top: 20px; display: flex; gap: 12px; align-items: flex-start; max-width: min(360px, 40%); padding: 16px 18px; border-radius: 10px;
-  border: 1px solid var(--strong); background: rgba(17,17,20,.9); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); opacity: 0; transform: translateY(8px); transition: opacity .5s ease, transform .6s var(--ease); }
-.gc4 .g-capcard.at-r { right: 20px; } .gc4 .g-capcard.at-l { left: 20px; }
+/* caption card: always top-left, solid and brighter than the dimmed screen so it reads at a glance (Palantir AIP) */
+.gc4 .g-capcard { position: absolute; z-index: 3; top: 24px; left: 24px; display: flex; gap: 12px; align-items: flex-start; max-width: min(400px, 44%); padding: 16px 20px;
+  border: 1px solid rgba(255,255,255,.22); background: #2B2C33; box-shadow: 0 16px 40px rgba(0,0,0,.45); opacity: 0; transform: translateY(8px); transition: opacity .5s ease, transform .6s var(--ease); }
 .gc4 .g-capcard.lit { opacity: 1; transform: none; transition-delay: .15s; }
-.gc4 .g-capcard b { flex: none; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--sky); color: var(--sky); font-size: 16px; }
-.gc4 .g-capcard p { font-size: 16px; line-height: 1.55; color: var(--sand); }
+.gc4 .g-capcard b { flex: none; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: #B3D1FF; color: #111114; font-size: 16px; font-weight: 700; }
+.gc4 .g-capcard p { font-size: 16px; line-height: 1.5; color: #FFFFFF; }
 .gc4 .g-tour-narrow { display: none; }
 .gc4 .g-tour-item { display: flex; flex-direction: column; gap: 14px; }
 
@@ -1099,8 +1139,127 @@ export const GC4_CSS = `
 .gc4 .g-take span, .gc4 .g-next span { color: var(--sky); }
 .gc4 .g-next p { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 8px; padding: 10px 0; font-size: 22px; line-height: 1.45; color: var(--sand); }
 
+/* ================= v124 (Figma 04 GameCove — 1921) ================= */
+.gc4 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.gc4 .g-body.mute { color: var(--mute); }
+.gc4 .g-k.cyan { color: #7DD3FC; }
+.gc4 .g-h3l { font-size: 32px; font-weight: 400; line-height: 40px; letter-spacing: -0.01em; color: var(--sand); }
+
+/* hero button: flat grey, square (Figma g-btn 200×56) */
+.gc4 .g-btn5 { display: inline-flex; align-items: center; justify-content: center; min-width: 200px; height: 56px; margin-top: 40px; padding: 0 40px; background: #6A6A75; color: #F2F0EC; font-size: 16px; font-weight: 400; text-decoration: none; transition: background-color .3s, transform .35s var(--ease); }
+.gc4 .g-btn5:hover { background: #7A7A86; transform: translateY(-2px); }
+.gc4 .g-btn5:focus-visible { outline: 2px solid var(--sky); outline-offset: 3px; }
+
+/* process */
+.gc4 .g-proc { display: grid; grid-template-columns: minmax(0, 480px) minmax(0, 920px); justify-content: space-between; gap: 40px; align-items: start; }
+.gc4 .g-proc-map { position: relative; aspect-ratio: 920 / 480; background: #0B0C0F; }
+.gc4 .g-proc-map img { width: 100%; height: 100%; object-fit: cover; }
+.gc4 .g-proc-fx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.gc4 .g-proc-fx .ring { opacity: 0; transform-box: fill-box; transform-origin: center; animation: gpRing 7.2s ease-in-out infinite both; }
+.gc4 .g-proc-fx .ring ellipse { fill: none; stroke: #7DD3FC; stroke-width: 2; }
+.gc4 .g-proc-fx .ring ellipse.o { opacity: .4; }
+.gc4 .g-proc-fx .loop { fill: #7DD3FC; opacity: 0; animation: gpLoop 7.2s linear infinite; }
+.gc4 .g-proc-fx .loop .halo { fill: rgba(125,211,252,.3); }
+@keyframes gpRing { 0% { opacity: 0; transform: scale(.88); } 4% { opacity: 1; transform: scale(1); } 14% { opacity: 1; transform: scale(1); } 18%, 100% { opacity: 0; transform: scale(1.04); } }
+@keyframes gpLoop { 0%, 80% { opacity: 0; } 83%, 95% { opacity: 1; } 99%, 100% { opacity: 0; } }
+
+/* empathize: research question + sticky 01/02/03 */
+.gc4 .g-rq { padding: 48px 40px; background: var(--skybg); text-align: center; }
+.gc4 .g-rq .rq-q { margin-top: 24px; font-size: clamp(28px, 2.4vw, 38px); font-weight: 400; line-height: 1.26; color: var(--sand); }
+.gc4 .emp-outer { position: relative; }
+.gc4 .emp-pin { position: sticky; top: max(96px, calc(50vh - 280px)); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 80px; height: 560px; }
+.gc4 .emp-list { display: flex; flex-direction: column; }
+.gc4 .emp-item { border-top: 1px solid #2B2D30; }
+.gc4 .emp-item:last-child { border-bottom: 1px solid #2B2D30; }
+.gc4 .emp-head { display: flex; align-items: baseline; gap: 16px; width: 100%; padding: 24px 0; background: none; border: 0; text-align: left; font: inherit; cursor: pointer; }
+.gc4 .emp-head .n, .gc4 .emp-head .t { font-size: 24px; line-height: 32px; letter-spacing: -0.01em; color: #8A8D96; transition: color .4s ease; }
+.gc4 .emp-item.on .emp-head .n { color: #7DD3FC; }
+.gc4 .emp-item.on .emp-head .t { color: var(--sand); }
+.gc4 .emp-head:hover .t { color: var(--sand); }
+.gc4 .emp-head:focus-visible { outline: 2px solid var(--sky); outline-offset: 2px; }
+.gc4 .emp-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .6s var(--ease); }
+.gc4 .emp-body > div { overflow: hidden; padding-left: 48px; }
+.gc4 .emp-item.on .emp-body { grid-template-rows: 1fr; }
+.gc4 .emp-item.on .emp-body > div { padding-bottom: 40px; }
+.gc4 .emp-h { font-size: 32px; font-weight: 400; line-height: 40px; letter-spacing: -0.01em; color: var(--sand); }
+.gc4 .emp-p { margin-top: 16px; font-size: 18px; line-height: 1.6; color: var(--mute); }
+.gc4 .emp-panel { position: relative; height: 560px; background: var(--card); }
+.gc4 .emp-layer { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 40px 56px; opacity: 0; transition: opacity .6s ease; }
+.gc4 .emp-layer.on { opacity: 1; }
+.gc4 .emp-vis { width: 100%; max-width: 608px; }
+.gc4 .emp-vis img { width: 100%; height: auto; }
+.gc4 .emp-vis figcaption { margin-top: 24px; text-align: center; }
+.gc4 .emp-narrow { display: none; }
+
+/* define: affinity strip, insight rows, story, HMW */
+.gc4 .g-aff img { width: 100%; height: auto; }
+.gc4 .g-ins { display: flex; flex-direction: column; gap: 32px; padding: 48px; background: var(--card); }
+.gc4 .ins-row { display: grid; grid-template-columns: 384px minmax(0, 1fr); gap: 24px; align-items: center; }
+.gc4 .ins-k { display: flex; align-items: center; gap: 24px; }
+.gc4 .ins-k img { flex: none; width: 80px; height: 72px; }
+.gc4 .ins-t { margin-top: 8px; font-size: 24px; font-weight: 400; line-height: 32px; color: var(--sand); }
+.gc4 .ins-notes { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.gc4 .ins-notes::before { content: ""; position: absolute; left: -24px; right: 0; top: 50%; height: 1px; background: rgba(255,255,255,.18); }
+.gc4 .ins-note { position: relative; padding: 24px; background: var(--bg); border: 1px solid rgba(255,255,255,.1); font-size: 18px; line-height: 1.55; color: var(--mute); }
+.gc4 .ins-note::before { content: ""; position: absolute; left: -16px; top: 50%; width: 8px; height: 8px; margin-top: -4px; border-radius: 50%; background: #7DD3FC; }
+.gc4 .g-story img { width: 100%; height: auto; }
+.gc4 .g-hmw5 { padding: 56px; background: var(--skybg); }
+.gc4 .hmw5-q { font-size: 36px; font-weight: 700; line-height: 48px; letter-spacing: -0.01em; color: var(--sand); }
+.gc4 .hmw5-p { font-size: 20px; line-height: 1.6; color: var(--text); }
+.gc4 .g-hmw5 hr { height: 1px; margin: 40px 0; border: 0; background: rgba(56,152,248,.3); }
+.gc4 .hmw5-qs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px; }
+.gc4 .hmw5-c { display: flex; flex-direction: column; gap: 12px; }
+.gc4 .hq-t { display: flex; gap: 16px; font-size: 24px; font-weight: 400; line-height: 32px; color: var(--sand); }
+.gc4 .hq-t b { font-weight: 400; color: var(--blue); }
+.gc4 .hmw5-c p { font-size: 18px; line-height: 1.55; color: var(--text); }
+.gc4 .hq-a { font-size: 16px; font-weight: 700; color: #6FB2FA; }
+
+/* ideate: user flow canvas, sketches, photo */
+.gc4 .g-flowc { padding: 48px; background: var(--raised); }
+.gc4 .fl-legend { display: flex; flex-wrap: wrap; gap: 16px 32px; font-size: 16px; color: var(--mute); }
+.gc4 .fl-legend span { display: inline-flex; align-items: center; gap: 8px; }
+.gc4 .lg { display: inline-block; width: 16px; height: 16px; }
+.gc4 .lg.user { background: #2F3237; border: 1.5px solid #454950; }
+.gc4 .lg.ai { background: rgba(56,152,248,.16); border: 1.5px solid var(--blue); }
+.gc4 .lg.q { border: 1.5px dashed var(--mute); }
+.gc4 .lg.end { border: 1.5px solid var(--sand); }
+.gc4 .fl { margin-top: 56px; }
+.gc4 .fl-t { display: flex; align-items: baseline; gap: 12px; font-size: 24px; font-weight: 400; line-height: 36px; color: var(--sand); }
+.gc4 .fl-t span { font-size: 16px; color: var(--blue); }
+.gc4 .fl-scroll { margin-top: 24px; overflow-x: auto; }
+.gc4 .fl-row { display: flex; align-items: center; gap: 4px; min-width: 1336px; }
+.gc4 .nd { flex: none; display: flex; flex-direction: column; gap: 6px; width: 160px; padding: 16px 18px; font-size: 16px; line-height: 1.5; color: var(--text); }
+.gc4 .nd.end { justify-content: center; min-height: 59px; text-align: center; color: var(--sand); border: 1.5px solid var(--sand); }
+.gc4 .nd.ai { background: rgba(56,152,248,.12); border: 1.5px solid var(--blue); }
+.gc4 .nd.ai .ai { font-weight: 700; color: var(--blue); }
+.gc4 .nd.user { background: #2F3237; border: 1.5px solid #454950; }
+.gc4 .nd.q { border: 1.5px dashed var(--mute); }
+.gc4 .nd .sub { color: var(--dim); }
+.gc4 .fl-paths { flex: none; display: flex; flex-direction: column; gap: 8px; }
+.gc4 .fl-arr { position: relative; flex: none; display: flex; width: 28px; }
+.gc4 .fl-arr .yes { position: absolute; left: 50%; bottom: 100%; transform: translateX(-50%); margin-bottom: 4px; font-size: 16px; color: var(--dim); }
+.gc4 .g-sk { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
+.gc4 .g-sk img { width: 100%; aspect-ratio: 362 / 276; object-fit: cover; }
+.gc4 .g-sk figcaption { display: flex; gap: 12px; margin-top: 16px; font-size: 16px; line-height: 1.5; color: var(--text); }
+.gc4 .g-sk figcaption span { color: var(--blue); }
+.gc4 .g-photo5 { width: 100%; aspect-ratio: 1520 / 573; object-fit: cover; }
+
+/* prototype · final design: a light section (Figma #FAFAF9) */
+.gc4 .g-final { --sand: #111114; --text: #3D3E44; --mute: #6E7078; --dim: #6E7078; --line: #E3E4E8; --card: #F4F4F6; --strong: #E3E4E8;
+  margin-top: 120px; padding-bottom: 120px; background: #FAFAF9; color: #111114; }
+.gc4 .g-final .g-live { color: #1F6FD1; }
+.gc4 .g-final .g-tab i { background: var(--blue); }
+.gc4 .g-final .g-stage { border-color: #E3E4E8; box-shadow: 0 24px 60px rgba(17,17,20,.18); }
+.gc4 .g-final .g-anno-lines polyline { stroke: var(--blue); opacity: .8; }
+.gc4 .g-final .g-anno-screen img { box-shadow: 0 16px 40px rgba(17,17,20,.16); }
+.gc4 .g-final .g-anno-screen .dot { background: var(--blue); box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 7px rgba(56,152,248,.18); }
+
+/* round shapes that carry meaning stay round (the page squares every other corner) */
+.gc .gc4 .ins-note::before, .gc .gc4 .g-spot b, .gc .gc4 .g-capcard b, .gc .gc4 .g-anno-screen .dot, .gc .gc4 .lg.end { border-radius: 50% !important; }
+.gc .gc4 .g-flowc .nd.end { border-radius: 40px !important; }
+
 @media (max-width: 1280px) {
-  .gc4 .g-ov, .gc4 .g-scenario, .gc4 .g-test-top { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .gc4 .g-ov, .gc4 .g-test-top { grid-template-columns: minmax(0, 1fr); gap: 24px; }
   .gc4 .g-anno { aspect-ratio: auto; }
   .gc4 .g-anno-lines { display: none; }
   .gc4 .g-anno-screen { position: relative; left: 0; width: 100%; }
@@ -1109,17 +1268,23 @@ export const GC4_CSS = `
   .gc4 .g-anno-labs b span { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--sky); color: #111114; font-size: 13px; }
   .gc4 .g-anno-labs em { padding-left: 30px; }
   .gc4 .g-anno-screen .dot { width: 22px; height: 22px; margin: -11px 0 0 -11px; font-size: 13px; }
+  .gc4 .g-proc { grid-template-columns: minmax(0, 1fr); }
+  .gc4 .ins-row { grid-template-columns: minmax(0, 1fr); }
+  .gc4 .ins-notes::before { left: 0; }
 }
 @media (max-width: 1023px) {
-  .gc4 .acc { display: none; }
-  .gc4 .acc-narrow { display: flex; flex-direction: column; gap: 16px; }
-  .gc4 .acc-narrow .acc-card { flex: none; cursor: default; }
-  .gc4 .acc-narrow .acc-title { max-width: none; }
-  .gc4 .acc-narrow .acc-body { position: static; width: auto; max-width: none; margin-top: 20px; opacity: 1; }
   .gc4 .g-tour-outer { display: none; }
   .gc4 .g-tour-narrow { display: flex; flex-direction: column; gap: 48px; }
-  .gc4 .g-two, .gc4 .g-pick, .gc4 .g-qs, .gc4 .g-rules, .gc4 .g-fixes, .gc4 .g-meta, .gc4 .g-stats { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+  .gc4 .g-two, .gc4 .g-fixes, .gc4 .g-meta, .gc4 .g-stats { grid-template-columns: minmax(0, 1fr); gap: 32px; }
   .gc4 .g-sys { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 24px; }
+  .gc4 .emp-outer { display: none; }
+  .gc4 .emp-narrow { display: block; }
+  .gc4 .emp-narrow .emp-head { cursor: default; }
+  .gc4 .emp-narrow .emp-panel { height: auto; padding: 32px 24px; }
+  .gc4 .ins-notes { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .gc4 .ins-notes::before, .gc4 .ins-note::before { display: none; }
+  .gc4 .hmw5-qs { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+  .gc4 .g-sk { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 700px) {
   .gc4 .g-wrap { padding: 0 20px; }
@@ -1127,11 +1292,19 @@ export const GC4_CSS = `
   .gc4 .g-hero { padding-top: 120px; }
   .gc4 .g-anno-labs { grid-template-columns: minmax(0, 1fr); }
   .gc4 .g-row { grid-template-columns: 40px minmax(0, 1fr); } .gc4 .g-row p { grid-column: 2; }
-  .gc4 .g-scenario { padding: 28px; }
-  .gc4 .g-hmw { padding: 56px 24px; }
+  .gc4 .g-rq { padding: 32px 20px; }
+  .gc4 .g-ins, .gc4 .g-flowc { padding: 24px; }
+  .gc4 .g-hmw5 { padding: 32px 24px; }
+  .gc4 .hmw5-q { font-size: 28px; line-height: 36px; }
+  .gc4 .emp-body > div { padding-left: 0; }
+  .gc4 .emp-h, .gc4 .g-h3l { font-size: 28px; line-height: 36px; }
+  .gc4 .g-sk { grid-template-columns: minmax(0, 1fr); }
+  .gc4 .g-final { margin-top: 88px; padding-bottom: 88px; }
+  .gc4 .g-capcard { top: 12px; left: 12px; max-width: 70%; padding: 12px 14px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .gc4 [data-r] { opacity: 1 !important; transform: none !important; transition: none !important; }
-  .gc4 .acc-card, .gc4 .acc-title, .gc4 .fix-inner, .gc4 .g-stage img, .gc4 .g-spot, .gc4 .g-spot b, .gc4 .g-capcard, .gc4 .g-tab i, .gc4 .g-anno *, .gc4 .g-anno-lines polyline { transition: none !important; }
+  .gc4 .fix-inner, .gc4 .g-stage img, .gc4 .g-spot, .gc4 .g-spot b, .gc4 .g-capcard, .gc4 .g-tab i, .gc4 .g-anno *, .gc4 .g-anno-lines polyline, .gc4 .emp-body, .gc4 .emp-layer { transition: none !important; }
+  .gc4 .g-proc-fx { display: none; }
 }
 `

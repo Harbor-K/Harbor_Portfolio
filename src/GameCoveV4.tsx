@@ -13,8 +13,8 @@ import React, { useEffect, useRef, useState } from 'react'
  *  - Process: looping orbit motion (design thinking stages, with the Test → Define iteration loops)
  *  - HMW callout pops on like the Trust Bank HMW notes; question / rule cards bounce in one after another
  *  - Prototype: the design flow lights up step by step
- *  - Final design: pinned showcase — scrolling moves feature 1 → 2 → 3, progress runs around the active card
- *    (like the Trust Bank Deliver block)
+ *  - Final design: pinned tour of the live prototype — tabs 01–03 across the top, each scroll step dims the screen,
+ *    lights one area and shows a short caption; then one live screen with its design tokens labelled
  *  - What we're fixing: each fix card flips Before → After in 3D as it reaches the middle of the screen
  *  - hover magnifier on dense boards (journey map, reviews, affinity map, components)
  * Text: Helvetica Neue everywhere, 16px minimum.
@@ -36,12 +36,10 @@ const IMG = {
   journey: V + 'journey.webp', players: V + 'players.webp', affinity: V + 'affinity.webp',
   story: V + 'story.webp', sketch: V + 'sketch.webp', photo1: L + 'photo-1.webp', photo2: L + 'photo-2.webp',
   midfi: V + 'midfi.webp', hifi: V + 'hifi.webp',
-  compNav: V + 'comp-nav.webp', compData: V + 'comp-data.webp',
-  featMapping: V + 'feat-mapping.webp', featSetup: V + 'feat-setup.webp', featBriefing: V + 'feat-briefing.webp',
   before: V + 'before-mapping.webp',
 }
 
-export const GC4_CHAPTERS = ['Overview', 'Process', 'Empathize', 'Define', 'Ideate', 'Prototype', 'Design system', 'Final design', 'Test', 'Reflection']
+export const GC4_CHAPTERS = ['Overview', 'Process', 'Empathize', 'Define', 'Ideate', 'Prototype', 'Final design', 'Test', 'Reflection']
 
 /* ---------- helpers ---------- */
 
@@ -505,178 +503,104 @@ function Prototype() {
   )
 }
 
-/* ---------- design system (live, from the Figma panels) ---------- */
+/* ---------- final design: live prototype tour + one labelled design-system screen ---------- */
 
-const SWATCHES = [
-  ['neutral/900', '#111114'], ['neutral/850', '#17171B'], ['neutral/800', '#2A2D31'], ['neutral/700', '#34343D'],
-  ['sand/100', '#F2F0EC'], ['sand/300', '#A7A9B0'], ['blue/200', '#B3D1FF'], ['blue/500', '#3898F8'], ['coral/500', '#EF7085'],
-]
-const TOKENS = [
-  ['color/bg/canvas', 'neutral/900', 'Page background'],
-  ['color/text/primary', 'sand/100', 'Main text, warm instead of pure white'],
-  ['color/text/accent', 'blue/200', 'AI features and links'],
-  ['chart/series/primary', 'blue/500', 'Main data line or bar'],
-  ['chart/series/exit', 'coral/500', 'Player exits, the only warm data colour'],
-]
-const TYPE = [
-  ['Display/Page', 'Bold 40 / 110%', 40, 700, 'GameCove Analytics'],
-  ['Display/Metric', 'Bold 28 / 120%', 28, 700, 'GameCove Analytics'],
-  ['Title/Card', 'Regular 20 / 130%', 20, 400, 'GameCove Analytics'],
-  ['Body/Default', 'Regular 16 / 160%', 16, 400, 'GameCove Analytics'],
-  ['Label/Default', 'Regular 14 / 150%', 0, 400, 'Used inside the product UI'],
-  ['Caption/Default', 'Regular 12 / 140%', 0, 400, 'Used inside the product UI'],
-] as const
-const SPACE = [4, 8, 12, 16, 24, 32, 40, 48, 64]
-const RADII: [string, number][] = [['none · 0', 0], ['sm · 4', 4], ['md · 8', 8], ['lg · 16', 16], ['full · 999', 999]]
-
-function DesignSystem() {
-  const [ref, p] = useCountProgress<HTMLDivElement>()
-  const [sref, sp] = useShownOnce<HTMLDivElement>(0.3)
-  return (
-    <section className="g-sec" data-chapter="Design system">
-      <div className="g-wrap">
-        <div data-r className="w-760">
-          <Eyebrow label="PROTOTYPE · DESIGN SYSTEM" sq="sky" />
-          <H2 className="mt-40">One token system<br />for a dark data dashboard</H2>
-          <p className="g-body mt-16">I built the GameCove design system in 3 layers: raw colours, tokens named by their job, and components. Screens use the tokens, not raw colours, so a light mode can be added by mapping new values.</p>
-        </div>
-        <div className="g-sys mt-40" ref={ref} data-r>
-          {[[19, 'core colours'], [31, 'semantic tokens'], [24, 'spacing, radius & size tokens'], [6, 'text styles']].map(([n, l]) => (
-            <div key={l as string}><div className="g-num light">{count(n as number, p)}</div><div className="g-cap">{l}</div></div>
-          ))}
-        </div>
-        <div className="g-panel mt-40" data-r>
-          <h3 className="g-h3">Colour</h3>
-          <div className="g-sw mt-24" ref={sref}>
-            {SWATCHES.map(([n, h], i) => (
-              <div key={n} className="sw" style={{ opacity: sp ? 1 : 0, transform: sp ? 'none' : 'translateY(16px)', transition: `opacity .5s ease ${i * 0.06}s, transform .7s cubic-bezier(.22,1,.36,1) ${i * 0.06}s` }}>
-                <i style={{ background: h }} />
-                <b>{n}</b><span>{h}</span>
-              </div>
-            ))}
-          </div>
-          <h4 className="g-h4 mt-40">Primitive → semantic</h4>
-          <div className="g-tokens mt-16">
-            {TOKENS.map(([t, v, u]) => <div key={t}><span className="t">{t}</span><span>→&nbsp; {v}</span><span className="u">{u}</span></div>)}
-          </div>
-        </div>
-        <div className="g-two mt-40">
-          <div className="g-panel" data-r style={d(0)}>
-            <h3 className="g-h3">Typography · Lato</h3>
-            <div className="g-type mt-24">
-              {TYPE.map(([n, s, size, w, ex]) => (
-                <div key={n}><div><b>{n}</b><span>{s}</span></div>
-                  <span className="ex" style={size ? { fontSize: size, fontWeight: w, fontFamily: 'Lato, "Helvetica Neue", Helvetica, Arial, sans-serif' } : undefined}>{ex}</span></div>
-              ))}
-            </div>
-          </div>
-          <div className="g-panel" data-r style={d(1)}>
-            <h3 className="g-h3">Spacing &amp; radius</h3>
-            <div className="g-space mt-24">
-              {SPACE.map((s, i) => (
-                <div key={s}><span className="k">space/{s}</span><i style={{ width: s * 3, transform: sp ? 'scaleX(1)' : 'scaleX(0)', transition: `transform .8s cubic-bezier(.22,1,.36,1) ${0.2 + i * 0.06}s` }} /><span>{s}px</span></div>
-              ))}
-            </div>
-            <div className="g-radii mt-40">
-              {RADII.map(([l, r]) => <div key={l}><i style={{ borderRadius: r }} /><span>{l}</span></div>)}
-            </div>
-          </div>
-        </div>
-        <div className="g-panel mt-40" data-r>
-          <h3 className="g-h3">Components</h3>
-          <p className="g-body mt-16 w-760">Navigation, top bars, KPI cards, retention and stage-progression chart cards, the AI agent panel, modals and tooltips. Every chart card is built from the same tokens, so new boards stay consistent.</p>
-          <div className="g-two mt-24">
-            <img className="g-comp" src={IMG.compNav} alt="Navigation components" loading="lazy" data-gzoom="true" />
-            <img className="g-comp" src={IMG.compData} alt="Data card components" loading="lazy" data-gzoom="true" />
-          </div>
-        </div>
-        <div className="g-note mt-40" data-r>
-          <div className="g-k sky">DESIGN DECISIONS FROM FEEDBACK</div>
-          <p>· Drop-off had to stand out, so exits get the only warm colour (coral).<br />· AI should feel distinct, so AI features use the light-blue accent and a spark icon.</p>
-        </div>
-      </div>
-    </section>
-  )
+// Screens captured from the live prototype (VIBE_URL) at 1440×900.
+type Shot = 'map' | 'ask' | 'goal' | 'board' | 'agent' | 'overview'
+const F = V + 'final/'
+const SHOTS: Record<Shot, string> = {
+  map: F + 'map.webp', ask: F + 'ask.webp', goal: F + 'goal.webp', board: F + 'board.webp', agent: F + 'agent.webp', overview: F + 'overview.webp',
 }
 
-/* ---------- final design: pinned showcase ---------- */
-
-const FEATURES = [
-  { t: 'AI Mapping', d: 'AI reads the game scripts and draws Lobby → Stage 1–4 as a map. The creator reviews, edits and confirms it.', s: 'Beginners can’t turn what they built into questions. And AI can’t suggest anything useful without knowing the game.', img: IMG.featMapping, alt: 'AI Mapping: Stage 2–4 nodes with a detail panel asking which part is the end point' },
-  { t: 'Goal-based setup', d: 'The creator picks a goal, like “Where do players get stuck?”. GameCove shows what it can track now and what needs extra setup.', s: 'Creators don’t know what to track.', img: IMG.featSetup, alt: 'Review data to track: ready to track and requires setup' },
-  { t: 'AI briefing + AI agent', d: 'The dashboard opens with the 2–3 biggest changes and suggested questions. Creators ask follow-ups in plain words.', s: 'Creators don’t know where to start looking.', img: IMG.featBriefing, alt: 'Overview with an AI briefing about the biggest drop-off' },
+const PW = 1440, PH = 900
+const TABS = ['AI Mapping', 'Goal-based setup', 'AI agent']
+// r = highlighted area on the 1440×900 screen: [x, y, width, height]
+const TOUR: { tab: number; shot: Shot; r: [number, number, number, number]; cap: string; alt: string }[] = [
+  { tab: 0, shot: 'map', r: [283, 428, 1126, 125], cap: 'AI reads the game script and draws it as a map: Lobby → Stage 1–4. The creator checks it before anything is tracked.', alt: 'Tracking: the AI map of Lobby and Stage 1–4, with Stage 3 flagged for review' },
+  { tab: 0, shot: 'ask', r: [1022, 477, 405, 284], cap: 'When the AI can’t tell how a stage ends, it asks instead of guessing. The creator picks the answer.', alt: 'Stage 3 detail panel asking which part is the end point' },
+  { tab: 1, shot: 'goal', r: [636, 390, 566, 143], cap: 'A new board starts from a goal in plain words, not from a blank chart.', alt: 'New analysis board: What would you like to analyze? with three suggested goals' },
+  { tab: 1, shot: 'board', r: [990, 62, 436, 826], cap: 'GameCove builds the board for that goal, says what each chart answers, and flags what isn’t tracked yet.', alt: 'Analysis board for stage difficulty and drop-off, with the AI explaining each chart' },
+  { tab: 2, shot: 'agent', r: [990, 62, 436, 806], cap: 'Ask about any page in plain words. The agent explains each chart and suggests the next question.', alt: 'Overview with the AI agent explaining the daily charts' },
 ]
+const TOUR_SHOTS = Array.from(new Set(TOUR.map(s => s.shot)))
+const pc = (v: number, of: number) => `${(v / of) * 100}%`
+const letterOf = (i: number) => String.fromCharCode(65 + TOUR.slice(0, i).filter(s => s.tab === TOUR[i].tab).length)
 
-/** progress drawn around the active card border, clockwise from top-left */
-function ProgressBorder({ progress }: { progress: number }) {
-  const ref = useRef<SVGSVGElement>(null)
-  const [size, setSize] = useState({ w: 0, h: 0 })
-  useEffect(() => {
-    const card = ref.current?.parentElement; if (!card) return
-    const measure = () => setSize({ w: card.offsetWidth, h: card.offsetHeight })
-    measure(); const ro = new ResizeObserver(measure); ro.observe(card); return () => ro.disconnect()
-  }, [])
-  const w = Math.max(0, size.w - 2), h = Math.max(0, size.h - 2), per = 2 * (w + h)
+/** one screen with the dimmed spotlight + caption card (caption sits on the side away from the highlight) */
+function TourStage({ step, lit, single = false }: { step: number; lit: boolean; single?: boolean }) {
+  const s = TOUR[step]
+  const capLeft = s.r[0] + s.r[2] / 2 > PW / 2
+  const list = single ? [s.shot] : TOUR_SHOTS
   return (
-    <svg ref={ref} aria-hidden="true" className="g-pborder" style={{ width: size.w, height: size.h }}>
-      {size.w > 0 && <rect x={1} y={1} width={w} height={h} rx={12} fill="none" stroke="#B3D1FF" strokeWidth={2} strokeDasharray={per} strokeDashoffset={per * (1 - clamp(progress))} />}
-    </svg>
+    <div className="g-stage">
+      {list.map(k => (
+        <img key={k} src={SHOTS[k]} alt={k === s.shot ? s.alt : ''} aria-hidden={k !== s.shot} className={k === s.shot ? 'on' : ''} />
+      ))}
+      <div className={'g-spot' + (lit ? ' lit' : '')} style={{ left: pc(s.r[0], PW), top: pc(s.r[1], PH), width: pc(s.r[2], PW), height: pc(s.r[3], PH) }} aria-hidden="true">
+        <b>{letterOf(step)}</b>
+      </div>
+      {!single && (
+        <div key={step} className={'g-capcard ' + (capLeft ? 'at-l' : 'at-r') + (lit ? ' lit' : '')}>
+          <b>{letterOf(step)}</b><p>{s.cap}</p>
+        </div>
+      )}
+    </div>
   )
 }
 
 /**
- * 3 feature cards on the left, that feature's screen on the right. The block is pinned while you scroll through it;
- * scrolling moves 1 → 2 → 3 and the progress runs around the active card. Clicking a card jumps to it.
+ * Pinned like the reference: the screen stays put while scrolling; tabs 01–03 run across the top,
+ * each step dims the screen and lights one area with a short caption.
  */
-function Showcase() {
+function Tour() {
   const outer = useRef<HTMLDivElement>(null)
-  const [active, setActive] = useState(0)
-  const [prog, setProg] = useState(0)
+  const [st, setSt] = useState({ step: 0, local: 0 })
   useOnScroll(() => {
     const el = outer.current; if (!el) return
-    const r = el.getBoundingClientRect(), travel = el.offsetHeight - innerHeight
+    const travel = el.offsetHeight - innerHeight
     if (travel <= 0) return
-    const t = clamp(-r.top / travel) * 3
-    const step = Math.min(2, Math.floor(t))
-    setActive(step); setProg(clamp(t - step))
+    const f = clamp(-el.getBoundingClientRect().top / travel) * TOUR.length
+    const step = Math.min(TOUR.length - 1, Math.floor(f))
+    const local = clamp(f - step)
+    setSt(p => (p.step === step && Math.abs(p.local - local) < 0.004 ? p : { step, local }))
   })
-  const jump = (i: number) => {
+  const jump = (tab: number) => {
     const el = outer.current; if (!el) return
     const travel = el.offsetHeight - innerHeight
-    scrollTo({ top: el.getBoundingClientRect().top + scrollY + travel * ((i + 0.05) / 3), behavior: reducedMotion() ? 'auto' : 'smooth' })
+    const first = TOUR.findIndex(s => s.tab === tab)
+    scrollTo({ top: el.getBoundingClientRect().top + scrollY + travel * ((first + 0.3) / TOUR.length), behavior: reducedMotion() ? 'auto' : 'smooth' })
   }
+  const { step, local } = st
+  const tab = TOUR[step].tab
+  const first = TOUR.findIndex(s => s.tab === tab)
+  const steps = TOUR.filter(s => s.tab === tab).length
+  const tabProg = clamp((step - first + local) / steps)
+  const lit = local > 0.12 || reducedMotion()
   return (
     <>
-      <div ref={outer} className="g-show-outer mt-40">
-        <div className="g-show">
-          <div className="g-feats">
-            {FEATURES.map((f, i) => {
-              const on = i === active
-              return (
-                <button key={f.t} type="button" onClick={() => jump(i)} className={'g-feat' + (on ? ' on' : '')} aria-pressed={on}>
-                  {on && <ProgressBorder progress={prog} />}
-                  <span className="n">0{i + 1}</span>
-                  <span className="t">{f.t}</span>
-                  <span className="dd">{f.d}</span>
-                  <span className="solves"><b>SOLVES</b>{f.s}</span>
+      <div ref={outer} className="g-tour-outer mt-40" style={{ height: `${TOUR.length * 90 + 60}vh` }}>
+        <div className="g-tour">
+          <div className="g-tour-top">
+            <a className="g-live" href={VIBE_URL} target="_blank" rel="noreferrer">Live prototype<span aria-hidden="true">↗</span></a>
+            <div className="g-tabs" role="tablist" aria-label="Final design features">
+              {TABS.map((t, i) => (
+                <button key={t} type="button" role="tab" aria-selected={i === tab} className={'g-tab' + (i === tab ? ' on' : '')} onClick={() => jump(i)}>
+                  <span className="t">{t}</span><span className="n">0{i + 1}</span>
+                  <i style={{ transform: `scaleX(${i === tab ? tabProg : i < tab ? 1 : 0})` }} />
                 </button>
-              )
-            })}
+              ))}
+            </div>
           </div>
-          <figure className="g-screen">
-            {FEATURES.map((f, i) => (
-              <img key={f.img} src={f.img} alt={f.alt} loading={i === 0 ? 'eager' : 'lazy'} className={i === active ? 'on' : ''} />
-            ))}
-          </figure>
+          <div className="g-stage-box"><TourStage step={step} lit={lit} /></div>
         </div>
       </div>
-      {/* small screens: one after another */}
-      <div className="g-show-narrow mt-40">
-        {FEATURES.map((f, i) => (
-          <div key={f.t} className="g-feat on" data-r>
-            <span className="n">0{i + 1}</span><span className="t">{f.t}</span><span className="dd">{f.d}</span>
-            <span className="solves"><b>SOLVES</b>{f.s}</span>
-            <img src={f.img} alt={f.alt} loading="lazy" />
+      {/* small screens: one step after another */}
+      <div className="g-tour-narrow mt-40">
+        {TOUR.map((s, i) => (
+          <div key={i} className="g-tour-item" data-r>
+            <div className="g-k blue">0{s.tab + 1} · {TABS[s.tab]} · {letterOf(i)}</div>
+            <TourStage step={i} lit single />
+            <p className="g-body">{s.cap}</p>
           </div>
         ))}
       </div>
@@ -684,16 +608,68 @@ function Showcase() {
   )
 }
 
+// Labels read from the live Overview screen (computed styles), mapped to the GameCove tokens.
+const AW = 1000, AH = 337.5, SX = 230, SW = 540 // annotation canvas; the screen fills 230–770
+const DS_LABELS: { side: 'l' | 'r'; y: number; x: number; dy: number; t: string; v: string }[] = [
+  { side: 'l', y: 8, x: 289, dy: 114, t: 'Display/Page', v: 'Lato Bold 40 / 110%' },
+  { side: 'l', y: 28, x: 289, dy: 151, t: 'Body/Default', v: 'Regular 16 / 160% · sand/300 #A7A9B0' },
+  { side: 'l', y: 48, x: 310, dy: 281, t: 'KPI number', v: 'Lato Bold 40 · sand/100 #F2F0EC' },
+  { side: 'l', y: 68, x: 311, dy: 334, t: 'Drop badge', v: 'Red #E28B8B on a 14% red tint' },
+  { side: 'l', y: 90, x: 470, dy: 770, t: 'Area chart', v: 'chart-area-primary gradient' },
+  { side: 'r', y: 8, x: 1296, dy: 25, t: 'AI accent', v: 'blue/200 #B3D1FF, only on AI features' },
+  { side: 'r', y: 32, x: 880, dy: 165, t: 'color/bg/canvas', v: 'neutral/900 #111114' },
+  { side: 'r', y: 56, x: 559, dy: 209, t: 'Card', v: 'neutral/850 #17171B · radius lg 16' },
+]
+
+function LabelledScreen() {
+  const [ref, shown] = useShownOnce<HTMLDivElement>(0.35)
+  return (
+    <div ref={ref} className={'g-anno mt-40' + (shown ? ' in' : '')}>
+      <svg className="g-anno-lines" viewBox={`0 0 ${AW} ${AH}`} preserveAspectRatio="none" aria-hidden="true">
+        {DS_LABELS.map((l, i) => {
+          const X = SX + (SW * l.x) / PW, Y = (AH * l.dy) / PH, Ly = (AH * l.y) / 100
+          const a = l.side === 'l' ? 214 : 786, b = l.side === 'l' ? 226 : 774
+          return <polyline key={i} points={`${a},${Ly} ${b},${Ly} ${X},${Y}`} pathLength={1} style={{ transitionDelay: `${0.3 + i * 0.08}s` }} />
+        })}
+      </svg>
+      <div className="g-anno-screen">
+        <img src={SHOTS.overview} alt="GameCove Overview screen with its design tokens labelled" loading="lazy" />
+        {DS_LABELS.map((l, i) => (
+          <span key={i} className="dot" style={{ left: pc(l.x, PW), top: pc(l.dy, PH), transitionDelay: `${0.2 + i * 0.08}s` }} aria-hidden="true">{i + 1}</span>
+        ))}
+      </div>
+      <ol className="g-anno-labs">
+        {DS_LABELS.map((l, i) => (
+          <li key={i} className={l.side} style={{ top: `${l.y}%`, transitionDelay: `${0.4 + i * 0.08}s` }}>
+            <b><span>{i + 1}</span>{l.t}</b><em>{l.v}</em>
+          </li>
+        ))}
+      </ol>
+    </div>
+  )
+}
+
 function FinalDesign() {
+  const [ref, p] = useCountProgress<HTMLDivElement>()
   return (
     <section className="g-sec" data-chapter="Final design">
       <div className="g-wrap">
         <div data-r className="w-760">
           <Eyebrow label="PROTOTYPE · FINAL DESIGN" sq="blue" />
           <H2 className="mt-40">The final design: 3 features</H2>
-          <p className="g-body mt-16">Feature 1 is what makes GameCove different from other dashboards. Features 2 and 3 build on the map it creates.</p>
+          <p className="g-body mt-16">Feature 1 is what makes GameCove different from other dashboards. Features 2 and 3 build on the map it creates. Scroll through the live prototype.</p>
         </div>
-        <Showcase />
+        <Tour />
+        <div className="g-ds" data-r>
+          <h3 className="g-h3">Built on one design system</h3>
+          <p className="g-body mt-16 w-760">Three layers: raw colours, tokens named by their job, and components. Here is one live screen with its tokens labelled.</p>
+          <div className="g-sys mt-24" ref={ref}>
+            {[[19, 'core colours'], [31, 'semantic tokens'], [24, 'spacing, radius & size tokens'], [6, 'text styles']].map(([n, l]) => (
+              <div key={l as string}><div className="g-num light">{count(n as number, p)}</div><div className="g-cap">{l}</div></div>
+            ))}
+          </div>
+        </div>
+        <LabelledScreen />
       </div>
     </section>
   )
@@ -873,7 +849,6 @@ export function GameCoveV4Body() {
       <Define />
       <Ideate />
       <Prototype />
-      <DesignSystem />
       <FinalDesign />
       <Test />
       <Reflection />
@@ -983,7 +958,6 @@ export const GC4_CSS = `
 .gc4 .g-board { overflow: hidden; border-radius: 12px; background: var(--raised); }
 .gc4 .g-board img { width: 100%; height: auto; }
 .gc4 .g-photo { width: 100%; aspect-ratio: 700 / 467; object-fit: cover; border-radius: 12px; }
-.gc4 .g-comp { width: 100%; border-radius: 8px; }
 .gc4 .g-slot { display: flex; align-items: center; justify-content: center; width: 100%; padding: 24px; text-align: center; border-radius: 12px; border: 1px dashed var(--strong); background: var(--card); color: var(--dim); font-size: 16px; }
 .gc4 .g-hair { height: 1px; margin: 40px 0; border: 0; background: var(--line); }
 
@@ -1032,47 +1006,71 @@ export const GC4_CSS = `
 .gc4 .g-flow .step.hi.on { background: var(--sky); color: #111114; font-weight: 700; }
 .gc4 .g-flow .arr { color: var(--mute); }
 
-/* design system */
-.gc4 .g-sys { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.gc4 .g-sys > div { padding: 4px 24px; border-left: 1px solid var(--line); }
-.gc4 .g-sys .g-cap { margin-top: 10px; }
-.gc4 .g-panel { padding: 40px; border-radius: 12px; background: var(--card); }
-.gc4 .g-sw { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 16px; }
-.gc4 .g-sw .sw i { display: block; aspect-ratio: 1 / .85; border-radius: 6px; border: 1px solid var(--strong); }
-.gc4 .g-sw b { display: block; margin-top: 12px; font-size: 16px; color: var(--sand); }
-.gc4 .g-sw span { display: block; margin-top: 4px; font-size: 16px; color: var(--dim); }
-.gc4 .g-tokens > div { display: grid; grid-template-columns: 300px 220px minmax(0, 1fr); gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--line); font-size: 16px; color: var(--sand); }
-.gc4 .g-tokens .t { color: #6FB2FA; } .gc4 .g-tokens .u { color: var(--mute); }
-.gc4 .g-type > div { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 16px; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--line); }
-.gc4 .g-type b { display: block; font-size: 16px; } .gc4 .g-type span { display: block; font-size: 16px; color: var(--dim); }
-.gc4 .g-type .ex { font-size: 16px; color: var(--sand); }
-.gc4 .g-space > div { display: grid; grid-template-columns: 110px auto minmax(0, 1fr); gap: 16px; align-items: center; padding: 6px 0; font-size: 16px; color: var(--sand); }
-.gc4 .g-space .k { color: var(--dim); }
-.gc4 .g-space i { display: block; height: 10px; background: var(--blue); border-radius: 2px; transform-origin: 0 50%; }
-.gc4 .g-radii { display: flex; gap: 28px; flex-wrap: wrap; }
-.gc4 .g-radii div { display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 16px; color: var(--dim); }
-.gc4 .g-radii i { width: 64px; height: 64px; background: var(--strong); }
+/* final design: pinned live-prototype tour */
+.gc4 .g-tour-outer { position: relative; }
+.gc4 .g-tour { position: sticky; top: 0; height: 100vh; padding: 96px 0 32px; display: flex; flex-direction: column; gap: 20px; }
+.gc4 .g-tour-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+.gc4 .g-live { display: inline-flex; align-items: center; gap: 8px; padding-bottom: 12px; font-size: 16px; color: var(--sky); text-decoration: none; }
+.gc4 .g-live span { transition: transform .35s var(--ease); }
+.gc4 .g-live:hover span { transform: translate(2px, -2px); }
+.gc4 .g-live:focus-visible { outline: 2px solid var(--sky); outline-offset: 4px; border-radius: 4px; }
+.gc4 .g-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 200px)); gap: 8px; }
+.gc4 .g-tab { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 10px 14px 14px; border: 1px solid transparent; border-radius: 8px 8px 0 0; background: none;
+  color: var(--dim); font: inherit; text-align: left; cursor: pointer; transition: color .3s, border-color .3s, background-color .3s; }
+.gc4 .g-tab::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--line); }
+.gc4 .g-tab .t { font-size: 16px; letter-spacing: .04em; text-transform: uppercase; }
+.gc4 .g-tab .n { font-size: 16px; font-variant-numeric: tabular-nums; }
+.gc4 .g-tab i { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--sky); transform-origin: 0 50%; z-index: 1; transition: transform .2s linear; }
+.gc4 .g-tab.on { color: var(--sand); border-color: var(--line); border-bottom-color: transparent; background: var(--card); }
+.gc4 .g-tab:hover { color: var(--sand); }
+.gc4 .g-tab:focus-visible { outline: 2px solid var(--sky); outline-offset: 2px; }
+.gc4 .g-stage-box { flex: 1; min-height: 0; display: flex; justify-content: center; align-items: flex-start; container-type: size; }
+.gc4 .g-stage-box .g-stage { width: min(100cqw, 160cqh); }
+.gc4 .g-stage { position: relative; aspect-ratio: 1440 / 900; overflow: hidden; border-radius: 12px; border: 1px solid var(--line); background: #0c0c0e; }
+.gc4 .g-stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .6s ease; }
+.gc4 .g-stage img.on { opacity: 1; }
+.gc4 .g-spot { position: absolute; z-index: 2; border-radius: 12px; border: 1.5px solid rgba(179,209,255,0); box-shadow: 0 0 0 200vmax rgba(8,8,11,0); pointer-events: none;
+  transition: left .7s var(--ease), top .7s var(--ease), width .7s var(--ease), height .7s var(--ease), box-shadow .6s ease, border-color .6s ease; }
+.gc4 .g-spot.lit { border-color: var(--sky); box-shadow: 0 0 0 200vmax rgba(8,8,11,.66), 0 0 32px rgba(56,152,248,.25); }
+.gc4 .g-spot b { position: absolute; left: -14px; top: -14px; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%;
+  background: var(--sky); color: #111114; font-size: 16px; font-weight: 700; opacity: 0; transform: scale(.6); transition: opacity .4s ease .2s, transform .5s cubic-bezier(0.34, 1.56, 0.64, 1) .2s; }
+.gc4 .g-spot.lit b { opacity: 1; transform: none; }
+.gc4 .g-capcard { position: absolute; z-index: 3; top: 20px; display: flex; gap: 12px; align-items: flex-start; max-width: min(360px, 40%); padding: 16px 18px; border-radius: 10px;
+  border: 1px solid var(--strong); background: rgba(17,17,20,.9); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); opacity: 0; transform: translateY(8px); transition: opacity .5s ease, transform .6s var(--ease); }
+.gc4 .g-capcard.at-r { right: 20px; } .gc4 .g-capcard.at-l { left: 20px; }
+.gc4 .g-capcard.lit { opacity: 1; transform: none; transition-delay: .15s; }
+.gc4 .g-capcard b { flex: none; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--sky); color: var(--sky); font-size: 16px; }
+.gc4 .g-capcard p { font-size: 16px; line-height: 1.55; color: var(--sand); }
+.gc4 .g-tour-narrow { display: none; }
+.gc4 .g-tour-item { display: flex; flex-direction: column; gap: 14px; }
+
+/* notes */
 .gc4 .g-note { padding: 32px; border-radius: 12px; background: var(--card); }
 .gc4 .g-note p { margin-top: 12px; font-size: 18px; line-height: 1.65; color: var(--text); }
 
-/* final design: pinned showcase */
-.gc4 .g-show-outer { position: relative; height: 300vh; }
-.gc4 .g-show { position: sticky; top: 0; height: 100vh; padding-top: 48px; display: grid; grid-template-columns: minmax(0, 440px) minmax(0, 1fr); gap: 56px; align-items: center; }
-.gc4 .g-feats { display: flex; flex-direction: column; gap: 16px; }
-.gc4 .g-feat { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 24px 28px; border-radius: 12px; border: 1px solid var(--line); background: transparent;
-  color: var(--sand); font: inherit; text-align: left; cursor: pointer; opacity: .45; transition: opacity .4s, background-color .4s, border-color .4s; }
-.gc4 .g-feat.on { opacity: 1; background: var(--card); border-color: transparent; }
-.gc4 .g-feat .n { font-size: 16px; color: var(--blue); }
-.gc4 .g-feat .t { font-size: 28px; font-weight: 700; letter-spacing: -0.01em; }
-.gc4 .g-feat .dd { font-size: 17px; line-height: 1.6; color: var(--text); }
-.gc4 .g-feat .solves { display: none; margin-top: 8px; padding: 14px 16px; border-radius: 8px; background: var(--bg); font-size: 16px; line-height: 1.55; color: var(--text); }
-.gc4 .g-feat.on .solves { display: block; }
-.gc4 .g-feat .solves b { display: block; margin-bottom: 4px; letter-spacing: .06em; color: var(--blue); }
-.gc4 .g-pborder { position: absolute; inset: 0; pointer-events: none; }
-.gc4 .g-screen { position: relative; aspect-ratio: 920 / 560; border-radius: 12px; overflow: hidden; background: #0c0c0e; }
-.gc4 .g-screen img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transform: scale(1.03); transition: opacity .6s ease, transform 1s var(--ease); }
-.gc4 .g-screen img.on { opacity: 1; transform: none; }
-.gc4 .g-show-narrow { display: none; }
+/* design system: one labelled live screen */
+.gc4 .g-ds { margin-top: 64px; }
+.gc4 .g-ds .g-num { font-size: 40px; }
+.gc4 .g-sys { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.gc4 .g-sys > div { padding: 4px 24px; border-left: 1px solid var(--line); }
+.gc4 .g-sys .g-cap { margin-top: 10px; }
+.gc4 .g-anno { position: relative; aspect-ratio: 1000 / 337.5; margin-bottom: 8px; }
+.gc4 .g-anno-lines { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.gc4 .g-anno-lines polyline { fill: none; stroke: var(--sky); stroke-width: .8; opacity: .55; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset .9s var(--ease); }
+.gc4 .g-anno.in .g-anno-lines polyline { stroke-dashoffset: 0; }
+.gc4 .g-anno-screen { position: absolute; left: 23%; top: 0; width: 54%; aspect-ratio: 1440 / 900; overflow: visible; }
+.gc4 .g-anno-screen img { position: relative; z-index: 0; width: 100%; height: 100%; border-radius: 10px; border: 1px solid var(--line); }
+.gc4 .g-anno-screen .dot { position: absolute; z-index: 3; display: flex; align-items: center; justify-content: center; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%;
+  background: var(--sky); color: #111114; font-size: 0; font-weight: 700; box-shadow: 0 0 0 2px #111114, 0 0 0 6px rgba(179,209,255,.25); opacity: 0; transform: scale(.4); transition: opacity .4s ease, transform .5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.gc4 .g-anno.in .dot { opacity: 1; transform: none; }
+.gc4 .g-anno-labs { margin: 0; padding: 0; list-style: none; }
+.gc4 .g-anno-labs li { position: absolute; width: 21%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 2px; opacity: 0; transition: opacity .5s ease; }
+.gc4 .g-anno.in .g-anno-labs li { opacity: 1; }
+.gc4 .g-anno-labs li.l { left: 0; text-align: right; align-items: flex-end; }
+.gc4 .g-anno-labs li.r { left: 79%; }
+.gc4 .g-anno-labs b { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 700; color: var(--sand); }
+.gc4 .g-anno-labs b span { display: none; }
+.gc4 .g-anno-labs em { font-style: normal; font-size: 16px; line-height: 1.45; color: var(--mute); }
 
 /* test */
 .gc4 .g-test-top { display: grid; grid-template-columns: minmax(0, 760px) minmax(0, 420px); justify-content: space-between; gap: 40px; align-items: end; }
@@ -1103,8 +1101,14 @@ export const GC4_CSS = `
 
 @media (max-width: 1280px) {
   .gc4 .g-ov, .gc4 .g-scenario, .gc4 .g-test-top { grid-template-columns: minmax(0, 1fr); gap: 24px; }
-  .gc4 .g-sw { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-  .gc4 .g-tokens > div { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .gc4 .g-tokens .u { grid-column: 1 / -1; }
+  .gc4 .g-anno { aspect-ratio: auto; }
+  .gc4 .g-anno-lines { display: none; }
+  .gc4 .g-anno-screen { position: relative; left: 0; width: 100%; }
+  .gc4 .g-anno-labs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 32px; margin-top: 24px; }
+  .gc4 .g-anno-labs li, .gc4 .g-anno-labs li.l, .gc4 .g-anno-labs li.r { position: static; width: auto; transform: none; text-align: left; align-items: flex-start; }
+  .gc4 .g-anno-labs b span { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--sky); color: #111114; font-size: 13px; }
+  .gc4 .g-anno-labs em { padding-left: 30px; }
+  .gc4 .g-anno-screen .dot { width: 22px; height: 22px; margin: -11px 0 0 -11px; font-size: 13px; }
 }
 @media (max-width: 1023px) {
   .gc4 .acc { display: none; }
@@ -1112,10 +1116,8 @@ export const GC4_CSS = `
   .gc4 .acc-narrow .acc-card { flex: none; cursor: default; }
   .gc4 .acc-narrow .acc-title { max-width: none; }
   .gc4 .acc-narrow .acc-body { position: static; width: auto; max-width: none; margin-top: 20px; opacity: 1; }
-  .gc4 .g-show-outer { display: none; }
-  .gc4 .g-show-narrow { display: flex; flex-direction: column; gap: 24px; }
-  .gc4 .g-show-narrow .g-feat { opacity: 1; cursor: default; }
-  .gc4 .g-show-narrow img { width: 100%; margin-top: 12px; border-radius: 8px; }
+  .gc4 .g-tour-outer { display: none; }
+  .gc4 .g-tour-narrow { display: flex; flex-direction: column; gap: 48px; }
   .gc4 .g-two, .gc4 .g-pick, .gc4 .g-qs, .gc4 .g-rules, .gc4 .g-fixes, .gc4 .g-meta, .gc4 .g-stats { grid-template-columns: minmax(0, 1fr); gap: 32px; }
   .gc4 .g-sys { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 24px; }
 }
@@ -1123,14 +1125,13 @@ export const GC4_CSS = `
   .gc4 .g-wrap { padding: 0 20px; }
   .gc4 .g-sec { padding-top: 88px; }
   .gc4 .g-hero { padding-top: 120px; }
-  .gc4 .g-sw { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .gc4 .g-type > div { grid-template-columns: minmax(0, 1fr); }
+  .gc4 .g-anno-labs { grid-template-columns: minmax(0, 1fr); }
   .gc4 .g-row { grid-template-columns: 40px minmax(0, 1fr); } .gc4 .g-row p { grid-column: 2; }
-  .gc4 .g-panel, .gc4 .g-scenario { padding: 28px; }
+  .gc4 .g-scenario { padding: 28px; }
   .gc4 .g-hmw { padding: 56px 24px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .gc4 [data-r] { opacity: 1 !important; transform: none !important; transition: none !important; }
-  .gc4 .acc-card, .gc4 .acc-title, .gc4 .fix-inner, .gc4 .g-screen img { transition: none !important; }
+  .gc4 .acc-card, .gc4 .acc-title, .gc4 .fix-inner, .gc4 .g-stage img, .gc4 .g-spot, .gc4 .g-spot b, .gc4 .g-capcard, .gc4 .g-tab i, .gc4 .g-anno *, .gc4 .g-anno-lines polyline { transition: none !important; }
 }
 `

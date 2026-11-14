@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { Ideate, Iterate, Reflection, PARTS_CSS } from './GameCoveParts'
 
 /**
  * GameCove case study — body built from Figma "GameCove_v.4 · GameCove colors" (node 1270:562,
@@ -33,6 +34,11 @@ import React, { useEffect, useRef, useState } from 'react'
  * Figma. Final design: step 02·B shows the rebuilt Retention screen so the charts read; the design system is the
  * Primitive → Semantic → Component map. New Iterate section after Test (round 2 with P2) — no session video and no
  * card sort yet (Harbor will add the video later).
+ *
+ * v126 (Harbor, Nov 14 night, Figma 1921 rebuilt): Process is a still picture again (no ringing, no Turning point chips).
+ * Ideate, Test · Iterate and Reflection now live in GameCoveParts.tsx: the user flow hands each step to its lo-fi
+ * wireframe as you scroll; the Test section is folded into Iterate as in Figma (round 2 video, findings, card sort);
+ * Reflection is light (#FAFAF9) with the team photo.
  */
 
 const L = 'https://raw.githubusercontent.com/Harbor-K/landing_page/main/gamecove/assets/'
@@ -45,13 +51,12 @@ export const VIBE_URL = 'https://game-cove.vercel.app/projects/bouncebounce/over
 const IMG = {
   logo: L + 'logo.png',
   poster: V + 'hero-ad-poster.jpg',
-  before: V + 'before-mapping.webp',
 }
 
 // v124 images (Figma 04 GameCove — 1921, exported at 2x)
 const V5 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/gamecove/v5/'
 const IMG5 = {
-  process: V5 + 'process.webp',
+  process: V5 + 'process-2.webp',
   emp: [V5 + 'emp-1.webp', V5 + 'emp-2.webp', V5 + 'emp-3b.webp'],
   affinity: V5 + 'affinity-strip.webp',
   insight: [V5 + 'insight-1.png', V5 + 'insight-2.png', V5 + 'insight-3.png'],
@@ -63,7 +68,7 @@ const IMG5 = {
   iterBefore: V5 + 'iter-before.webp', iterAfter: V5 + 'iter-after.webp',
 }
 
-export const GC4_CHAPTERS = ['Overview', 'Process', 'Empathize', 'Define', 'Ideate', 'Prototype', 'Test', 'Iterate', 'Reflection']
+export const GC4_CHAPTERS = ['Overview', 'Process', 'Empathize', 'Define', 'Ideate', 'Prototype', 'Iterate', 'Reflection']
 
 /* ---------- helpers ---------- */
 
@@ -163,9 +168,6 @@ function Eyebrow({ label, sq = 'grey' }: { label: string; sq?: Sq }) {
 }
 function H2({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return <h2 className={'g-h2 ' + className}>{children}</h2>
-}
-function Slot({ label, ratio }: { label: string; ratio: string }) {
-  return <div className="g-slot" style={{ aspectRatio: ratio }} role="img" aria-label={`${label} (image coming soon)`}><span>{label}</span></div>
 }
 const d = (n: number) => ({ '--d': n } as React.CSSProperties)
 
@@ -288,9 +290,6 @@ function Overview() {
 
 /* ---------- process: title left, isometric stage map right ---------- */
 
-// stage rings on the 920×480 map (Figma 869:3180–3189), lit one after another, then a dot runs the Iterate arc
-const STAGE_RINGS: [number, number][] = [[122, 228], [286, 231], [450, 234], [620, 237], [802, 242]]
-
 function Process() {
   return (
     <section className="g-sec" data-chapter="Process">
@@ -302,20 +301,7 @@ function Process() {
             <p className="g-body mt-24 mute">We changed direction twice and tested twice. Each step shows what we did and what changed.</p>
           </div>
           <figure className="g-proc-map" data-r style={d(1)}>
-            <img src={IMG5.process} alt="Design thinking process: Empathize, Define, Ideate, Prototype and Test. Define and Ideate were turning points; an Iterate arrow loops from Test back to Prototype: fix, then test again." loading="lazy" />
-            <svg className="g-proc-fx" viewBox="0 0 920 480" aria-hidden="true">
-              {STAGE_RINGS.map(([cx, cy], i) => (
-                <g key={i} className="ring" style={{ animationDelay: `${i * 0.7}s` }}>
-                  <ellipse cx={cx} cy={cy} rx={53} ry={29} />
-                  <ellipse className="o" cx={cx} cy={cy} rx={70} ry={39} />
-                </g>
-              ))}
-              <g className="loop">
-                <circle r={12} className="halo" />
-                <circle r={5} />
-                <animateMotion dur="4.2s" repeatCount="indefinite" path="M802 178 Q707 48 611 175" keyPoints="0;0;1;1" keyTimes="0;0.82;0.97;1" calcMode="linear" />
-              </g>
-            </svg>
+            <img src={IMG5.process} alt="Design thinking process: Empathize, Define, Ideate, Prototype and Test. An Iterate arrow loops from Test back to Prototype: fix, then test again." loading="lazy" />
           </figure>
         </div>
       </div>
@@ -506,119 +492,6 @@ function Bounce({ children, className, step = 0.3 }: { children: React.ReactNode
   )
 }
 
-/* ---------- ideate: user flow, lo-fi wireframes, photo ---------- */
-
-type Nd = { k: 'end' | 'ai' | 'user' | 'q'; t: string; sub?: string; yes?: boolean } | { k: 'paths'; items: string[] }
-const FLOWS: { t: string; nodes: Nd[] }[] = [
-  { t: 'Set up a project', nodes: [
-    { k: 'end', t: 'New project' },
-    { k: 'ai', t: 'Reads the game scripts and maps the stages' },
-    { k: 'user', t: 'Checks the map and writes a goal' },
-    { k: 'ai', t: 'Suggests what to track for that goal' },
-    { k: 'q', t: 'Does it fit the goal?', sub: 'No: edit it in plain words' },
-    { k: 'ai', t: 'Turns tracking on in the game', yes: true },
-    { k: 'end', t: 'Dashboard overview' },
-  ] },
-  { t: 'From a problem to a decision', nodes: [
-    { k: 'end', t: 'Dashboard overview' },
-    { k: 'user', t: 'Notices more players quit on Day 4' },
-    { k: 'q', t: 'How do I find the cause?' },
-    { k: 'paths', items: ['1  Explore the charts myself', '2  Ask AI about a chart', '3  Open the AI agent'] },
-    { k: 'ai', t: 'Builds a chart, explains it and suggests a next step' },
-    { k: 'q', t: 'Do I know what to fix?', sub: 'No: keep asking' },
-    { k: 'end', t: 'Explains the cause and the fix', yes: true },
-  ] },
-]
-
-const Arrow = ({ yes }: { yes?: boolean }) => (
-  <span className="fl-arr" aria-hidden="true">
-    {yes && <span className="yes">Yes</span>}
-    <svg width="28" height="16" viewBox="0 0 28 16" fill="none"><path d="M1 8h24M19 2l6 6-6 6" stroke="#8A8D96" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-  </span>
-)
-
-function FlowNode({ n }: { n: Nd }) {
-  if (n.k === 'paths') return <div className="fl-paths">{n.items.map(t => <div key={t} className="nd user">{t}</div>)}</div>
-  return (
-    <div className={'nd ' + n.k}>
-      {n.k === 'ai' && <b className="ai">AI</b>}
-      <span>{n.t}</span>
-      {n.sub && <span className="sub">{n.sub}</span>}
-    </div>
-  )
-}
-
-const SKETCHES = [
-  ['Pick a game project', 'AI reads the game and maps the stages', 'Write what you want to check', 'AI suggests what to track'],
-  ['Overview opens with an AI briefing', 'Explore a chart, with Ask AI on hand', 'Find the cause together with AI', 'Or ask the AI agent directly'],
-]
-
-function Ideate() {
-  return (
-    <section className="g-sec" data-chapter="Ideate">
-      <div className="g-wrap">
-        <div data-r className="w-760">
-          <Eyebrow label="IDEATE" sq="blue" />
-          <H2 className="mt-40">6 rules from research:<br />AI goes first, the creator decides</H2>
-          <p className="g-body mt-24">Research on sensemaking showed that beginners need a starting point, not more charts. So the AI should act as a guide, not a judge. Its suggestions must be easy to check and change.</p>
-        </div>
-
-        <div className="mt-80" data-r>
-          <h3 className="g-h3l">User flow</h3>
-          <p className="g-body mute mt-16">We mapped two flows before sketching: setting up a project, then going from a problem to a decision.</p>
-        </div>
-        <div className="g-flowc mt-40" data-r>
-          <div className="fl-legend">
-            <span><i className="lg user" />Game creator does</span>
-            <span><i className="lg ai" />AI does</span>
-            <span><i className="lg q" />Decision</span>
-            <span><i className="lg end" />Start / end</span>
-          </div>
-          {FLOWS.map((f, fi) => (
-            <div className="fl" key={f.t}>
-              <h4 className="fl-t"><span>0{fi + 1}</span>{f.t}</h4>
-              <div className="fl-scroll">
-                <div className="fl-row">
-                  {f.nodes.map((n, i) => (
-                    <React.Fragment key={i}>
-                      {i > 0 && <Arrow yes={'yes' in n && n.yes} />}
-                      <FlowNode n={n} />
-                    </React.Fragment>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-80" data-r>
-          <h3 className="g-h3l">Lo-fi wireframes</h3>
-          <p className="g-body mute mt-16">Hand sketches of the same two flows, drawn before the coded prototype.</p>
-        </div>
-        {SKETCHES.map((row, ri) => (
-          <div key={ri} className="mt-40">
-            <h4 className="fl-t" data-r><span>0{ri + 1}</span>{FLOWS[ri].t}</h4>
-            <div className="g-sk mt-24">
-              {row.map((c, i) => {
-                const n = ri * 4 + i
-                return (
-                  <figure key={c} data-r style={d(i)}>
-                    <img src={IMG5.sketch[n]} alt={`Lo-fi sketch ${n + 1}: ${c}`} loading="lazy" data-gzoom="true" />
-                    <figcaption><span>0{n + 1}</span>{c}</figcaption>
-                  </figure>
-                )
-              })}
-            </div>
-          </div>
-        ))}
-
-        {/* stand-in until Harbor's drawing video */}
-        <img className="g-photo5 mt-40" data-r src={IMG5.photo} alt="Harbor talking through the GameCove sketches with her teammate" loading="lazy" />
-      </div>
-    </section>
-  )
-}
-
 /* ---------- final design: live prototype tour + one labelled design-system screen ---------- */
 
 // Screens captured from the live prototype (VIBE_URL) at 1440×900.
@@ -752,216 +625,6 @@ function FinalDesign() {
   )
 }
 
-/* ---------- test ---------- */
-
-function Sus() {
-  const [ref, p] = useCountProgress<HTMLDivElement>()
-  return (
-    <div className="g-card sus" ref={ref} data-r>
-      <div className="g-num big light">{count(85.5, p)}</div>
-      <div className="g-cap">average SUS score (A+). Our goal was 90.</div>
-      <div className="sus-bar mt-24" aria-hidden="true"><i style={{ width: `${85.5 * p}%` }} /><b style={{ left: '90%' }} /></div>
-    </div>
-  )
-}
-
-const FIXES = [
-  ['Mapping', 'Starts with no reason given', 'Explains the purpose first: “check your game’s structure so the analysis fits”'],
-  ['AI setup', 'Approval step is easy to miss', 'A clear approval step, plus a screen that shows what was applied'],
-  ['AI agent', 'One button in the top bar', '“Ask AI” next to each chart'],
-  ['Charts', 'Striped bars, hover to see numbers', 'Standard charts by default, key numbers always shown, benchmarks from similar games'],
-]
-
-/** one fix: the card flips Before → After in 3D when it reaches the middle of the screen (scroll back flips it back) */
-function FixCard({ k, before, after }: { k: string; before: string; after: string }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const [after_, setAfter] = useState(false)
-  useOnScroll(() => { const el = ref.current; if (el) setAfter(el.getBoundingClientRect().top < innerHeight * 0.5) })
-  return (
-    <div className="g-fix" ref={ref}>
-      <div className="fix-k">{k}</div>
-      <div className="fix-flip">
-        <div className="fix-inner" style={{ transform: `rotateY(${after_ ? 180 : 0}deg)` }}>
-          <div className="face before"><span className="lab">Before</span><p>{before}</p></div>
-          <div className="face after"><span className="lab">After</span><p>{after}</p></div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function Test() {
-  return (
-    <section className="g-sec" data-chapter="Test">
-      <div className="g-wrap">
-        <div className="g-test-top">
-          <div data-r>
-            <Eyebrow label="TEST" sq="blue" />
-            <H2 className="mt-40">Usability test: the flow worked,<br />the start didn’t</H2>
-            <p className="g-body mt-16">5 remote sessions with think-aloud. 3 tasks: check the map, pick a goal, then explore the data and decide what to fix. We didn’t tell anyone to use the AI agent. We wanted to see if they would find it.</p>
-          </div>
-          <Sus />
-        </div>
-
-        <h3 className="g-h3 mt-80" data-r>We hid 3 problems in the sample data</h3>
-        <div className="g-table-wrap mt-24" data-r>
-          <table className="g-table">
-            <thead><tr><th>Hidden problem</th><th>Found?</th><th>Who found it</th></tr></thead>
-            <tbody>
-              <tr><td className="b">A · Stage 4 is too hard</td><td className="ok">Found</td><td>1 participant (the expert), via the AI briefing</td></tr>
-              <tr><td className="b">B · New players leave early</td><td className="ok">Found</td><td>2 participants, from the Lobby → Stage 1 drop</td></tr>
-              <tr><td className="b">C · Players quit after finishing</td><td className="no">Not found</td><td>No one</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <p className="g-body mt-40 w-760" data-r>Finding problems we planned is stronger proof than “users found a problem”. 3 of 3 core participants used data to form a hypothesis.</p>
-
-        <h3 className="g-h3 mt-80" data-r>Who took part</h3>
-        <div className="g-table-wrap mt-24" data-r>
-          <table className="g-table">
-            <thead><tr><th /><th>Who</th><th>Role in the analysis</th></tr></thead>
-            <tbody>
-              <tr><td className="b">P1</td><td>Teen, plans and builds games (Roblox, Unity, Unreal)</td><td>Pilot. The flow changed after it, so we analysed it separately</td></tr>
-              <tr><td className="b">P2</td><td>35–44, solo Roblox creator, 1–3 years</td><td>Core</td></tr>
-              <tr><td className="b">P3</td><td>28–35, professional game planner and developer</td><td>Core (our only expert)</td></tr>
-              <tr><td className="b">P4</td><td>Teen, solo Roblox creator, 1–3 years</td><td>Left out of the core analysis: language made the tasks hard to follow</td></tr>
-              <tr><td className="b">P5</td><td>Teen, solo Roblox and Unity creator</td><td>Core</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <p className="g-cap mt-24" data-r>Teen participants joined with guardian consent. Names, faces and recordings are not shown.</p>
-
-        <h3 className="g-h3 mt-80" data-r>What worked</h3>
-        <div className="g-list mt-24">
-          {[
-            ['Goal-based tracking', 'All 3 core participants liked picking a goal and getting a list of what to track. It took away the part they found hardest.'],
-            ['Data to decision', 'All 3 found a problem in the data and suggested a fix. P2 used the AI agent to double-check their own idea, P3 spotted Stage 4 from the AI briefing, and P5 found the Lobby drop without the AI.'],
-            ['Mapping, once explained', 'After we explained what mapping was for, the expert said it was a step the product really needs.'],
-          ].map(([t, p], i) => <div className="g-row" key={t} data-r style={d(i)}><span className="n">0{i + 1}</span><b>{t}</b><p>{p}</p></div>)}
-        </div>
-
-        <h3 className="g-h3 mt-80" data-r>What slowed users down</h3>
-        <div className="g-list mt-24">
-          {[
-            ['Mapping', 'Users understood the map, but not why they were making it. Even the expert thought he was designing a new game.'],
-            ['AI setup', 'Users couldn’t check what the AI had set up, so they felt unsure about it.'],
-            ['AI agent', 'One user never noticed the AI agent.'],
-            ['Charts', 'Striped charts tired some users’ eyes. Numbers only showed on hover.'],
-          ].map(([t, p], i) => <div className="g-row" key={t} data-r style={d(i)}><span className="n">0{i + 1}</span><b>{t}</b><p>{p}</p></div>)}
-        </div>
-
-        <h3 className="g-h3 mt-80" data-r>What we’re fixing</h3>
-        <div className="g-fixes mt-24">
-          {FIXES.map(([k, b, a]) => <FixCard key={k} k={k} before={b} after={a} />)}
-        </div>
-        <div className="g-two mt-40">
-          <figure className="g-fig" data-r style={d(0)}>
-            <div className="g-board"><img src={IMG.before} alt="Before: the mapping screen starts without saying why" loading="lazy" /></div>
-            <figcaption className="g-cap mt-8">Before · Mapping without purpose guide</figcaption>
-          </figure>
-          <figure className="g-fig" data-r style={d(1)}>
-            <Slot label="Image · After · revised screen" ratio="700 / 470" />
-            <figcaption className="g-cap mt-8">After · revised screen</figcaption>
-          </figure>
-        </div>
-        <div className="g-note mt-40" data-r>
-          <div className="g-k blue">LIMITS</div>
-          <p>Only 3 people were in the core analysis, and most participants were teens. That doesn’t match our target of small studios. The sample game was simple, and logging settings didn’t flow into the dashboard. These results show a direction, not proof.</p>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-/* ---------- iterate: round 2 with P2 (v125; session video and card sort come later) ---------- */
-
-const FINDINGS = [
-  { q: 'Give me the base info first.', t: '38:05 · “Adding and removing is fine.” 47:58', a: 'Ready-made default boards. Charts can be turned on, off or added. No blank start.' },
-  { q: 'AI just has to tell me the facts, accurately.', t: '33:35 · the decision is his', a: 'Every AI line shows the number behind it and where it came from.' },
-  { q: 'Give me the answer in one line.', t: '30:40 · question titles took time to read', a: 'Each question-style chart title gets a one-line summary.' },
-  { q: 'There’s no info on what it does, or how far.', t: '16:01 · during tracking setup', a: 'Show which chart each tracked event feeds, so the reason to collect is visible.' },
-]
-
-function Iterate() {
-  return (
-    <section className="g-sec" data-chapter="Iterate">
-      <div className="g-wrap">
-        <div data-r className="w-900">
-          <Eyebrow label="ITERATE" sq="blue" />
-          <H2 className="mt-40">We fixed it, then asked again:<br />is this data really needed?</H2>
-          <p className="g-body mute mt-24">After round 1, we added a Mapping guide, a check that logging really worked, and more metrics on the dashboard. Then we tested again with P2, a hobby game creator in his mid-30s, and talked mostly about the data.</p>
-        </div>
-
-        <h3 className="g-h3 mt-64" data-r>What we changed after round 1: the Mapping guide</h3>
-        <div className="g-two mt-24">
-          <figure className="it-shot" data-r style={d(0)}>
-            <img src={IMG5.iterBefore} alt="Before: the Mapping screen shows the game map with a small tip, “Review the details of each structure and edit anything that looks wrong”" loading="lazy" />
-            <figcaption><b>BEFORE</b>A tip on what to do, but not why</figcaption>
-          </figure>
-          <figure className="it-shot" data-r style={d(1)}>
-            <img src={IMG5.iterAfter} alt="After: a purpose guide on the Mapping screen, “Step 1 · Check your game map. AI read your game and drew its stages. Check they’re right. We’ll track and analyse along this map.” with a Looks right button" loading="lazy" />
-            <figcaption><b className="on">AFTER</b>Says why: this map decides what we track (redrawn)</figcaption>
-          </figure>
-        </div>
-
-        <div className="mt-64" data-r>
-          <div className="it-round"><span className="g-k blue">ROUND 2</span><span className="it-tag">P2 · hobby game creator, mid-30s</span></div>
-          <h3 className="g-h3l mt-16">What he told us about the data</h3>
-          <p className="g-body mute mt-8">Task 3 (finding a problem in the data) and a card sort of every metric on the dashboard.</p>
-        </div>
-        <div className="it-take mt-32" data-r>
-          <div className="g-k sky">WHAT IT MEANS FOR GAMECOVE</div>
-          <p className="it-take-h mt-16">Not a blank board to build. A finished screen he can switch on, off, or add to.</p>
-          <p className="it-take-p mt-16">He was fine adding charts. He just didn’t want to start from nothing.</p>
-        </div>
-        <div className="it-finds mt-32">
-          {FINDINGS.map((f, i) => (
-            <div className="it-find" key={f.q} data-r style={d(i)}>
-              <p className="q">“{f.q}”</p>
-              <p className="t">{f.t}</p>
-              <hr />
-              <div className="g-k blue">SO WE</div>
-              <p className="a">{f.a}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="g-note mt-64" data-r>
-          <div className="g-k">NOTE</div>
-          <p>One participant, so this is a direction, not proof. Quotes are translated from Korean; times are from the session recording. He had done round 1, so Tasks 1 and 2 felt familiar and he didn’t notice the changes.</p>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-/* ---------- reflection ---------- */
-
-function Reflection() {
-  return (
-    <section className="g-sec last" data-chapter="Reflection">
-      <div className="g-wrap">
-        <div data-r><Eyebrow label="REFLECTION" sq="sky" /><H2 className="mt-40">Takeaways</H2></div>
-        <div className="g-take mt-40">
-          {[
-            'Users expect AI to give the answer. My next challenge is helping them reason for themselves, not just accept what AI says.',
-            'Score “doing” and “understanding” separately. A user can press confirm without knowing why. That is how we found the mapping problem.',
-            'Handoff goes both ways. As a receiver, I want to see the process as it happens. As a giver, I should explain every step.',
-          ].map((t, i) => <p key={i} data-r style={d(i)}><span>0{i + 1}</span>{t}</p>)}
-        </div>
-        <div className="g-cap mt-80" data-r>Next steps</div>
-        <div className="g-next mt-24">
-          {[
-            'Test the fixes with one more user on a real desktop screen, and compare before and after.',
-            'Test with adult creators from small studios.',
-            'After launch, track setup completion, AI agent use and weekly return visits.',
-          ].map((t, i) => <p key={i} data-r style={d(i)}><span>0{i + 1}</span>{t}</p>)}
-        </div>
-      </div>
-    </section>
-  )
-}
-
 /* ---------- body ---------- */
 
 /** the whole GameCove case-study body (hero → reflection). Wrap it with the site's header and footer. */
@@ -981,6 +644,7 @@ export function GameCoveV4Body() {
   return (
     <div className="gc4" ref={root} data-tone="dark">
       <style>{GC4_CSS}</style>
+      <style>{PARTS_CSS}</style>
       <Hero />
       <Overview />
       <Process />
@@ -988,7 +652,6 @@ export function GameCoveV4Body() {
       <Define />
       <Ideate />
       <FinalDesign />
-      <Test />
       <Iterate />
       <Reflection />
     </div>
@@ -1148,33 +811,6 @@ export const GC4_CSS = `
 .gc4 .g-anno-labs b span { display: none; }
 .gc4 .g-anno-labs em { font-style: normal; font-size: 16px; line-height: 1.45; color: var(--mute); }
 
-/* test */
-.gc4 .g-test-top { display: grid; grid-template-columns: minmax(0, 760px) minmax(0, 420px); justify-content: space-between; gap: 40px; align-items: end; }
-.gc4 .g-card.sus { gap: 8px; }
-.gc4 .sus-bar { position: relative; height: 6px; border-radius: 3px; background: var(--strong); }
-.gc4 .sus-bar i { position: absolute; inset: 0 auto 0 0; border-radius: 3px; background: var(--blue); }
-.gc4 .sus-bar b { position: absolute; top: -6px; width: 2px; height: 18px; background: var(--sky); }
-.gc4 .g-row { display: grid; grid-template-columns: 48px 240px minmax(0, 1fr); gap: 16px; padding: 22px 0; border-top: 1px solid var(--line); font-size: 18px; }
-.gc4 .g-list .g-row:last-child { border-bottom: 1px solid var(--line); }
-.gc4 .g-row .n { color: var(--blue); font-size: 16px; padding-top: 2px; }
-.gc4 .g-row p { line-height: 1.6; color: var(--text); }
-.gc4 .g-fixes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
-.gc4 .g-fix { display: flex; flex-direction: column; gap: 12px; }
-.gc4 .fix-k { font-size: 20px; font-weight: 700; }
-.gc4 .fix-flip { perspective: 1200px; }
-.gc4 .fix-inner { position: relative; min-height: 150px; transform-style: preserve-3d; transition: transform .9s cubic-bezier(.22,1,.36,1); }
-.gc4 .face { position: absolute; inset: 0; display: flex; flex-direction: column; gap: 10px; padding: 24px 28px; border-radius: 12px; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
-.gc4 .face.before { background: var(--card); border: 1px solid var(--line); }
-.gc4 .face.after { background: var(--skybg); transform: rotateY(180deg); }
-.gc4 .face .lab { font-size: 16px; font-weight: 700; letter-spacing: .06em; color: var(--dim); }
-.gc4 .face.after .lab { color: var(--sky); }
-.gc4 .face p { font-size: 18px; line-height: 1.55; color: var(--sand); }
-
-/* reflection */
-.gc4 .g-take p { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 8px; max-width: 900px; padding: 14px 0; font-size: 18px; line-height: 1.6; color: var(--text); }
-.gc4 .g-take span, .gc4 .g-next span { color: var(--sky); }
-.gc4 .g-next p { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 8px; padding: 10px 0; font-size: 22px; line-height: 1.45; color: var(--sand); }
-
 /* ================= v124 (Figma 04 GameCove — 1921) ================= */
 .gc4 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .gc4 .g-body.mute { color: var(--mute); }
@@ -1190,14 +826,6 @@ export const GC4_CSS = `
 .gc4 .g-proc { display: grid; grid-template-columns: minmax(0, 480px) minmax(0, 920px); justify-content: space-between; gap: 40px; align-items: start; }
 .gc4 .g-proc-map { position: relative; aspect-ratio: 920 / 480; background: #0B0C0F; }
 .gc4 .g-proc-map img { width: 100%; height: 100%; object-fit: cover; }
-.gc4 .g-proc-fx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
-.gc4 .g-proc-fx .ring { opacity: 0; transform-box: fill-box; transform-origin: center; animation: gpRing 4.2s ease-in-out infinite both; }
-.gc4 .g-proc-fx .ring ellipse { fill: none; stroke: #7DD3FC; stroke-width: 2; }
-.gc4 .g-proc-fx .ring ellipse.o { opacity: .4; }
-.gc4 .g-proc-fx .loop { fill: #7DD3FC; opacity: 0; animation: gpLoop 4.2s linear infinite; }
-.gc4 .g-proc-fx .loop .halo { fill: rgba(125,211,252,.3); }
-@keyframes gpRing { 0% { opacity: 0; transform: scale(.88); } 5% { opacity: 1; transform: scale(1); } 16% { opacity: 1; transform: scale(1); } 21%, 100% { opacity: 0; transform: scale(1.04); } }
-@keyframes gpLoop { 0%, 80% { opacity: 0; } 83%, 95% { opacity: 1; } 99%, 100% { opacity: 0; } }
 
 /* empathize: research question + sticky 01/02/03 */
 .gc4 .g-rq { padding: 48px 40px; background: var(--skybg); text-align: center; }
@@ -1352,36 +980,15 @@ export const GC4_CSS = `
 .gc4 .insc-q { margin-top: auto; padding-top: 16px; border-top: 1px solid #2A2B31; font-size: 18px; line-height: 1.55; color: var(--mute); }
 .gc4 .insc-t + .insc-q { margin-top: 16px; }
 .gc4 .g-dsmap img { width: 100%; height: auto; }
-.gc4 .it-shot img { width: 100%; aspect-ratio: 744 / 500; object-fit: cover; border: 1px solid var(--line); }
-.gc4 .it-shot figcaption { display: flex; gap: 12px; margin-top: 16px; font-size: 16px; line-height: 1.5; color: var(--mute); }
-.gc4 .it-shot figcaption b { font-weight: 500; letter-spacing: .06em; color: var(--dim); }
-.gc4 .it-shot figcaption b.on { color: #6FB2FA; }
-.gc4 .it-round { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-.gc4 .it-tag { padding: 4px 12px; border: 1px solid var(--blue); background: var(--skybg); font-size: 16px; color: var(--sky); }
-.gc4 .it-take { padding: 56px 40px; border: 1px solid var(--blue); background: var(--skybg); }
-.gc4 .it-take-h { max-width: 760px; font-size: 28px; line-height: 40px; color: var(--sand); }
-.gc4 .it-take-p { font-size: 18px; line-height: 1.55; color: #C9D6EA; }
-.gc4 .it-finds { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
-.gc4 .it-find { display: flex; flex-direction: column; padding: 32px 28px; background: var(--card); border: 1px solid var(--line); }
-.gc4 .it-find .q { font-size: 20px; line-height: 1.5; color: var(--sand); }
-.gc4 .it-find .t { margin-top: 16px; font-size: 16px; line-height: 1.5; color: var(--dim); }
-.gc4 .it-find hr { width: 100%; height: 1px; margin: 16px 0; border: 0; background: var(--line); }
-.gc4 .it-find .a { margin-top: 16px; font-size: 18px; line-height: 1.55; color: var(--mute); }
-@media (max-width: 1280px) {
-  .gc4 .it-finds { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
 @media (max-width: 1023px) {
   .gc4 .g-insc { grid-template-columns: minmax(0, 1fr); gap: 16px; }
   .gc4 .insc-q { margin-top: 16px; }
 }
 @media (max-width: 700px) {
   .gc4 .insc { padding: 32px 24px; }
-  .gc4 .it-finds { grid-template-columns: minmax(0, 1fr); }
-  .gc4 .it-take { padding: 32px 24px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .gc4 [data-r] { opacity: 1 !important; transform: none !important; transition: none !important; }
   .gc4 .fix-inner, .gc4 .g-stage img, .gc4 .g-spot, .gc4 .g-spot b, .gc4 .g-capcard, .gc4 .g-tab i, .gc4 .g-anno *, .gc4 .g-anno-lines polyline, .gc4 .emp-body, .gc4 .emp-layer { transition: none !important; }
-  .gc4 .g-proc-fx { display: none; }
 }
 `

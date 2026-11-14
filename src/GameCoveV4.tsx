@@ -39,6 +39,11 @@ import { Ideate, Iterate, Reflection, PARTS_CSS } from './GameCoveParts'
  * Ideate, Test · Iterate and Reflection now live in GameCoveParts.tsx: the user flow hands each step to its lo-fi
  * wireframe as you scroll; the Test section is folded into Iterate as in Figma (round 2 video, findings, card sort);
  * Reflection is light (#FAFAF9) with the team photo.
+ *
+ * v129 (Harbor, Nov 14 22:53): "Where Lucas gets stuck" uses the same heading size as "Interview affinity map" above it
+ * (32/40). Lucas's 6-panel story is Harbor's motion version (Figma user-story · motion v2 · 960, her GIF), shown at
+ * 960×640 so it reads at a glance; it plays as a looping muted MP4 (1.5 MB instead of the 9.8 MB GIF), the last frame
+ * (all 6 panels) is the poster, and with reduced motion it stays on that frame.
  */
 
 const L = 'https://raw.githubusercontent.com/Harbor-K/landing_page/main/gamecove/assets/'
@@ -61,6 +66,7 @@ const IMG5 = {
   affinity: V5 + 'affinity-strip.webp',
   insight: [V5 + 'insight-1.png', V5 + 'insight-2.png', V5 + 'insight-3.png'],
   story: V5 + 'story.webp',
+  storyVideo: V5 + 'story.mp4', storyPoster: V5 + 'story-poster.webp', // v129: Harbor's motion version, 960×640
   sketch: [1, 2, 3, 4, 5, 6, 7, 8].map(n => V5 + `sketch-${n}.webp`),
   photo: V5 + 'photo.webp',
   retention: V5 + 'retention.webp',
@@ -449,11 +455,11 @@ function Define() {
         </div>
 
         <div className="mt-40" data-r>
-          <h3 className="g-h3">Where Lucas gets stuck</h3>
+          <h3 className="g-h3l">Where Lucas gets stuck</h3>
           <p className="g-cap mt-8">Lucas is our persona, built from our interviews with 2 teen game creators. His game and numbers are examples.</p>
         </div>
         <div className="g-story mt-40" data-r>
-          <img src={IMG5.story} alt="User story in 6 panels: 1 Launch day — my game is live. 2 Players leave — players left 62%. 3 Only totals — average playtime 4 min, drop-off 62%; it doesn’t say where. 4 Asking around — everyone says something different. 5 Fix everything — lower difficulty, new music, faster ball. 6 Nothing changed — players left 61%; what should I fix first?" loading="lazy" data-gzoom="true" />
+          <video src={IMG5.storyVideo} poster={IMG5.storyPoster} autoPlay={!reducedMotion()} muted loop playsInline preload="metadata" aria-label="User story in 6 panels: 1 Launch day — my game is live. 2 Players leave — players left 62%. 3 Only totals — average playtime 4 min, drop-off 62%; it doesn’t say where. 4 Asking around — everyone says something different. 5 Fix everything — lower difficulty, new music, faster ball. 6 Nothing changed — players left 61%; what should I fix first?" />
         </div>
 
         <div className="g-hmw5 mt-40" data-r>
@@ -867,6 +873,7 @@ export const GC4_CSS = `
 .gc4 .ins-note { position: relative; padding: 24px; background: var(--bg); border: 1px solid rgba(255,255,255,.1); font-size: 18px; line-height: 1.55; color: var(--mute); }
 .gc4 .ins-note::before { content: ""; position: absolute; left: -16px; top: 50%; width: 8px; height: 8px; margin-top: -4px; border-radius: 50%; background: #7DD3FC; }
 .gc4 .g-story img { width: 100%; height: auto; }
+.gc4 .g-story video { display: block; width: 100%; max-width: 960px; height: auto; aspect-ratio: 960 / 640; background: #FFFFFF; }
 .gc4 .g-hmw5 { padding: 56px; background: var(--skybg); }
 .gc4 .hmw5-q { font-size: 36px; font-weight: 700; line-height: 48px; letter-spacing: -0.01em; color: var(--sand); }
 .gc4 .hmw5-p { font-size: 20px; line-height: 1.6; color: var(--text); }

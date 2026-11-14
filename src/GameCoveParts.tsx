@@ -14,18 +14,26 @@ import React, { useEffect, useRef, useState } from 'react'
  *    "What it means", 4 findings, the card sort of all 18 metrics, and the note. The Test section before it is gone (Figma).
  *  - Reflection: light (#FAFAF9, like Final design) — takeaways on the left, team photo on the right, then next steps.
  * Labels that are mono in Figma (Roboto Mono) are mono here (.mono).
+ *
+ * v127 (Harbor, Nov 14 22:05): the four wireframes of a flow now move together, in one go, not one after another.
+ * Drawings are Figma's English redraws (901:1629, sketch-en-1…8). The session video is out for now (Harbor adds it
+ * herself; set SESSION_VIDEO to bring the player back), so "What it means" runs full width. The Final design tour's
+ * "Live prototype" link (GameCoveV4.tsx) is styled here as a square box button on the right, after the tabs, no arrow.
+ *
+ * v129 (Harbor, Figma note): the "Live prototype" box button goes back to the left end of the tour's top row, across
+ * from the tabs (same square box, no arrow).
  */
 
 const V5 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/gamecove/v5/'
 const P = {
-  sketch: [1, 2, 3, 4, 5, 6, 7, 8].map(n => V5 + `sketch-${n}.webp`),
+  sketch: [1, 2, 3, 4, 5, 6, 7, 8].map(n => V5 + `sketch-en-${n}.webp`), // Figma 901:1629, English redraws
   photo: V5 + 'photo.webp',
   iterBefore: V5 + 'iter-before.webp',
   iterAfter: V5 + 'iter-after.webp',
   reflection: V5 + 'reflection-photo.webp',
 }
-// round 2 session recording (face blurred), from the Figma frame
-const SESSION_VIDEO = 'zpETQewcnTQ'
+// round 2 session recording: off for now, Harbor will add the video herself (a YouTube id here brings the player back)
+const SESSION_VIDEO: string = ''
 
 const reducedMotion = () => typeof window !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches
 const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v))
@@ -84,7 +92,7 @@ function FlowNode({ n, k }: { n: Nd; k: number }) {
   )
 }
 
-/** one flow, pinned: each wireframe appears over its step, then drops into its place below with a line back to the step */
+/** one flow, pinned: all four wireframes appear over their steps together, then drop into place below with a line back to each step */
 function FlowSketch({ fi }: { fi: number }) {
   const outer = useRef<HTMLDivElement>(null)
   const pin = useRef<HTMLDivElement>(null)
@@ -111,13 +119,13 @@ function FlowSketch({ fi }: { fi: number }) {
     const travel = el.offsetHeight - p.offsetHeight
     if (travel <= 0) return
     const prog = clamp((top - el.getBoundingClientRect().top) / travel)
-    const s = clamp(prog / 0.88) * row.length // the last stretch holds the finished state
+    const s = clamp(prog / 0.8) // all cards move together; the last stretch holds the finished state
     const pr = p.getBoundingClientRect()
     row.forEach((_, k) => {
       const card = cards.current[k], box = boxes.current[k], cap = caps.current[k], pa = paths[k]
       const node = p.querySelector<HTMLElement>(`[data-k="${from[k]}"]`)
       if (!card || !box || !node) return
-      const t = clamp(s - k)
+      const t = s
       const nr = node.getBoundingClientRect(), br = box.getBoundingClientRect()
       const sc0 = Math.min(1, nr.width / br.width)
       const x0 = nr.left - br.left, y0 = nr.top - br.top + (nr.height - br.height * sc0) / 2
@@ -299,8 +307,8 @@ export function Iterate() {
           <h3 className="g-h3l mt-8">What he told us about the data</h3>
           <p className="g-body mute mt-8">Task 3 (finding a problem in the data) and a card sort of every metric on the dashboard.</p>
         </div>
-        <div className="it-pair mt-40">
-          <div data-r style={d(0)}><SessionVideo /></div>
+        <div className={'it-pair mt-40' + (SESSION_VIDEO ? '' : ' solo')}>
+          {SESSION_VIDEO && <div data-r style={d(0)}><SessionVideo /></div>}
           <div className="it-take" data-r style={d(1)}>
             <div className="mono it-k sky">WHAT IT MEANS FOR GAMECOVE</div>
             <p className="it-take-h">Not a blank board to build. A finished screen he can switch on, off, or add to.</p>
@@ -420,7 +428,7 @@ export const PARTS_CSS = `
 .gc4 .fs-flow .fl-t { margin: 0; }
 .gc4 .fs-k { margin-top: 40px; font-size: 16px; line-height: 24px; color: var(--mute); }
 .gc4 .fs-sk { margin-top: 16px; }
-.gc4 .fs-box { position: relative; z-index: 3; aspect-ratio: 362 / 276; }
+.gc4 .fs-box { position: relative; z-index: 3; aspect-ratio: 344 / 264; }
 .gc4 .fs-box img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform-origin: 0 0; will-change: transform, opacity; }
 .gc4 .fs-lines { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
 .gc4 .fs-lines path { fill: none; stroke: #3898F8; stroke-width: 1.5; stroke-dasharray: 4 4; opacity: 0; transition: opacity .3s ease; }
@@ -428,7 +436,7 @@ export const PARTS_CSS = `
 .gc4 .fs .nd.lit { box-shadow: 0 0 0 2px #B3D1FF, 0 0 24px rgba(56,152,248,.35); }
 .gc4 .fs .nd.done { box-shadow: inset 0 -3px 0 #3898F8; }
 /* pinned (wide, tall screens): the row fits the screen, no side scroll */
-.gc4 .fs.on { height: calc(100vh + 240vh); }
+.gc4 .fs.on { height: calc(100vh + 120vh); }
 .gc4 .fs.on .fs-pin { position: sticky; top: max(32px, calc(50vh - 400px)); }
 .gc4 .fs.on .fs-flow { padding: 32px 40px; }
 .gc4 .fs.on .fl-scroll { overflow: visible; margin-top: 16px; }
@@ -446,6 +454,8 @@ export const PARTS_CSS = `
 .gc4 .it-k { font-size: 16px; line-height: 24px; font-weight: 500; letter-spacing: .08em; color: #6FB2FA; }
 .gc4 .it-k.sky { color: #B3D1FF; } .gc4 .it-k.dim { color: var(--dim); }
 .gc4 .it-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
+.gc4 .it-pair.solo { grid-template-columns: minmax(0, 1fr); }
+.gc4 .it-pair.solo .it-take { min-height: 0; }
 .gc4 .it-shot img { width: 100%; aspect-ratio: 744 / 504; object-fit: cover; border: 1px solid var(--line); background: #fff; }
 .gc4 .it-shot figcaption { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px; font-size: 16px; line-height: 24px; color: var(--mute); }
 .gc4 .it-shot figcaption b { font-weight: 500; letter-spacing: .08em; color: var(--dim); }
@@ -500,6 +510,14 @@ export const PARTS_CSS = `
 .gc4 .cs-missing p { font-size: 16px; line-height: 24px; color: #3A3524; }
 .gc4 .it-note { display: flex; flex-direction: column; gap: 8px; padding: 32px; background: var(--card); border: 1px solid var(--line); }
 .gc4 .it-note p { font-size: 18px; line-height: 28px; color: var(--mute); }
+
+/* final design tour (GameCoveV4.tsx): "Live prototype" as a square box button on the left, tabs on the right, no arrow */
+.gc4 .g-final .g-tour-top { justify-content: space-between; align-items: center; }
+.gc4 .g-final .g-live { display: inline-flex; align-items: center; justify-content: center; height: 56px; padding: 0 32px;
+  border: 1px solid #111114; background: transparent; color: #111114; font-size: 16px; line-height: 24px; text-decoration: none; transition: background-color .3s, color .3s; }
+.gc4 .g-final .g-live span { display: none; }
+.gc4 .g-final .g-live:hover { background: #111114; color: #FAFAF9; }
+.gc4 .g-final .g-live:focus-visible { outline: 2px solid #3898F8; outline-offset: 3px; }
 
 /* reflection: light like Final design */
 .gc4 .rf { background: #FAFAF9; color: #111114; padding-top: 120px; }

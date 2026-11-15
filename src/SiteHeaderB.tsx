@@ -151,6 +151,16 @@ const HDR_CSS = `
 .hdrb .mm-list a.on { background: rgba(236,236,234,.16); color: #FAFAFA; }
 .hdrb .mm-list a:focus-visible { outline: 2px solid #FAFAFA; outline-offset: -2px; }
 
+/* v132: "In progress" tag on case studies that aren't finished yet */
+.hdrb .mm-list a .mm-wip { margin-left: auto; padding-left: 16px; font-size: 16px; line-height: 24px; color: rgba(250,250,250,.6); white-space: nowrap; }
+.hdrb .mm-list a.on .mm-wip { color: rgba(250,250,250,.8); }
+.hdrb .mm-card > .mm-bot { position: relative; z-index: 1; display: flex; align-items: center; gap: 16px; }
+.hdrb .mm-bot .mm-go { align-self: auto; }
+.hdrb .mm-wip-card { display: inline-flex; align-items: center; height: 32px; padding: 0 8px; border: 1px solid rgba(250,250,250,.6);
+  background: rgba(12,10,9,.32); font-family: ${SANS}; font-size: 16px; line-height: 24px; letter-spacing: 0; color: #FAFAFA; white-space: nowrap; }
+.hdrb .mnav .nm .mnav-wip { display: inline-flex; align-items: center; height: 32px; padding: 0 8px; border: 1px solid rgba(250,250,250,.6);
+  font-size: 16px; line-height: 24px; letter-spacing: 0; color: rgba(250,250,250,.8); white-space: nowrap; }
+
 /* ---- mobile menu (≤ 900px, v119) ---- */
 .hdrb .hd-burger { display: none; position: relative; width: 40px; height: 40px; padding: 0; margin: 0; background: transparent; border: 0; border-radius: 0;
   color: var(--hd-fg); cursor: pointer; }
@@ -197,12 +207,13 @@ const HDR_CSS = `
 
 /* ---------- Projects menu ---------- */
 // plain: a still that needs no dark gradient behind the white text (ETO's red)
-type MenuItem = { name: string; sub: string; href: string; gif?: string; img?: string; plain?: boolean }
+// wip (v132, Harbor Nov 15): the case study is still being written — shown with an "In progress" tag
+type MenuItem = { name: string; sub: string; href: string; gif?: string; img?: string; plain?: boolean; wip?: boolean }
 const MENU: MenuItem[] = [
   { name: 'Trust Bank', sub: 'Rewards UX revamp', href: '#/trust-bank', gif: GIFS.trustBankMenu },
-  { name: 'GameCove', sub: 'AI analytics dashboard', href: '#/gamecove', gif: GIFS.gameCoveMenu },
-  { name: 'UTrada', sub: 'Trading platform design system', href: '#/utrada', img: IMG3 + 'utrada-screens.webp' },
-  { name: 'ETO Markets', sub: 'CRM dashboard', href: '#/eto-markets', img: ETO + 'eto-cover.jpg', plain: true },
+  { name: 'GameCove', sub: 'AI analytics dashboard', href: '#/gamecove', gif: GIFS.gameCoveMenu, wip: true },
+  { name: 'UTrada', sub: 'Trading platform design system', href: '#/utrada', img: IMG3 + 'utrada-screens.webp', wip: true },
+  { name: 'ETO Markets', sub: 'CRM dashboard', href: '#/eto-markets', img: ETO + 'eto-cover.jpg', plain: true, wip: true },
 ]
 // how long each project stays up while the menu moves through them: a GIF plays to its end (plus a beat), a still 2.8s
 const STILL_MS = 2800
@@ -271,7 +282,7 @@ function ProjectsMenu() {
               <span className="mm-name">{p.name}</span>
               <span className="mm-sub">{p.sub}</span>
             </span>
-            <span className="mm-go">View project</span>
+            <span className="mm-bot"><span className="mm-go">View project</span>{p.wip && <span className="mm-wip-card">In progress</span>}</span>
           </a>
 
           <div className="mm-list" onMouseEnter={() => setHeld(true)} onMouseLeave={() => setHeld(false)}>
@@ -281,7 +292,7 @@ function ProjectsMenu() {
                 <li key={m.name}>
                   <a href={m.href} className={i === hot ? 'on' : undefined} tabIndex={tab}
                     onMouseEnter={() => setHot(i)} onFocus={() => { setHot(i); setHeld(true) }} onBlur={() => setHeld(false)}
-                    onClick={() => setOpen(false)}>{m.name}</a>
+                    onClick={() => setOpen(false)}>{m.name}{m.wip && <span className="mm-wip"> In progress</span>}</a>
                 </li>
               ))}
             </ul>
@@ -305,7 +316,7 @@ function MobileNav({ open, close, current }: { open: boolean; close: () => void;
         {MENU.map(m => (
           <li key={m.name} style={d()}>
             <a href={m.href} tabIndex={tab} onClick={close} aria-current={here.startsWith(m.href) ? 'page' : undefined}>
-              <span className="nm">{m.name}</span>
+              <span className="nm">{m.name}{m.wip && <span className="mnav-wip"> In progress</span>}</span>
               <span className="sb">{m.sub}</span>
             </a>
           </li>

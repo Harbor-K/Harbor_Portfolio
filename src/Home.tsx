@@ -51,7 +51,8 @@ const TB = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/tru
 const ETO = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/eto/'
 
 // Selected work rows
-type Project = { title: string; sub: string; href: string; logo: string; gif?: string; img?: string }
+// wip (v132, Harbor Nov 15): the case study is still being written — an "In progress" tag sits next to the name
+type Project = { title: string; sub: string; href: string; logo: string; gif?: string; img?: string; wip?: boolean }
 const PROJECTS: Project[] = [
   {
     title: 'Trust Bank', sub: 'Turning hidden rewards into everyday loyalty.', href: '#/trust-bank',
@@ -59,15 +60,15 @@ const PROJECTS: Project[] = [
   },
   {
     title: 'GameCove', sub: 'An AI game-analytics dashboard.', href: '#/gamecove',
-    logo: svgUri(GAMECOVE_LOGO_SVG), gif: GIFS.gameCoveRow,
+    logo: svgUri(GAMECOVE_LOGO_SVG), gif: GIFS.gameCoveRow, wip: true,
   },
   {
     title: 'UTrada', sub: 'Product design for a trading platform.', href: '#/utrada',
-    logo: svgUri(UTRADA_LOGO_SVG), img: IMG3 + 'utrada-screens.webp',
+    logo: svgUri(UTRADA_LOGO_SVG), img: IMG3 + 'utrada-screens.webp', wip: true,
   },
   {
     title: 'ETO Markets', sub: 'A CRM dashboard for a Sydney-based trading broker.', href: '#/eto-markets',
-    logo: ETO + 'eto-logo.png', img: ETO + 'eto-cover.jpg',
+    logo: ETO + 'eto-logo.png', img: ETO + 'eto-cover.jpg', wip: true,
   },
 ]
 
@@ -141,6 +142,9 @@ const PAGE_CSS = `
 .pl-link:hover .pl-logo, .pl-link:focus-visible .pl-logo { opacity: 0; }
 .hb .pl-name { font-family: ${SERIF}; font-size: clamp(64px, 5vw, 96px); font-weight: 400; line-height: 1; letter-spacing: -0.03em; color: #0F0F0F;
   white-space: nowrap; transition: opacity .35s ease; }
+/* v132: "In progress" tag next to a case study that isn't finished yet */
+.hb .pl-wip { display: inline-flex; align-items: center; height: 32px; margin-left: 24px; padding: 0 8px; vertical-align: middle; position: relative; top: -8px;
+  border: 1px solid #0F0F0F; font-family: ${SANS}; font-size: 16px; font-weight: 400; line-height: 24px; letter-spacing: 0; color: #0F0F0F; white-space: nowrap; }
 /* the Figma hover frame: while one row is pointed at, the others step back */
 .pl-list:hover .pl-item:not(:hover) .pl-desc p, .pl-list:focus-within .pl-item:not(:focus-within) .pl-desc p { opacity: .48; }
 .pl-list:hover .pl-item:not(:hover) .pl-name, .pl-list:focus-within .pl-item:not(:focus-within) .pl-name { opacity: .24; }
@@ -164,6 +168,7 @@ const PAGE_CSS = `
   .hb .pl-title { margin-bottom: 40px; font-size: 40px; line-height: 48px; }
   .pl-row { grid-template-columns: minmax(0, 1fr); gap: 20px; height: auto; padding: 40px 0; }
   .hb .pl-name { order: -1; font-size: 56px; white-space: normal; }
+  .hb .pl-wip { margin-left: 16px; top: -4px; }
   .pl-desc { height: auto; gap: 16px; }
   .pl-shot { opacity: 1; transform: none; }
   .pl-logo { display: none; }
@@ -247,7 +252,7 @@ function ProjectRow({ p, i }: { p: Project; i: number }) {
   return (
     <li className="pl-item" data-reveal>
       <a className="pl-link" href={p.href} onMouseEnter={() => setOn(true)} onMouseLeave={() => setOn(false)}
-        onFocus={() => setOn(true)} onBlur={() => setOn(false)} aria-label={`${p.title}: ${p.sub}`}>
+        onFocus={() => setOn(true)} onBlur={() => setOn(false)} aria-label={`${p.title}${p.wip ? ' (in progress)' : ''}: ${p.sub}`}>
         <div className="wrap pl-row">
           <div className="pl-desc">
             <p>{p.sub}</p>
@@ -259,7 +264,7 @@ function ProjectRow({ p, i }: { p: Project; i: number }) {
               {p.gif ? <img src={gif} alt="" width={384} height={224} /> : <img src={p.img} alt="" loading="lazy" />}
             </div>
           </div>
-          <div className="pl-name">{p.title}</div>
+          <div className="pl-name">{p.title}{p.wip && <span className="pl-wip" aria-hidden="true">In progress</span>}</div>
         </div>
       </a>
     </li>

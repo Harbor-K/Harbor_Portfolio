@@ -50,6 +50,8 @@ import { Ideate, Iterate, Reflection, PARTS_CSS } from './GameCoveParts'
  * sized by the screen height; when the full screen is taller than the space left, it slides so the lit area stays in
  * view. Design system copy and numbers from Figma (108 colour tokens, 38 just for charts, 2 themes, 4px base) and the
  * new Value → Token → On screen map.
+ *
+ * v131 (Harbor, Nov 15): hero title drops "beginner": Helping game creators decide what to fix next.
  */
 
 const L = 'https://raw.githubusercontent.com/Harbor-K/landing_page/main/gamecove/assets/'
@@ -255,7 +257,7 @@ function Hero() {
       <div className="g-wrap">
         <div data-r>
           <img className="g-logo" src={IMG.logo} alt="GameCove" />
-          <h1 className="g-h1">Helping beginner game creators<br />decide what to fix next</h1>
+          <h1 className="g-h1">Helping game creators<br />decide what to fix next</h1>
           <p className="g-lead">An AI analytics dashboard that maps the game, then shows where players quit<br />GameCove · Product design case study</p>
           {VIBE_URL && <a className="g-btn5" href={VIBE_URL} target="_blank" rel="noreferrer">View dashboard<span className="sr-only"> (opens in a new tab)</span></a>}
         </div>

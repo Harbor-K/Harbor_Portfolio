@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { HEADER_LOGO_SVG } from './harborLogo'
-import { GIFS, GIF_MS, useGifSrc } from './gifPlay'
+import { GIFS, gifMs, useGifSrc } from './gifPlay'
 
 // The site header, shared by every page (main, About, Trust Bank, GameCove, UTrada, ETO Markets).
 //
@@ -13,16 +13,15 @@ import { GIFS, GIF_MS, useGifSrc } from './gifPlay'
 //   [ project card 320×360 | project list 330 ]
 // - Card: the project's picture filling it; 32px padding; at the top the project name (32/38, -2%) with its
 //   one-line description 8px under it (16/24, 75%); at the bottom "View project" (44px).
-//   Background: Trust Bank and GameCove play Harbor's 320×360 GIFs, which carry their own dark edges for the text, so no
-//   extra shade goes on them; each starts from its first frame when its project comes up. UTrada's screens keep the
-//   dark gradient. ETO Markets (v117) shows its red logo picture with no shade, as in Figma 776:92.
+//   Background: every project plays Harbor's 320×360 GIF (v138: UTrada and ETO Markets too), which carry their own dark
+//   edges for the text, so no extra shade goes on them; each starts from its first frame when its project comes up.
 // - List: 32px top / 16px sides; "Projects" label (16/24, 60%), 12px, then the four projects as 44px rows (12px
 //   side padding). Label and project names share one left edge (28px in), and the label's top lines up with the card's
 //   project name (32px down), so the panel reads as two groups: the shown project, and the choice of project.
 // - Interactions: opens on hover / click / focus and moves through the projects by itself while open (pointing at the
-//   list holds it). v94: a GIF project stays up for its whole GIF (5.3s) before the next one, so its story plays to the
-//   end; a still stays 2.8s. Pointing at a project shows it in the card, Esc / click outside / page change closes it.
-//   The card's pictures load on the first open.
+//   list holds it). v94: a GIF project stays up for its whole GIF (5.3s; ETO 4.5s) before the next one, so its story
+//   plays to the end; a still stays 2.8s. Pointing at a project shows it in the card, Esc / click outside / page change
+//   closes it. The card's pictures load on the first open.
 //
 // Phones and small tablets (≤ 900px, v119 — Harbor: "responsive, good enough on mobile"): Projects, About me and
 // LinkedIn don't fit the bar, so they move into a menu. The bar keeps the logo, Resume and a 40×40 Menu button
@@ -47,8 +46,6 @@ const LINKS = {
   linkedin: 'https://www.linkedin.com/in/harborkim/',
   resume: 'https://drive.google.com/file/d/1HVj_RZWRWKovvyIbYKPlQfGkQrecxC1B/view?usp=sharing',
 }
-const IMG3 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/main-v3/'
-const ETO = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/eto/'
 
 function ArrowUpRight() {
   return (
@@ -151,7 +148,7 @@ const HDR_CSS = `
 .hdrb .mm-list a.on { background: rgba(236,236,234,.16); color: #FAFAFA; }
 .hdrb .mm-list a:focus-visible { outline: 2px solid #FAFAFA; outline-offset: -2px; }
 
-/* v132: "In progress" tag on case studies that aren't finished yet */
+/* v132: tag on case studies that aren't finished yet (v138: "Coming soon") */
 .hdrb .mm-list a .mm-wip { margin-left: auto; padding-left: 16px; font-size: 16px; line-height: 24px; color: rgba(250,250,250,.6); white-space: nowrap; }
 .hdrb .mm-list a.on .mm-wip { color: rgba(250,250,250,.8); }
 .hdrb .mm-card > .mm-bot { position: relative; z-index: 1; display: flex; align-items: center; gap: 16px; }
@@ -206,18 +203,19 @@ const HDR_CSS = `
 `
 
 /* ---------- Projects menu ---------- */
-// plain: a still that needs no dark gradient behind the white text (ETO's red)
-// wip (v132, Harbor Nov 15): the case study is still being written — shown with an "In progress" tag
+// plain: a still that needs no dark gradient behind the white text
+// wip (v132, Harbor Nov 15): the case study is still being written — shown with a "Coming soon" tag (v138, was "In progress")
 type MenuItem = { name: string; sub: string; href: string; gif?: string; img?: string; plain?: boolean; wip?: boolean }
 const MENU: MenuItem[] = [
   { name: 'Trust Bank', sub: 'Rewards UX revamp', href: '#/trust-bank', gif: GIFS.trustBankMenu },
   { name: 'GameCove', sub: 'AI analytics dashboard', href: '#/gamecove', gif: GIFS.gameCoveMenu, wip: true },
-  { name: 'UTrada', sub: 'Trading platform design system', href: '#/utrada', img: IMG3 + 'utrada-screens.webp', wip: true },
-  { name: 'ETO Markets', sub: 'CRM dashboard', href: '#/eto-markets', img: ETO + 'eto-cover.jpg', plain: true, wip: true },
+  { name: 'UTrada', sub: 'Trading platform design system', href: '#/utrada', gif: GIFS.utradaMenu, wip: true },
+  { name: 'ETO Markets', sub: 'CRM dashboard', href: '#/eto-markets', gif: GIFS.etoMenu, wip: true },
 ]
+const WIP = 'Coming soon'
 // how long each project stays up while the menu moves through them: a GIF plays to its end (plus a beat), a still 2.8s
 const STILL_MS = 2800
-const dwell = (m: MenuItem) => (m.gif ? GIF_MS + 200 : STILL_MS)
+const dwell = (m: MenuItem) => (m.gif ? gifMs(m.gif) + 200 : STILL_MS)
 
 /** one card background; a GIF starts from its first frame whenever its project comes up */
 function MenuLayer({ m, active }: { m: MenuItem; active: boolean }) {
@@ -282,7 +280,7 @@ function ProjectsMenu() {
               <span className="mm-name">{p.name}</span>
               <span className="mm-sub">{p.sub}</span>
             </span>
-            <span className="mm-bot"><span className="mm-go">View project</span>{p.wip && <span className="mm-wip-card">In progress</span>}</span>
+            <span className="mm-bot"><span className="mm-go">View project</span>{p.wip && <span className="mm-wip-card">{WIP}</span>}</span>
           </a>
 
           <div className="mm-list" onMouseEnter={() => setHeld(true)} onMouseLeave={() => setHeld(false)}>
@@ -292,7 +290,7 @@ function ProjectsMenu() {
                 <li key={m.name}>
                   <a href={m.href} className={i === hot ? 'on' : undefined} tabIndex={tab}
                     onMouseEnter={() => setHot(i)} onFocus={() => { setHot(i); setHeld(true) }} onBlur={() => setHeld(false)}
-                    onClick={() => setOpen(false)}>{m.name}{m.wip && <span className="mm-wip"> In progress</span>}</a>
+                    onClick={() => setOpen(false)}>{m.name}{m.wip && <span className="mm-wip"> {WIP}</span>}</a>
                 </li>
               ))}
             </ul>
@@ -316,7 +314,7 @@ function MobileNav({ open, close, current }: { open: boolean; close: () => void;
         {MENU.map(m => (
           <li key={m.name} style={d()}>
             <a href={m.href} tabIndex={tab} onClick={close} aria-current={here.startsWith(m.href) ? 'page' : undefined}>
-              <span className="nm">{m.name}{m.wip && <span className="mnav-wip"> In progress</span>}</span>
+              <span className="nm">{m.name}{m.wip && <span className="mnav-wip"> {WIP}</span>}</span>
               <span className="sb">{m.sub}</span>
             </a>
           </li>

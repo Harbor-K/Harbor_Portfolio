@@ -1,20 +1,28 @@
 import { useEffect, useRef, useState } from 'react'
 
-// Harbor's animated GIFs: Trust Bank and GameCove, for the main page's Selected work rows (384×224) and the Projects
-// menu card (320×360). Hosted with the site's other assets (Harbor-K/harbor-pf, assets/main-v4).
+// Harbor's animated GIFs for the main page's Selected work rows (384×224) and the Projects menu card (320×360).
+// Hosted with the site's other assets (Harbor-K/harbor-pf, assets/main-v4).
 // v91 (Harbor, Nov 9): Trust Bank's two GIFs replaced with new versions (-v2 files; the first versions stay in the repo).
 // v95 (Harbor, Nov 10): Selected work row GIFs replaced (trustbank-row-v3, gamecove-row-v2); menu GIFs unchanged.
 // v96 (Harbor, Nov 10): GameCove row GIF replaced again (gamecove-row-v3, 91 frames, 6.37s).
+// v138 (Harbor, Nov 17): UTrada and ETO Markets get their own GIFs too (utrada-row / utrada-menu, eto-row / eto-menu-v4).
 const G4 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/main-v4/'
 export const GIFS = {
   trustBankRow: G4 + 'trustbank-row-v3.gif',
   trustBankMenu: G4 + 'trustbank-menu-v2.gif',
   gameCoveRow: G4 + 'gamecove-row-v3.gif',
   gameCoveMenu: G4 + 'gamecove-menu.gif',
+  utradaRow: G4 + 'utrada-row.gif',
+  utradaMenu: G4 + 'utrada-menu.gif',
+  etoRow: G4 + 'eto-row.gif',
+  etoMenu: G4 + 'eto-menu-v4.gif',
 }
-// the two menu GIFs run 76 frames, 5.32s, then loop (measured from the files); the menu's dwell uses this.
+// the menu GIFs' lengths (measured from the files): Trust Bank, GameCove and UTrada run 76 frames, 5.32s; ETO Markets
+// runs 90 frames, 4.5s. The menu's dwell uses these so each story plays to its end.
 // (The Selected work row GIFs play only while hovered, so their length doesn't matter.)
 export const GIF_MS = 5320
+export const GIF_LEN: Record<string, number> = { [G4 + 'eto-menu-v4.gif']: 4500 }
+export const gifMs = (src: string) => GIF_LEN[src] ?? GIF_MS
 
 // A GIF keeps looping on its own clock, so pointing at a project could land in the middle of its story. To start it from
 // its first frame each time it is shown, the file is downloaded once and handed to the <img> as a fresh blob: URL on

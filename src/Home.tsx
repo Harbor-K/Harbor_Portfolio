@@ -27,6 +27,7 @@ import { GIFS, useGifSrc } from './gifPlay'
 // - Media: Trust Bank and GameCove show Harbor's 384×224 GIFs (gifPlay.ts), started from their first frame each time
 //   the row is pointed at; UTrada shows its screens; ETO Markets (v117, Figma 775:2 / hover 776:37, /0.4) its red logo
 //   picture, filled into the 384×224 box like Figma's Fill.
+// v135: the ETO Markets logo at rest is Harbor's logo.svg (mark + ETO MARKETS, 181×62, #E2E1E0) at its own size.
 // Footer: Footer.tsx, rendered by index.tsx under every page.
 // Type: Roboto everywhere (index.css).
 
@@ -52,7 +53,7 @@ const ETO = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/et
 
 // Selected work rows
 // wip (v132, Harbor Nov 15): the case study is still being written — an "In progress" tag sits next to the name
-type Project = { title: string; sub: string; href: string; logo: string; gif?: string; img?: string; wip?: boolean }
+type Project = { title: string; sub: string; href: string; logo: string; gif?: string; img?: string; wip?: boolean; logoRaw?: boolean }
 const PROJECTS: Project[] = [
   {
     title: 'Trust Bank', sub: 'Turning hidden rewards into everyday loyalty.', href: '#/trust-bank',
@@ -68,7 +69,7 @@ const PROJECTS: Project[] = [
   },
   {
     title: 'ETO Markets', sub: 'A CRM dashboard for a Sydney-based trading broker.', href: '#/eto-markets',
-    logo: ETO + 'eto-logo.png', img: ETO + 'eto-cover.jpg', wip: true,
+    logo: ETO + 'v3/logo-home.svg', logoRaw: true, img: ETO + 'eto-cover.jpg', wip: true,
   },
 ]
 
@@ -140,6 +141,8 @@ const PAGE_CSS = `
 .pl-shot img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .pl-link:hover .pl-shot, .pl-link:focus-visible .pl-shot { opacity: 1; transform: none; }
 .pl-link:hover .pl-logo, .pl-link:focus-visible .pl-logo { opacity: 0; }
+/* v135: ETO Markets uses Harbor's own logo.svg at its own size (181×62); its grey #E2E1E0 is already the 10% black look, so no filter */
+.pl-logo.raw { width: 181px; height: 62px; max-width: none; filter: none; opacity: 1; }
 .hb .pl-name { font-family: ${SERIF}; font-size: clamp(64px, 5vw, 96px); font-weight: 400; line-height: 1; letter-spacing: -0.03em; color: #0F0F0F;
   white-space: nowrap; transition: opacity .35s ease; }
 /* v132: "In progress" tag next to a case study that isn't finished yet */
@@ -259,7 +262,7 @@ function ProjectRow({ p, i }: { p: Project; i: number }) {
             <span className="pl-n">/0.{i + 1}</span>
           </div>
           <div className="pl-media" aria-hidden="true">
-            <img className="pl-logo" src={p.logo} alt="" />
+            <img className={'pl-logo' + (p.logoRaw ? ' raw' : '')} src={p.logo} alt="" />
             <div className="pl-shot">
               {p.gif ? <img src={gif} alt="" width={384} height={224} /> : <img src={p.img} alt="" loading="lazy" />}
             </div>

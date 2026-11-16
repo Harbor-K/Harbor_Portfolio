@@ -1,7 +1,8 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { CSS } from './portfolio'
 import { SideToc, useHeadroom } from './CaseNav'
 import { SiteHeaderB } from './SiteHeaderB'
+import { CaseFilm, useCaseIntro } from './CaseFilm'
 
 /**
  * UTrada case study (v134, Harbor Nov 16) — built from Harbor's Figma "UTrada_v.3 · Design (Trust Bank structure)"
@@ -18,6 +19,8 @@ import { SiteHeaderB } from './SiteHeaderB'
  * on its own into its place under the headline (1440×810), easing in and out. Scrolling, swiping or a key press starts
  * the move straight away; the page can't scroll until the film has settled. The header and the process list stay hidden
  * until then. After that the film keeps looping muted; the sound, play and progress controls show on hover.
+ * v135: the film and its control bar moved to CaseFilm.tsx (shared with ETO Markets). The bar is now Trust Bank's —
+ * round 36px buttons, round progress and volume lines — instead of the square one (Harbor: "why is it angular?").
  * Reduced motion: no intro, the film simply sits in its place.
  * Assets: Harbor-K/harbor-pf assets/utrada/v3/ (logo, CRM sign-in capture and the 3 screen captures exported from the
  * Figma frame at 2x).
@@ -33,18 +36,13 @@ const IMG = {
   cookie: A + 'screen-cookie.webp',
   accounts: A + 'screen-accounts.webp',
 }
+const FILM_LABEL = 'UTrada intro film: a trader at night wonders whether a new broker with no reviews is safe, checks the regulations page, the legal documents, the trading accounts and the help chat, then signs up. Ends on: UTrada, trust before the first deposit.'
 const NEXT = { name: 'ETO Markets', href: '#/eto-markets' }
 export const U3_CHAPTERS = ['Overview', 'Process', 'Discover', 'Define', 'Develop', 'Deliver', 'Test', 'Reflection']
 
-const HOLD_MS = 5000
-const ANIM_MS = 1000
-const WAIT_MS = 2500
 const DARK = '#0B0B0D'
 
 const reducedMotion = () => typeof window !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches
-const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v))
-const ease = (t: number) => (t < 0.5 ? 8 * t * t * t * t : 1 - Math.pow(-2 * t + 2, 4) / 2)
-const fmt = (t: number) => (!isFinite(t) ? '0:00' : `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`)
 
 /** copy with Harbor's open items: every [ … ] shows in grey italics */
 function T({ children }: { children: string }) {
@@ -54,130 +52,6 @@ function T({ children }: { children: string }) {
 
 function Label({ children }: { children: string }) {
   return <div className="u3-label"><i aria-hidden="true" />{children}</div>
-}
-
-/* ---------- intro film with sound controls ---------- */
-
-function Film({ quiet, introRef }: { quiet: boolean; introRef: React.RefObject<HTMLVideoElement> }) {
-  const [playing, setPlaying] = useState(false)
-  const [muted, setMuted] = useState(true)
-  const [volume, setVolume] = useState(0.5)
-  const [time, setTime] = useState(0)
-  const [duration, setDuration] = useState(0)
-  const [hover, setHover] = useState(false)
-  const [focus, setFocus] = useState(false)
-  const show = !quiet && (hover || focus)
-  useEffect(() => {
-    const v = introRef.current; if (!v) return
-    v.volume = 0.5; v.muted = true; v.play().catch(() => {})
-  }, [introRef])
-  const v = () => introRef.current
-  const togglePlay = () => { const x = v(); if (!x) return; if (x.paused) x.play().catch(() => {}); else x.pause() }
-  const toggleMute = () => { const x = v(); if (!x) return; x.muted = !x.muted; if (!x.muted && x.volume === 0) x.volume = 0.5; setMuted(x.muted); setVolume(x.volume) }
-  const changeVolume = (val: number) => { const x = v(); if (!x) return; x.volume = val; x.muted = val === 0; setVolume(val); setMuted(x.muted) }
-  const seek = (val: number) => { const x = v(); if (!x || !duration) return; x.currentTime = val; setTime(val) }
-  const shownVolume = muted ? 0 : volume
-  const pct = duration ? (time / duration) * 100 : 0
-  const tab = quiet ? -1 : undefined
-  return (
-    <div className="u3-film" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
-      onFocusCapture={() => setFocus(true)} onBlurCapture={() => setFocus(false)}>
-      <video ref={introRef} src={IMG.video} poster={IMG.poster} muted loop playsInline preload="auto"
-        aria-label="UTrada intro film: a trader at night wonders whether a new broker with no reviews is safe, checks the regulations page, the legal documents, the trading accounts and the help chat, then signs up. Ends on: UTrada, trust before the first deposit."
-        onClick={togglePlay} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)}
-        onTimeUpdate={e => setTime(e.currentTarget.currentTime)} onLoadedMetadata={e => setDuration(e.currentTarget.duration)} />
-      <div className={'u3-ctl' + (show ? ' show' : '')} aria-hidden={quiet || undefined}>
-        <input type="range" min={0} max={duration || 0} step={0.01} value={time} onChange={e => seek(Number(e.target.value))} tabIndex={tab}
-          aria-label="Video progress" className="u3-range wide" style={{ '--fill': `${pct}%` } as React.CSSProperties} />
-        <div className="u3-ctl-row">
-          <button type="button" onClick={togglePlay} tabIndex={tab} aria-label={playing ? 'Pause' : 'Play'} className="u3-btn">
-            {playing
-              ? <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" /><rect x="14" y="5" width="4" height="14" /></svg>
-              : <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z" /></svg>}
-          </button>
-          <span className="u3-time">{fmt(time)} / {fmt(duration)}</span>
-          <div className="u3-vol">
-            <button type="button" onClick={toggleMute} tabIndex={tab} aria-label={muted ? 'Turn sound on' : 'Mute'} className="u3-btn">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M11 5 6 9H2v6h4l5 4V5z" fill="currentColor" />
-                {shownVolume === 0
-                  ? <><line x1="22" y1="9" x2="16" y2="15" /><line x1="16" y1="9" x2="22" y2="15" /></>
-                  : <><path d="M15.5 8.5a5 5 0 0 1 0 7" />{shownVolume > 0.5 && <path d="M19 5a10 10 0 0 1 0 14" />}</>}
-              </svg>
-            </button>
-            <input type="range" min={0} max={1} step={0.01} value={shownVolume} onChange={e => changeVolume(Number(e.target.value))} tabIndex={tab}
-              aria-label="Volume" className="u3-range vol" style={{ '--fill': `${shownVolume * 100}%` } as React.CSSProperties} />
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/** the full-screen opening: the film's box starts over the whole screen and eases into its own slot */
-function useIntro(on: boolean, slot: React.RefObject<HTMLDivElement>, box: React.RefObject<HTMLDivElement>, media: React.RefObject<HTMLVideoElement>, onDone: () => void) {
-  const done = useRef(onDone); done.current = onDone
-  useLayoutEffect(() => {
-    const s = slot.current, b = box.current, m = media.current
-    if (!on || !s || !b) { done.current(); return }
-    const root = document.documentElement
-    const keep = { overflow: root.style.overflow, gutter: root.style.getPropertyValue('scrollbar-gutter') }
-    scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior })
-    root.style.overflow = 'hidden'
-    root.style.setProperty('scrollbar-gutter', 'stable')
-    // dark until the film really plays, then one soft fade in (no white box, no poster flash)
-    const poster = m?.getAttribute('poster') ?? null
-    if (m) { m.removeAttribute('poster'); m.style.transition = 'opacity .5s ease'; m.style.opacity = '0' }
-    const showMedia = () => { if (m) m.style.opacity = '1' }
-    const restoreMedia = () => { if (!m) return; m.style.opacity = ''; m.style.transition = ''; if (poster && !m.getAttribute('poster')) m.setAttribute('poster', poster) }
-
-    const apply = (e: number) => {
-      const vh = innerHeight, vw = root.clientWidth
-      const r = s.getBoundingClientRect()
-      b.style.left = `${(-r.left * (1 - e)).toFixed(2)}px`
-      b.style.top = `${(-r.top * (1 - e)).toFixed(2)}px`
-      b.style.width = `${(vw + (r.width - vw) * e).toFixed(2)}px`
-      b.style.height = `${(vh + (r.height - vh) * e).toFixed(2)}px`
-    }
-    let animStart = Infinity, raf = 0, finished = false
-    const startHold = () => { showMedia(); if (animStart === Infinity) animStart = performance.now() + HOLD_MS }
-    const skip = () => { showMedia(); const now = performance.now(); if (now < animStart) animStart = now }
-    const tWait = window.setTimeout(() => {
-      if (m && m.paused && poster && !m.getAttribute('poster')) m.setAttribute('poster', poster)
-      startHold()
-    }, WAIT_MS)
-    m?.addEventListener('playing', startHold)
-    if (m && !m.paused && m.readyState >= 3) startHold()
-    const unlock = () => {
-      root.style.overflow = keep.overflow
-      if (keep.gutter) root.style.setProperty('scrollbar-gutter', keep.gutter)
-      else root.style.removeProperty('scrollbar-gutter')
-      removeEventListener('wheel', skip); removeEventListener('touchmove', skip); removeEventListener('keydown', skip)
-      m?.removeEventListener('playing', startHold)
-      window.clearTimeout(tWait)
-    }
-    const finish = () => {
-      finished = true
-      Object.assign(b.style, { left: '0px', top: '0px', width: '100%', height: '100%' })
-      unlock(); restoreMedia(); done.current()
-    }
-    const frame = (now: number) => {
-      if (scrollY !== 0) scrollTo(0, 0)
-      const p = clamp((now - animStart) / ANIM_MS)
-      apply(ease(p))
-      if (p >= 1) finish()
-      else raf = requestAnimationFrame(frame)
-    }
-    apply(0)
-    raf = requestAnimationFrame(frame)
-    addEventListener('wheel', skip, { passive: true })
-    addEventListener('touchmove', skip, { passive: true })
-    addEventListener('keydown', skip)
-    return () => {
-      if (raf) cancelAnimationFrame(raf)
-      if (!finished) { unlock(); restoreMedia(); Object.assign(b.style, { left: '0px', top: '0px', width: '100%', height: '100%' }) }
-    }
-  }, [on])
 }
 
 /* ---------- content (Figma 1698:443, word for word) ---------- */
@@ -249,7 +123,7 @@ export function UTradaV3() {
   const slot = useRef<HTMLDivElement>(null)
   const box = useRef<HTMLDivElement>(null)
   const media = useRef<HTMLVideoElement>(null)
-  useIntro(introOn, slot, box, media, () => setIntro(false))
+  useCaseIntro(introOn, slot, box, media, () => setIntro(false))
 
   // soft reveal as blocks scroll in
   useEffect(() => {
@@ -275,7 +149,7 @@ export function UTradaV3() {
             <h1 className="u3-h1">5 moments to check if your<br />broker is safe</h1>
             <p className="u3-sub">How UTrada, a brand-new broker with no reviews, earned trust before the first deposit<br /><span>UTrada Global · UX case study</span></p>
             <div className="u3-slot" ref={slot}>
-              <div className="u3-box" ref={box}><Film quiet={intro} introRef={media} /></div>
+              <div className="u3-box" ref={box}><CaseFilm src={IMG.video} poster={IMG.poster} label={FILM_LABEL} quiet={intro} introRef={media} /></div>
             </div>
             <div className="u3-meta">
               <div><div className="k">TIMELINE</div><p>Jul 2024 – Oct 2025</p></div>
@@ -535,21 +409,7 @@ const U3_CSS = `
 .u3 .u3-sub span { color: var(--ash); }
 .u3 .u3-slot { position: relative; margin-top: 40px; aspect-ratio: 16 / 9; }
 .u3 .u3-box { position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: 40; overflow: hidden; background: ${DARK}; }
-.u3 .u3-film { position: relative; width: 100%; height: 100%; }
-.u3 .u3-film video { display: block; width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
-.u3 .u3-ctl { position: absolute; left: 0; right: 0; bottom: 0; padding: 48px 24px 16px; background: linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,.45)); opacity: 0; pointer-events: none; transition: opacity .3s; }
-.u3 .u3-ctl.show { opacity: 1; pointer-events: auto; }
-.u3 .u3-ctl-row { display: flex; align-items: center; gap: 16px; margin-top: 8px; color: #FFFFFF; }
-.u3 .u3-btn { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0; background: none; border: 0; color: #FFFFFF; cursor: pointer; }
-.u3 .u3-btn:hover { background: rgba(255,255,255,.15); }
-.u3 .u3-btn:focus-visible { outline: 2px solid #FFFFFF; outline-offset: 2px; }
-.u3 .u3-time { font-size: 16px; font-variant-numeric: tabular-nums; }
-.u3 .u3-vol { margin-left: auto; display: flex; align-items: center; gap: 8px; }
-.u3 .u3-range { -webkit-appearance: none; appearance: none; display: block; height: 3px; margin: 0; cursor: pointer; background: linear-gradient(90deg, #fff var(--fill, 0%), rgba(255,255,255,.35) var(--fill, 0%)); }
-.u3 .u3-range.wide { width: 100%; } .u3 .u3-range.vol { width: 96px; }
-.u3 .u3-range::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: #fff; border: 0; }
-.u3 .u3-range::-moz-range-thumb { width: 12px; height: 12px; background: #fff; border: 0; }
-.u3.intro-on .u3-ctl { visibility: hidden; }
+/* the film and its control bar: CaseFilm.tsx (Trust Bank's round bar) */
 .u3 .u3-meta { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 48px; margin-top: 40px; }
 .u3 .u3-meta p { margin-top: 8px; font-size: 18px; line-height: 28px; }
 

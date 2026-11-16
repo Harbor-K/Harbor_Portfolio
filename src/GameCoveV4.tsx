@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Ideate, Iterate, Reflection, PARTS_CSS } from './GameCoveParts'
+import { DsLayers, DS_CSS } from './GameCoveDS'
 
 /**
  * GameCove case study — body built from Figma "GameCove_v.4 · GameCove colors" (node 1270:562,
@@ -52,6 +53,11 @@ import { Ideate, Iterate, Reflection, PARTS_CSS } from './GameCoveParts'
  * new Value → Token → On screen map.
  *
  * v131 (Harbor, Nov 15): hero title drops "beginner": Helping game creators decide what to fix next.
+ *
+ * v132 (Harbor, Nov 16, reference v7labs.com): Live prototype moves up under the intro. The tour's top row is a ruled
+ * strip like V7's: the step caption (A / B / C) on the left where the button was, the 3 feature tabs on the right with
+ * icons; the caption card no longer sits on the screen. The design system is shown as layers (GameCoveDS.tsx):
+ * Colour → Type → Spacing → Screens drop onto an isometric stack as you scroll, then the token map.
  */
 
 const L = 'https://raw.githubusercontent.com/Harbor-K/landing_page/main/gamecove/assets/'
@@ -585,12 +591,16 @@ function TourScreen({ step, lit, view }: { step: number; lit: boolean; view: { w
           <b>{letterOf(step)}</b>
         </div>
       </div>
-      <div key={step} className={'g-capcard' + (lit ? ' lit' : '')}>
-        <b>{letterOf(step)}</b><p>{s.cap}</p>
-      </div>
     </div>
   )
 }
+
+/** tab icons (20px, line): map, goal, agent */
+const TAB_ICONS = [
+  <svg key="m" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><rect x="1.5" y="7" width="5" height="6" /><rect x="13.5" y="2.5" width="5" height="6" /><rect x="13.5" y="11.5" width="5" height="6" /><path d="M6.5 10H10M10 5.5V14.5M10 5.5H13.5M10 14.5H13.5" /></svg>,
+  <svg key="g" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><circle cx="10" cy="10" r="7.5" /><circle cx="10" cy="10" r="4" /><circle cx="10" cy="10" r="0.75" fill="currentColor" /></svg>,
+  <svg key="a" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" aria-hidden="true"><path d="M10 2.5L11.8 8.2L17.5 10L11.8 11.8L10 17.5L8.2 11.8L2.5 10L8.2 8.2Z" /></svg>,
+]
 
 /**
  * Pinned like the reference: the screen stays put while scrolling; tabs 01–03 run across the top,
@@ -632,12 +642,17 @@ function Tour() {
     <>
       <div ref={outer} className="g-tour-outer mt-40" style={{ height: `${TOUR.length * 90 + 60}vh` }}>
         <div className="g-tour">
-          <div className="g-tour-top">
-            <a className="g-live" href={VIBE_URL} target="_blank" rel="noreferrer">Live prototype<span aria-hidden="true">↗</span></a>
+          <div className="g-tour-top v7">
+            <div className="g-tcap" aria-live="polite">
+              <div key={step} className={'g-tcap-in' + (lit ? ' lit' : '')}>
+                <div className="g-tcap-k"><b>{letterOf(step)}</b>0{tab + 1} · {TABS[tab]}</div>
+                <p>{TOUR[step].cap}</p>
+              </div>
+            </div>
             <div className="g-tabs" role="tablist" aria-label="Final design features">
               {TABS.map((t, i) => (
                 <button key={t} type="button" role="tab" aria-selected={i === tab} className={'g-tab' + (i === tab ? ' on' : '')} onClick={() => jump(i)}>
-                  <span className="t">{t}</span><span className="n">0{i + 1}</span>
+                  <span className="ic">{TAB_ICONS[i]}<span className="n">0{i + 1}</span></span><span className="t">{t}</span>
                   <i style={{ transform: `scaleX(${i === tab ? tabProg : i < tab ? 1 : 0})` }} />
                 </button>
               ))}
@@ -661,7 +676,6 @@ function Tour() {
 }
 
 function FinalDesign() {
-  const [ref, p] = useCountProgress<HTMLDivElement>()
   return (
     <section className="g-sec g-final" data-chapter="Prototype">
       <div className="g-wrap">
@@ -669,16 +683,12 @@ function FinalDesign() {
           <Eyebrow label="PROTOTYPE · FINAL DESIGN" sq="blue" />
           <H2 className="mt-40">The final design: 3 features</H2>
           <p className="g-body mt-24">Feature 1 is what makes GameCove different from other dashboards. Features 2 and 3 build on the map it creates. Scroll through the live prototype.</p>
+          <a className="g-live mt-40" href={VIBE_URL} target="_blank" rel="noreferrer">Live prototype<span aria-hidden="true">↗</span><span className="sr-only"> (opens in a new tab)</span></a>
         </div>
         <Tour />
+        <DsLayers />
         <div className="g-ds" data-r>
-          <h3 className="g-h3">Built on one design system</h3>
-          <p className="g-body mt-16 w-760">Every colour in the code is a token named by its job. 38 of the 108 are just for charts, because reading data is what GameCove is for. Here is one live screen with its tokens labelled.</p>
-          <div className="g-sys mt-24" ref={ref}>
-            {([[108, 'colour tokens', ''], [38, 'just for charts', ''], [2, 'themes: light and dark', ''], [4, 'spacing base', 'px']] as [number, string, string][]).map(([n, l, u]) => (
-              <div key={l}><div className="g-num light">{count(n, p)}{u}</div><div className="g-cap">{l}</div></div>
-            ))}
-          </div>
+          <p className="g-body w-760">Every colour in the code is a token named by its job. 38 of the 108 are just for charts, because reading data is what GameCove is for. Here is one live screen with its tokens labelled.</p>
         </div>
         <figure className="g-dsmap mt-40" data-r>
           <img src={IMG5.dsMap2} alt="Design system map. 01 Value, the hex in the code: #E28B8B, #F2F0EC, #3898F8, #17171B. 02 Token, named by its job: text-critical (drops), text-primary (key numbers), chart-series-primary (chart line and area), bg-surface (cards). 03 On screen: lines lead from each token to where it is used on the live Overview screen of Tower Escape." loading="lazy" data-gzoom="true" />
@@ -708,6 +718,7 @@ export function GameCoveV4Body() {
     <div className="gc4" ref={root} data-tone="dark">
       <style>{GC4_CSS}</style>
       <style>{PARTS_CSS}</style>
+      <style>{DS_CSS}</style>
       <Hero />
       <Overview />
       <Process />
@@ -1050,6 +1061,33 @@ export const GC4_CSS = `
 .gc4 .g-stage-box { display: block; container-type: normal; }
 .gc4 .g-stage-box .g-stage.g-screen { width: 100%; aspect-ratio: auto; }
 .gc4 .g-pan { position: absolute; left: 0; top: 0; width: 100%; aspect-ratio: 1440 / 900; transition: transform .8s var(--ease); }
+
+/* ================= v132 ================= */
+/* Live prototype sits under the intro (its square-box look comes from PARTS_CSS) */
+.gc4 .g-final .w-760 > .g-live { display: inline-flex; }
+.gc4 .g-final .w-760 > .g-live .sr-only { display: block; }
+/* tour top strip like V7: step caption on the left, the 3 feature tabs on the right, ruled, joined to the screen */
+.gc4 .g-final .g-tour { gap: 0; }
+.gc4 .g-final .g-tour-top.v7 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 672px); align-items: stretch; gap: 0;
+  border: 1px solid var(--line); border-bottom: 0; background: #FFFFFF; }
+.gc4 .g-tcap { display: flex; align-items: center; min-height: 128px; padding: 24px 32px; }
+.gc4 .g-tcap-in { opacity: 0; transform: translateY(8px); transition: opacity .5s ease, transform .6s var(--ease); }
+.gc4 .g-tcap-in.lit { opacity: 1; transform: none; }
+.gc4 .g-tcap-k { display: flex; align-items: center; gap: 8px; font-size: 16px; line-height: 24px; color: var(--mute); }
+.gc4 .g-tcap-k b { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: var(--blue); color: #FFFFFF; font-size: 16px; font-weight: 700; }
+.gc4 .g-tcap p { margin-top: 8px; font-size: 20px; line-height: 28px; color: var(--sand); }
+.gc4 .g-final .g-tour-top.v7 .g-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; }
+.gc4 .g-final .g-tour-top.v7 .g-tab { justify-content: space-between; gap: 24px; height: 100%; padding: 24px; border: 0; border-left: 1px solid var(--line); border-radius: 0; background: none; }
+.gc4 .g-final .g-tour-top.v7 .g-tab::after { display: none; }
+.gc4 .g-final .g-tour-top.v7 .g-tab.on { background: var(--card); }
+.gc4 .g-tab .ic { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+.gc4 .g-tab .ic svg { display: block; width: 20px; height: 20px; }
+.gc4 .g-final .g-stage-box .g-stage { border-radius: 0; }
+.gc .gc4 .g-tcap-k b { border-radius: 50% !important; }
+@media (max-width: 1280px) {
+  .gc4 .g-final .g-tour-top.v7 { grid-template-columns: minmax(0, 1fr) minmax(0, 540px); }
+  .gc4 .g-final .g-tour-top.v7 .g-tab { padding: 16px; }
+}
 @media (max-width: 1023px) {
   .gc4 .g-insc { grid-template-columns: minmax(0, 1fr); gap: 16px; }
   .gc4 .insc-q { margin-top: 16px; }

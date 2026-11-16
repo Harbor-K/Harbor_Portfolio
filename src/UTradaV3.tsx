@@ -147,7 +147,7 @@ export function UTradaV3() {
             <img className="u3-logo" src={IMG.logo} alt="UTrada" width={160} height={38} />
             <p className="u3-kicker">UTrada and regulation</p>
             <h1 className="u3-h1">5 moments to check if your<br />broker is safe</h1>
-            <p className="u3-sub">How UTrada, a brand-new broker with no reviews, earned trust before the first deposit<br /><span>UTrada Global · UX case study</span></p>
+            <p className="u3-sub">How UTrada, a brand-new broker with no reviews, earned trust before the first deposit.</p>
             <div className="u3-slot" ref={slot}>
               <div className="u3-box" ref={box}><CaseFilm src={IMG.video} poster={IMG.poster} label={FILM_LABEL} quiet={intro} introRef={media} /></div>
             </div>

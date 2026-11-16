@@ -271,9 +271,7 @@ export function HeroSection() {
             into everyday loyalty
           </h1>
           <p className="mt-8 md:mt-[31px] max-w-[760px] text-[17px] md:text-[18px] leading-[29px]" style={{ fontFamily: HELV, color: INK }}>
-            Helping people find and use their rewards in a digital bank
-            <br />
-            Trust Bank (Singapore) · UX case study
+            Helping people find and use their rewards in a digital bank (Singapore).
           </p>
 
           {/* the video's own place (2:1); the box inside starts full-screen and moves into it on its own */}

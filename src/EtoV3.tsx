@@ -171,7 +171,7 @@ export function EtoV3() {
           <div className="e3-w">
             <div className="e3-brand"><img src={IMG.mark} alt="" width={48} height={48} /><span>ETO Markets</span></div>
             <h1 className="e3-h1">Making a broker's CRM read in the right order</h1>
-            <p className="e3-sub">Reinterpreting the client CRM dashboard I designed at ETO Markets<br />ETO Markets (Sydney) · CRM redesign · 40-hour design sprint</p>
+            <p className="e3-sub">Reinterpreting the client CRM dashboard I designed at ETO Markets (Sydney).</p>
             <div className="e3-slot" ref={slot}>
               <div className="e3-box" ref={box}><CaseFilm src={IMG.video} poster={IMG.poster} label={FILM_LABEL} quiet={intro} introRef={media} /></div>
             </div>

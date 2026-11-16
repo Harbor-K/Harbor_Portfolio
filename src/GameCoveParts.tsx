@@ -179,7 +179,6 @@ function FlowSketch({ fi }: { fi: number }) {
             </div>
           </div>
         </div>
-        <div className="fs-k">Lo-fi wireframes · {f.t}</div>
         <div className="g-sk fs-sk">
           {row.map((c, i) => {
             const n = fi * 4 + i
@@ -212,16 +211,8 @@ export function Ideate() {
           <p className="g-body mt-24">Research on sensemaking showed that beginners need a starting point, not more charts. So the AI should act as a guide, not a judge. Its suggestions must be easy to check and change.</p>
         </div>
 
-        <div className="fs-intro mt-80" data-r>
-          <div>
-            <h3 className="g-h3l">User flow</h3>
-            <p className="g-body mute mt-16">We mapped two flows before sketching: setting up a project, then going from a problem to a decision.</p>
-          </div>
-          <div>
-            <h3 className="g-h3l">Lo-fi wireframes</h3>
-            <p className="g-body mute mt-16">Hand sketches of the same two flows, drawn before the coded prototype.</p>
-          </div>
-        </div>
+        {/* v137 (Harbor): one title line, no descriptions */}
+        <h3 className="g-h3l mt-80" data-r>User flow · Wireframe</h3>
         <div className="fl-legend mt-40" data-r>
           <span><i className="lg user" />Game creator does</span>
           <span><i className="lg ai" />AI does</span>
@@ -427,7 +418,7 @@ export const PARTS_CSS = `
 .gc4 .fs-flow { position: relative; z-index: 1; }
 .gc4 .fs-flow .fl-t { margin: 0; }
 .gc4 .fs-k { margin-top: 40px; font-size: 16px; line-height: 24px; color: var(--mute); }
-.gc4 .fs-sk { margin-top: 16px; }
+.gc4 .fs-sk { margin-top: 40px; } /* v137: the "Lo-fi wireframes · …" label above the sketches is gone */
 .gc4 .fs-box { position: relative; z-index: 3; aspect-ratio: 344 / 264; }
 .gc4 .fs-box img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform-origin: 0 0; will-change: transform, opacity; }
 .gc4 .fs-lines { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; overflow: visible; pointer-events: none; }

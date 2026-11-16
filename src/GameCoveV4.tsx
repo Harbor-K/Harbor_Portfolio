@@ -264,7 +264,7 @@ function Hero() {
         <div data-r>
           <img className="g-logo" src={IMG.logo} alt="GameCove" />
           <h1 className="g-h1">Helping game creators<br />decide what to fix next</h1>
-          <p className="g-lead">An AI analytics dashboard that maps the game, then shows where players quit<br />GameCove · Product design case study</p>
+          <p className="g-lead">An AI analytics dashboard that maps the game, then shows where players quit.</p>
           {VIBE_URL && <a className="g-btn5" href={VIBE_URL} target="_blank" rel="noreferrer">View dashboard<span className="sr-only"> (opens in a new tab)</span></a>}
         </div>
         {HERO_VIDEO

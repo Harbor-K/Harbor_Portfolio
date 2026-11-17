@@ -621,6 +621,8 @@ function ProgressBorder({ progress }: { progress: number }) {
 /**
  * Deliver: 3 feature cards on the left, the phone plays that feature's screen recording on the right.
  * The block is pinned while you scroll through it; scrolling moves 1 → 2 → 3. When a video ends the next starts (3 → 1 loops).
+ * Harbor, Nov 17 16:16: the section always opens on 01. Until the block pins, 01 stays on (its video loops instead of
+ * moving on to 02), and once the block is off screen below it goes back to 01, so coming in from above never lands on 02.
  */
 function DeliverShowcase() {
   const outer = useRef<HTMLDivElement>(null);
@@ -628,6 +630,13 @@ function DeliverShowcase() {
   const [active, setActive] = useState(0);
   const [prog, setProg] = useState(0);
   const lastStep = useRef(0);
+  const activeRef = useRef(0);
+  activeRef.current = active;
+  // not pinned yet: the block's top is still below the top of the window (1 → 2 → 3 starts once it pins)
+  const beforePin = () => {
+    const el = outer.current;
+    return !el || el.getBoundingClientRect().top > 0;
+  };
 
   useEffect(() => {
     let raf = 0;
@@ -637,7 +646,14 @@ function DeliverShowcase() {
       if (!el) return;
       const r = el.getBoundingClientRect();
       const travel = el.offsetHeight - window.innerHeight;
-      if (travel <= 0 || r.top > 0 || r.bottom < window.innerHeight) return;
+      if (travel <= 0) return;
+      if (r.top > 0) {
+        // coming in from above (or not reached yet): always 01
+        lastStep.current = 0;
+        if (activeRef.current !== 0) setActive(0);
+        return;
+      }
+      if (r.bottom < window.innerHeight) return;
       const step = Math.min(2, Math.floor((-r.top / travel) * 3));
       if (step !== lastStep.current) {
         lastStep.current = step;
@@ -647,9 +663,12 @@ function DeliverShowcase() {
     const on = () => {
       if (!raf) raf = requestAnimationFrame(read);
     };
+    read();
     window.addEventListener('scroll', on, { passive: true });
+    window.addEventListener('resize', on);
     return () => {
       window.removeEventListener('scroll', on);
+      window.removeEventListener('resize', on);
       if (raf) cancelAnimationFrame(raf);
     };
   }, []);
@@ -720,8 +739,15 @@ function DeliverShowcase() {
                   onTimeUpdate={(e) => {
                     if (i === active && e.currentTarget.duration) setProg(e.currentTarget.currentTime / e.currentTarget.duration);
                   }}
-                  onEnded={() => {
-                    if (i === active) setActive((active + 1) % FEATURES.length);
+                  onEnded={(e) => {
+                    if (i !== active) return;
+                    // before the block pins, 01 replays instead of moving on, so the section is met on 01
+                    if (beforePin()) {
+                      e.currentTarget.currentTime = 0;
+                      e.currentTarget.play().catch(() => {});
+                      return;
+                    }
+                    setActive((active + 1) % FEATURES.length);
                   }}
                 />
               ))}

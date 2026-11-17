@@ -42,6 +42,9 @@ const spotsFor = (src: string) => {
  * After the flip, the To-be screen shows plain for a moment, then the rest of the screen dims and only the
  * changed part pops out bigger (blue ring + shadow), like Harbor's Figma "To-be · changed part" frames.
  * Small screens: no pinning, both phones side by side under the text.
+ * Harbor, Nov 17 16:16: faster, so a quick scroll doesn't miss it — the card flips as soon as the second step comes
+ * up from the bottom of the screen (80% instead of 55%), the flip takes 0.6s instead of 0.9s, and the changed part
+ * pops right as the flip lands (0.6s instead of 1.5s later), with a shorter stagger.
  */
 export function FixBlock({
   kicker,
@@ -75,8 +78,8 @@ export function FixBlock({
       raf = 0;
       const el = step2.current;
       if (!el) return;
-      // flip once the second text step's top passes the middle of the screen
-      setToBe(el.getBoundingClientRect().top < window.innerHeight * 0.55);
+      // flip once the second text step's top comes up past 80% of the screen
+      setToBe(el.getBoundingClientRect().top < window.innerHeight * 0.8);
     };
     const onScroll = () => {
       if (!raf) raf = requestAnimationFrame(update);
@@ -91,18 +94,18 @@ export function FixBlock({
     };
   }, []);
 
-  // To-be: flip (0.9s), hold the plain screen, then pop the changed part. Back to As-is: drop it at once.
+  // To-be: flip (0.6s), then pop the changed part as it lands. Back to As-is: drop it at once.
   useEffect(() => {
     if (!toBe) {
       setZoom(false);
       return;
     }
-    const t = window.setTimeout(() => setZoom(true), reduce ? 0 : 1500);
+    const t = window.setTimeout(() => setZoom(true), reduce ? 0 : 600);
     return () => window.clearTimeout(t);
   }, [toBe, reduce]);
 
   const PANEL = 'clamp(520px, 76vh, 680px)';
-  const flipT = reduce ? 'none' : 'transform 0.9s cubic-bezier(0.65, 0, 0.35, 1)';
+  const flipT = reduce ? 'none' : 'transform 0.6s cubic-bezier(0.65, 0, 0.35, 1)';
   const spots = spotsFor(after);
 
   const textTop = (
@@ -167,7 +170,7 @@ export function FixBlock({
           borderRadius: '13% / 6%',
           background: 'rgba(0,0,0,0.38)',
           opacity: zoom ? 1 : 0,
-          transition: reduce ? 'none' : 'opacity 0.5s ease',
+          transition: reduce ? 'none' : 'opacity 0.3s ease',
         }}
       />
       {spots.map((s, i) => (
@@ -189,7 +192,7 @@ export function FixBlock({
             transform: `scale(${zoom ? s.scale : 1})`,
             transition: reduce
               ? 'none'
-              : `opacity 0.35s ease ${0.2 + i * 0.15}s, transform 0.7s cubic-bezier(0.34, 1.4, 0.64, 1) ${0.2 + i * 0.15}s`,
+              : `opacity 0.25s ease ${i * 0.08}s, transform 0.5s cubic-bezier(0.34, 1.4, 0.64, 1) ${i * 0.08}s`,
           }}
         />
       ))}

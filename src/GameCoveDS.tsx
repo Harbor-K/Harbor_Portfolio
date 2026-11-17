@@ -7,51 +7,67 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
  * right, left) with a single dashed line to the spot on that screen, and the previous group goes away: one screen,
  * one group, nothing else on screen at once (Harbor: "하나는 하나끼리만").
  * The heading sits on the left with the same eyebrow / title / body styles as "The final design: 3 features" above.
- * Every token below was read from the live prototype (game-cove.vercel.app, Tower Escape, Nov 16) — the classes used on
- * each page, and the values from the page's CSS (108 --gc- tokens in all):
- *  - Tracking: bg-tracking-canvas #111114, border-node-0/1/2 (white at 28 / 14 / 8%), bg-node-inset #111114
- *  - Retention: chart-heatmap-accent #3898F8 (21 cohort cells), chart-series-primary #3898F8, chart-label #666970
- *  - Overview: text-primary #F2F0EC, text-critical #E28B8B, bg-surface #17171B
+ *
+ * v139 (Harbor Nov 17, Figma "Scroll states · 07 Final design · design system", file 44기 김지현 4차 랜딩페이지, node
+ * 1781:13881): the section was all colour, so each screen now shows a different part of the system —
+ *  - 01 · COLOUR on Tracking: bg-tracking-canvas, border-node-0 · 1 · 2, bg-node-inset (values read from the live
+ *    prototype, game-cove.vercel.app, Nov 16: #111114, white at 28 / 14 / 8%, #111114)
+ *  - 02 · TYPE on Retention: Lato 40 / 32 / 24 Bold, each with an "Aa" sample (Lato Bold 20 / 18 / 16 on #111114);
+ *    the line points to the page title. The sample's font is set inline: the site's Roboto-everywhere rule (index.css)
+ *    leaves alone only elements whose inline style names Lato.
+ *  - 03 · COMPONENTS on Overview: KPI card, Filter and select, AI Agent button, each with a small blue-outlined shape
+ *    (#17171B fill, 1.5px #3898F8 edge; 6 / 4 / 8 corners); the line points to the first KPI card
+ * Body copy: "Colour, type and components from one set of tokens, on a 4px grid". The motion is unchanged.
  * Small screens (≤ 1023px): each screen, then its labels, one after another.
  * v133: this replaces the token-map block that followed it in GameCoveV4.tsx (hidden by DS_CSS below).
  */
 
 const F = 'https://raw.githubusercontent.com/Harbor-K/landing_page/main/gamecove/assets/v4/final/'
 const V5 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/gamecove/v5/'
+const LATO = '"Lato", sans-serif'
 
-type Tag = { k: string; v: string; sw: string }
-// side: where the label group sits; at: the spot its line points to on that screen (1440×900)
-type Layer = { name: string; src: string; alt: string; side: 'l' | 'r'; at: [number, number]; tags: Tag[] }
+// sw: a colour swatch · aa: an "Aa" type sample at this size · shape: a component outline (height, corners)
+type Tag = { k: string; v: string; sw?: string; aa?: number; shape?: { h: number; r: number } }
+// kind: the part of the system the group shows · side: where the group sits · at: the spot its line points to (1440×900)
+type Layer = { name: string; kind: string; src: string; alt: string; side: 'l' | 'r'; at: [number, number]; tags: Tag[] }
 const LAYERS: Layer[] = [
-  { name: 'Tracking', src: F + 'map.webp', alt: 'Tracking: the AI map of Lobby and Stage 1–4', side: 'l', at: [846, 486], tags: [
+  { name: 'Tracking', kind: 'Colour', src: F + 'map.webp', alt: 'Tracking: the AI map of Lobby and Stage 1–4', side: 'l', at: [846, 486], tags: [
     { k: 'bg-tracking-canvas', v: 'Map canvas', sw: '#111114' },
     { k: 'border-node-0 · 1 · 2', v: 'Node outlines, 3 strengths', sw: 'rgba(255,255,255,.28)' },
     { k: 'bg-node-inset', v: 'Inside each node', sw: '#111114' },
   ] },
-  { name: 'Retention', src: V5 + 'retention.webp', alt: 'Retention: Day 1 retention line and the date-cohort table', side: 'r', at: [654, 806], tags: [
-    { k: 'chart-heatmap-accent', v: 'Cohort cells', sw: '#3898F8' },
-    { k: 'chart-series-primary', v: 'Retention line', sw: '#3898F8' },
-    { k: 'chart-label', v: 'Axis labels', sw: '#666970' },
+  { name: 'Retention', kind: 'Type', src: V5 + 'retention.webp', alt: 'Retention: Day 1 retention line and the date-cohort table', side: 'r', at: [384, 101], tags: [
+    { k: 'Lato 40 Bold', v: 'Page title · Retention', aa: 20 },
+    { k: 'Lato 32 Bold', v: 'Key numbers · 6.0%', aa: 18 },
+    { k: 'Lato 24 Bold', v: 'Card titles · Day 1 retention', aa: 16 },
   ] },
-  { name: 'Overview', src: F + 'overview.webp', alt: 'Overview: key numbers, drops and daily charts', side: 'l', at: [338, 283], tags: [
-    { k: 'text-primary', v: 'Key numbers', sw: '#F2F0EC' },
-    { k: 'text-critical', v: 'Drops', sw: '#E28B8B' },
-    { k: 'bg-surface', v: 'Cards', sw: '#17171B' },
+  { name: 'Overview', kind: 'Components', src: F + 'overview.webp', alt: 'Overview: key numbers, drops and daily charts', side: 'l', at: [296, 286], tags: [
+    { k: 'KPI card', v: '16 corners · 24 padding', shape: { h: 28, r: 6 } },
+    { k: 'Filter and select', v: '8 corners', shape: { h: 20, r: 4 } },
+    { k: 'AI Agent button', v: 'Full round · 16 side padding', shape: { h: 16, r: 8 } },
   ] },
 ]
-const HEAD = { eyebrow: 'DESIGN SYSTEM', title: 'Built on one design system', body: '108 colour tokens, each named by its job · dark and light themes' }
+const HEAD = { eyebrow: 'DESIGN SYSTEM', title: 'Built on one design system', body: 'Colour, type and components from one set of tokens, on a 4px grid' }
 
 const reduced = () => typeof window !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches
 const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v))
 
+function Swatch({ t }: { t: Tag }) {
+  if (t.aa) return <i className="sw aa" style={{ fontSize: `${t.aa}px`, fontFamily: LATO }}>Aa</i>
+  if (t.shape) return <i className="sw cp"><b style={{ height: `${t.shape.h}px`, borderRadius: `${t.shape.r}px` }} /></i>
+  return <i className="sw" style={{ background: `linear-gradient(${t.sw}, ${t.sw}), #111114` }} />
+}
+
 function TagRow({ t }: { t: Tag }) {
   return (
     <li className="ds-tag">
-      <i className="sw" style={{ background: `linear-gradient(${t.sw}, ${t.sw}), #111114` }} />
+      <Swatch t={t} />
       <span className="kv"><b className="mono">{t.k}</b><span>{t.v}</span></span>
     </li>
   )
 }
+
+const label = (i: number, l: Layer) => `${String(i + 1).padStart(2, '0')} · ${l.kind.toUpperCase()}`
 
 export function DsLayers() {
   const outer = useRef<HTMLDivElement>(null)
@@ -107,6 +123,7 @@ export function DsLayers() {
   const shown = inView || reduced()
   return (
     <>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@700&display=swap" />
       <div ref={outer} className="ds-outer" style={{ height: `${LAYERS.length * 90 + 60}vh` }}>
         <div className="ds-pin">
           <div className="ds-headline">
@@ -132,7 +149,7 @@ export function DsLayers() {
             </div>
             {shown && (
               <div key={step} ref={group} className={'ds-group ' + L.side}>
-                <div className="ds-k mono"><i />{String(step + 1).padStart(2, '0')} · {L.name.toUpperCase()}</div>
+                <div className="ds-k mono"><i />{label(step, L)}</div>
                 <ul>{L.tags.map(t => <TagRow key={t.k} t={t} />)}</ul>
               </div>
             )}
@@ -146,7 +163,7 @@ export function DsLayers() {
             )}
           </div>
           <p className="vh-only">
-            {LAYERS.map(l => `${l.name}: ${l.tags.map(t => `${t.k} for ${t.v}`).join(', ')}.`).join(' ')}
+            {LAYERS.map(l => `${l.kind}, on ${l.name}: ${l.tags.map(t => `${t.k} for ${t.v}`).join(', ')}.`).join(' ')}
           </p>
         </div>
       </div>
@@ -158,7 +175,7 @@ export function DsLayers() {
         {LAYERS.map((l, i) => (
           <div key={l.name} className="ds-flat-g">
             <img src={l.src} alt={l.alt} loading="lazy" />
-            <div className="ds-k mono"><i />{String(i + 1).padStart(2, '0')} · {l.name.toUpperCase()}</div>
+            <div className="ds-k mono"><i />{label(i, l)}</div>
             <ul>{l.tags.map(t => <TagRow key={t.k} t={t} />)}</ul>
           </div>
         ))}
@@ -204,6 +221,11 @@ export const DS_CSS = `
 .gc4 .ds-tag { display: flex; align-items: center; gap: 16px; width: 296px; padding: 12px 16px; background: #FFFFFF; border: 1px solid var(--line); }
 .gc4 .ds-group.r .ds-tag { flex-direction: row-reverse; text-align: right; }
 .gc4 .ds-tag .sw { flex: none; width: 32px; height: 32px; border: 1px solid rgba(17,17,20,.12); }
+/* v139: type sample (Lato Bold on the dashboard's #111114) and component outline (the dashboard's blue edge) */
+.gc4 .ds-tag .sw.aa { display: flex; align-items: center; justify-content: center; border: 0; background: #111114; color: #F2F0EC;
+  font-style: normal; font-weight: 700; line-height: 1; }
+.gc4 .ds-tag .sw.cp { display: flex; align-items: center; border: 0; background: none; }
+.gc4 .ds-tag .sw.cp b { display: block; width: 32px; background: #17171B; border: 1.5px solid #3898F8; box-sizing: border-box; }
 .gc4 .ds-tag .kv { display: flex; flex-direction: column; min-width: 0; }
 .gc4 .ds-tag .kv b { font-size: 16px; line-height: 24px; font-weight: 400; color: var(--sand); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .gc4 .ds-tag .kv span { font-size: 16px; line-height: 24px; color: var(--mute); }

@@ -15,8 +15,9 @@ import { CaseFilm, useCaseIntro } from './CaseFilm'
  * number badges, the tier chips and the film's control bar.
  * Layout: the 1440 column (240px sides at 1920), sections 120px top and bottom.
  *
- * Opening (like Trust Bank, GameCove and UTrada): Harbor's film "eto-crm-partners-v5b" (31.5s, re-encoded to
- * 1600×900, 3.6 MB) fills the screen, stays dark until it really plays, and 5 seconds later moves into its place
+ * Opening (like Trust Bank, GameCove and UTrada): Harbor's film "eto-crm-partners-v6" (v139, Nov 17; 31.5s,
+ * re-encoded to 1600×900, 3.7 MB; poster = the ETO Markets logo frame at 1.2s) fills the screen, stays dark until it
+ * really plays, and 5 seconds later moves into its place
  * under the headline (CaseFilm.tsx). Scrolling, swiping or a key press starts the move at once. The header and the
  * process list stay hidden until then. Afterwards the film loops muted; Trust Bank's round control bar shows on hover.
  * Assets: Harbor-K/harbor-pf assets/eto/v3/ (film, poster, ETO mark and the Figma images exported at 2x).
@@ -27,8 +28,8 @@ import { CaseFilm, useCaseIntro } from './CaseFilm'
 const A = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/eto/v3/'
 const IMG = {
   mark: A + 'mark.png',
-  video: A + 'intro.mp4',
-  poster: A + 'intro-poster.jpg',
+  video: A + 'intro-v6.mp4',
+  poster: A + 'intro-v6-poster.jpg',
   oldUx: A + 'old-ux.webp',
   competitive: A + 'competitive.webp',
   sticky: A + 'sticky-ia.webp',

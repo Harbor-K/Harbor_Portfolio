@@ -591,7 +591,8 @@ export const PARTS_CSS = `
 .gc4 .rf-np { max-width: 808px; font-size: 18px; line-height: 28px; color: #3D3E44; }
 
 /* round shapes that carry meaning stay round */
-.gc .gc4 .ts-pin { border-radius: 50% !important; }
+/* the page-wide 0px rule is (0,3,1), so this needs (0,4,1) to win */
+.gc .gc4 .ts-screen i.ts-pin { border-radius: 50% !important; }
 
 @media (max-width: 1280px) {
   .gc4 .ts-card { grid-template-columns: 360px minmax(0, 1fr); gap: 40px; }

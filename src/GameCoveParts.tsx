@@ -22,18 +22,21 @@ import React, { useEffect, useRef, useState } from 'react'
  *
  * v129 (Harbor, Figma note): the "Live prototype" box button goes back to the left end of the tour's top row, across
  * from the tabs (same square box, no arrow).
+ *
+ * v140 (Harbor, Nov 17, Figma "08 Test + Iterate · v3" 1773:13708): Test · Iterate is rebuilt from that frame word for word —
+ * the 3 questions (their screen cards stack as you scroll, wide and tall screens only), the SUS and hidden-problem cards,
+ * the Mapping guide before/after, and the follow-up card sort (the session GIF goes in FOLLOW_GIF). Reflection's next
+ * steps are one line now (Figma 1785:424).
  */
 
 const V5 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/gamecove/v5/'
 const P = {
   sketch: [1, 2, 3, 4, 5, 6, 7, 8].map(n => V5 + `sketch-en-${n}.webp`), // Figma 901:1629, English redraws
   photo: V5 + 'photo.webp',
-  iterBefore: V5 + 'iter-before.webp',
-  iterAfter: V5 + 'iter-after.webp',
   reflection: V5 + 'reflection-photo.webp',
 }
-// round 2 session recording: off for now, Harbor will add the video herself (a YouTube id here brings the player back)
-const SESSION_VIDEO: string = ''
+// v140: Figma "08 Test + Iterate · v3" screens, the redrawn Mapping guide and the tester flags
+const V6 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/gamecove/v6/'
 
 const reducedMotion = () => typeof window !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches
 const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v))
@@ -229,145 +232,197 @@ export function Ideate() {
   )
 }
 
-/* ---------- test · iterate: round 2 with P2 ---------- */
+/* ---------- test · iterate (Figma "08 Test + Iterate · v3", 1773:13708) ---------- */
 
-const FINDINGS = [
-  { q: 'Give me the base info first.', t: '38:05 · “Adding and removing is fine.” 47:58', a: 'Ready-made default boards. Charts can be turned on, off or added. No blank start.' },
-  { q: 'AI just has to tell me the facts, accurately.', t: '33:35 · the decision is his', a: 'Every AI line shows the number behind it and where it came from.' },
-  { q: 'Give me the answer in one line.', t: '30:40 · question titles took time to read', a: 'Each question-style chart title gets a one-line summary.' },
-  { q: 'There’s no info on what it does, or how far.', t: '16:01 · during tracking setup', a: 'Show which chart each tracked event feeds, so the reason to collect is visible.' },
+type Mark = { c: 'red' | 'blue'; pin: [number, number]; box: [number, number]; t: string } // % of the screen
+const QS: { n: string; q: string; ok: boolean; task: string; f: string; img: string; ar: string; alt: string; marks: Mark[] }[] = [
+  {
+    n: '01', q: 'Do they get what the setup is for?', ok: false, task: 'TASK 1 · MAP THE GAME',
+    f: 'weren’t sure why they were mapping. One thought he was designing a new game.',
+    img: V6 + 'task1.jpg', ar: '880 / 592',
+    alt: 'Task 1, the Mapping screen as tested: the game map with a small tip on what to review. A red pin marks the tip: no reason given here.',
+    marks: [{ c: 'red', pin: [56.23, 59.12], box: [33.84, 58.95], t: 'No reason given here' }],
+  },
+  {
+    n: '02', q: 'Can AI set up tracking for them?', ok: true, task: 'TASK 2 · PICK A GOAL',
+    f: 'liked AI turning a goal into a tracking plan. All 3 opened the default dashboard first.',
+    img: V6 + 'task2.jpg', ar: '880 / 550',
+    alt: 'Task 2, a new analysis board asking “What would you like to analyze?” with three suggested goals and a text box. A blue pin marks the goal box: goal in plain words, AI suggests what to track. A red pin on the sidebar: starting here needed a hint.',
+    marks: [
+      { c: 'blue', pin: [61.73, 51.36], box: [18.89, 51.18], t: 'Goal in plain words → AI suggests what to track' },
+      { c: 'red', pin: [6.73, 38.36], box: [12.64, 38.18], t: 'Starting here needed a hint' },
+    ],
+  },
+  {
+    n: '03', q: 'Can they find a problem and decide what to fix?', ok: true, task: 'TASK 3 · EXPLORE THE DATA',
+    f: 'found a problem in the data and suggested a fix. One never noticed the AI agent.',
+    img: V6 + 'task3.jpg', ar: '880 / 550',
+    alt: 'Task 3, the Overview dashboard with key numbers and the AI agent panel open. A blue pin on the key numbers: all 3 found a problem from these numbers. A red pin on the AI Agent button: 1 of 3 never saw this.',
+    marks: [
+      { c: 'blue', pin: [39.73, 32.36], box: [45.64, 32.18], t: 'All 3 found a problem from these numbers' },
+      { c: 'red', pin: [84.23, -0.13], box: [62.30, 2.18], t: '1 of 3 never saw this' },
+    ],
+  },
 ]
-const CS_TOP = [
-  { r: '1ST', c: 'D01', t: 'Today’s numbers', q: 'I check analytics every hour or day. This is the summary of everything below it.' },
-  { r: '2ND', c: 'D03', t: 'Daily players, last 7 days', q: 'Is my game alive? Is it growing every week, or every day?' },
-  { r: '3RD', c: 'D04', t: 'Playtime and sessions per player', q: 'I had a playtime in mind when I made the game. Am I hitting it?' },
+const SUS: { p: string; flag: 'kr' | 'kg'; who: string; v: string; w: number; pilot?: boolean }[] = [
+  { p: 'P1 · pilot', flag: 'kr', who: 'Teen game creator', v: '65', w: 286, pilot: true },
+  { p: 'P2', flag: 'kr', who: 'Hobby game creator, 35–44', v: '90', w: 396 },
+  { p: 'P3', flag: 'kr', who: 'Pro game developer, 28–35', v: '97.5', w: 429 },
+  { p: 'P4', flag: 'kg', who: 'Teen game creator', v: '82.5', w: 363 },
+  { p: 'P5', flag: 'kr', who: 'Teen game creator', v: '93.3', w: 410 },
 ]
-const CS_TIERS: [string, [string, string][]][] = [
-  ['TIER 1', [['D01', 'Today’s numbers'], ['D02', 'This week’s top 3 problems'], ['D03', 'Daily players'], ['D04', 'Playtime and sessions']]],
-  ['TIER 2', [['D06', 'First-session drop-off by step'], ['D09', 'Stars collected in failed runs'], ['D10', 'Sessions that ended at the problem'], ['D11', 'Next-day return by how far they got'], ['D13', 'What they did right after leaving'], ['D17', 'Data we can’t collect yet'], ['D18', 'Hypotheses to test']]],
-  ['TIER 3', [['D05', 'Clear rate by stage'], ['D07', 'Who left the Lobby: time, device, return'], ['D08', 'Fails and time to first clear'], ['D12', 'Follow one drop-off step'], ['D14', 'Cleared vs not cleared']]],
-]
-const CS_NICE: [string, string][] = [['D15', 'Where in a stage they stopped'], ['D16', 'One session’s timeline']]
-const CS_MISSING = [
-  { t: 'Crash and error reports', p: 'Which errors happen and how often. e.g. “Warning: Stage 3, Star #3 not detected: 5 times.”' },
-  { t: 'Where players come from', p: 'Country, age and gender. “My target was US teens. Why are people in their 20s in Saudi Arabia playing?”' },
-]
+const FLAG = { kr: { src: V6 + 'flag-kr.svg', alt: 'South Korea' }, kg: { src: V6 + 'flag-kg.svg', alt: 'Kyrgyzstan' } }
+const HIDDEN: [string, boolean, string][] = [['A ✓', true, 'Stage 4 is too hard'], ['B ✓', true, 'New players leave early'], ['C ✗', false, 'Players quit after finishing']]
+// follow-up session (P2), face covered: a GIF goes here once Harbor's recording is in (empty = card sort only)
+const FOLLOW_GIF: string = ''
 
-const Chip = ({ c, t }: { c: string; t: string }) => <span className="cs-chip"><b className="mono">{c}</b>{t}</span>
-
-/** YouTube, loaded only when played (no cookies until then). No YouTube thumbnail: its auto frame shows faces unblurred. */
-function SessionVideo() {
-  const [play, setPlay] = useState(false)
-  return (
-    <div className="it-vid">
-      {play
-        ? <iframe src={`https://www.youtube-nocookie.com/embed/${SESSION_VIDEO}?autoplay=1&rel=0`} title="Round 2 session with P2 (face blurred)"
-            allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen />
-        : <button type="button" onClick={() => setPlay(true)} aria-label="Play the round 2 session video (face blurred)">
-            <span className="play" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" /></svg></span>
-            <span className="lab">Session video · face blurred</span>
-          </button>}
-    </div>
-  )
+/** stacking cards: on wide, tall screens each question card sticks and the next one slides up over it */
+function useStack() {
+  const ref = useRef<HTMLDivElement>(null)
+  const [on, setOn] = useState(false)
+  useEffect(() => {
+    const mq = matchMedia('(min-width: 1024px) and (min-height: 760px)')
+    const set = () => setOn(mq.matches && !reducedMotion())
+    set(); mq.addEventListener('change', set)
+    return () => mq.removeEventListener('change', set)
+  }, [])
+  useEffect(() => {
+    const el = ref.current; if (!el) return
+    const cards = Array.from(el.querySelectorAll<HTMLElement>('.ts-q'))
+    if (!on) { cards.forEach(c => c.style.removeProperty('--k')); return }
+    let raf = 0
+    const run = () => {
+      raf = 0
+      cards.forEach((c, i) => {
+        const nx = cards[i + 1]
+        if (!nx) { c.style.setProperty('--k', '0'); return }
+        const a = c.getBoundingClientRect(), b = nx.getBoundingClientRect()
+        c.style.setProperty('--k', String(clamp(1 - (b.top - a.top) / (a.height + 80)).toFixed(3)))
+      })
+    }
+    const go = () => { if (!raf) raf = requestAnimationFrame(run) }
+    run()
+    addEventListener('scroll', go, { passive: true }); addEventListener('resize', go)
+    return () => { if (raf) cancelAnimationFrame(raf); removeEventListener('scroll', go); removeEventListener('resize', go) }
+  }, [on])
+  return [ref, on] as const
 }
 
 export function Iterate() {
+  const [stack, on] = useStack()
   return (
     <section className="g-sec it" data-chapter="Iterate">
       <div className="g-wrap">
-        <div data-r className="it-head">
-          <Eyebrow label="TEST · ITERATE" />
-          <h2 className="g-h2 mt-24">We fixed it, then asked again:<br />is this data really needed?</h2>
-          <p className="g-body mute mt-24">After round 1, we added a Mapping guide, a check that logging really worked, and more metrics on the dashboard. Then we tested again with P2, a hobby game creator in his mid-30s, and talked mostly about the data.</p>
+        <div data-r className="ts-head">
+          <Eyebrow label="TEST" />
+          <h2 className="ts-h2">Can a beginner go from data to a decision?</h2>
+          <p className="ts-lead">We gave 5 game creators a sample game with 3 hidden problems, then watched them work.</p>
         </div>
 
-        <h3 className="g-h3l it-gap" data-r>What we changed after round 1: the Mapping guide</h3>
-        <div className="it-pair mt-24">
-          <figure className="it-shot" data-r style={d(0)}>
-            <img src={P.iterBefore} alt="Before: the Mapping screen shows the game map with a small tip, “Review the details of each structure and edit anything that looks wrong”" loading="lazy" data-gzoom="true" />
-            <figcaption><b className="mono">BEFORE</b>A tip on what to do, but not why</figcaption>
-          </figure>
-          <figure className="it-shot" data-r style={d(1)}>
-            <img src={P.iterAfter} alt="After: a purpose guide on the Mapping screen, “Step 1 · Check your game map. AI read your game and drew its stages. Check they’re right. We’ll track and analyse along this map.” with a Looks right button" loading="lazy" data-gzoom="true" />
-            <figcaption><b className="mono on">AFTER</b>Says why: this map decides what we track (redrawn)</figcaption>
-          </figure>
-        </div>
-
-        <div className="it-gap" data-r>
-          <div className="it-round"><span className="mono it-k">ROUND 2</span><span className="mono it-tag">P2 · hobby game creator, mid-30s</span></div>
-          <h3 className="g-h3l mt-8">What he told us about the data</h3>
-          <p className="g-body mute mt-8">Task 3 (finding a problem in the data) and a card sort of every metric on the dashboard.</p>
-        </div>
-        <div className={'it-pair mt-40' + (SESSION_VIDEO ? '' : ' solo')}>
-          {SESSION_VIDEO && <div data-r style={d(0)}><SessionVideo /></div>}
-          <div className="it-take" data-r style={d(1)}>
-            <div className="mono it-k sky">WHAT IT MEANS FOR GAMECOVE</div>
-            <p className="it-take-h">Not a blank board to build. A finished screen he can switch on, off, or add to.</p>
-            <p className="it-take-p">He was fine adding charts. He just didn’t want to start from nothing.</p>
-          </div>
-        </div>
-        <div className="it-finds mt-40">
-          {FINDINGS.map((f, i) => (
-            <div className="it-find" key={f.q} data-r style={d(i)}>
-              <p className="q">“{f.q}”</p>
-              <p className="t mono">{f.t}</p>
-              <hr />
-              <div className="mono it-k">SO WE</div>
-              <p className="a">{f.a}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="it-gap" data-r>
-          <div className="mono it-k">CARD SORT</div>
-          <h3 className="g-h3l mt-8">Is this data really needed? He sorted all 18 metrics from the session.</h3>
-        </div>
-        <div className="cs-stats mt-32" data-r>
-          <div><b>16</b><span>must-have</span></div>
-          <div><b>2</b><span>nice to have</span></div>
-          <div><b>0</b><span>not needed</span></div>
-        </div>
-        <div className="cs-top mt-32">
-          {CS_TOP.map((c, i) => (
-            <div className="cs-card" key={c.c} data-r style={d(i)}>
-              <i className="cs-bar" aria-hidden="true" />
-              <div className="cs-rank"><b className="mono">{c.r}</b><span className="mono">{c.c}</span></div>
-              <h4 className="cs-t">{c.t}</h4>
-              <p className="cs-q">“{c.q}”</p>
-            </div>
-          ))}
-        </div>
-        <div className="cs-sorted mt-32">
-          <div className="cs-card" data-r>
-            <div className="cs-head"><b className="mono">MUST-HAVE</b><span>“Without it I can’t decide”</span></div>
-            {CS_TIERS.map(([tier, chips]) => (
-              <div className="cs-tier" key={tier}>
-                <div className="mono cs-tl">{tier}</div>
-                <div className="cs-chips">{chips.map(([c, t]) => <Chip key={c} c={c} t={t} />)}</div>
+        <div className={'ts-stack' + (on ? ' on' : '')} ref={stack}>
+          {QS.map((q, i) => (
+            <article className="ts-q" key={q.n} style={{ '--i': i } as React.CSSProperties}>
+              <div className="ts-card">
+                <div className="ts-text" data-r>
+                  <div className="ts-n">{q.n}</div>
+                  <h3 className="ts-qt">{q.q}</h3>
+                  <div className="ts-meta">
+                    <span className={'ts-chip ' + (q.ok ? 'yes' : 'no')}>{q.ok ? 'YES' : 'NOT YET'}</span>
+                    <span className="ts-task">{q.task}</span>
+                  </div>
+                  <div className="ts-find">
+                    <div className={'ts-big ' + (q.ok ? 'yes' : 'no')}>3 of 3</div>
+                    <p>{q.f}</p>
+                  </div>
+                </div>
+                <figure className="ts-panel" data-r style={d(1)}>
+                  <div className="ts-screen" style={{ aspectRatio: q.ar }}>
+                    <img src={q.img} alt={q.alt} loading="lazy" data-gzoom="true" />
+                    {q.marks.map(m => (
+                      <React.Fragment key={m.t}>
+                        <i className={'ts-pin ' + m.c} aria-hidden="true" style={{ left: m.pin[0] + '%', top: m.pin[1] + '%' }} />
+                        <span className={'ts-call ' + m.c} aria-hidden="true" style={{ left: m.box[0] + '%', top: m.box[1] + '%' }}>{m.t}</span>
+                      </React.Fragment>
+                    ))}
+                  </div>
+                </figure>
               </div>
-            ))}
-          </div>
-          <div className="cs-side">
-            <div className="cs-card" data-r style={d(1)}>
-              <div className="cs-head"><b className="mono">NICE TO HAVE</b><span>“I’d check it sometimes”</span></div>
-              <div className="cs-chips col">{CS_NICE.map(([c, t]) => <Chip key={c} c={c} t={t} />)}</div>
-            </div>
-            <div className="cs-empty" data-r style={d(2)}>
-              <div className="mono it-k dim">NOT NEEDED · UNSURE</div>
-              <p>Empty. He kept every card.</p>
-            </div>
-          </div>
+            </article>
+          ))}
         </div>
-        <div className="mt-32" data-r>
-          <div className="mono it-k dim">NOT ON THE SCREEN, BUT HE WANTED IT</div>
-          <div className="cs-missing mt-16">
-            {CS_MISSING.map(m => <div key={m.t}><b>{m.t}</b><p>{m.p}</p></div>)}
+
+        <div className="ts-nums">
+          <div className="ts-box ts-sus" data-r>
+            <h3 className="ts-bt">How easy it felt · SUS score</h3>
+            <p className="ts-sub">Goal: 90. After the pilot, testers scored 82.5 to 97.5.</p>
+            <ul className="ts-bars">
+              {SUS.map(s => (
+                <li key={s.p}>
+                  <div className="ts-who">
+                    <div className="ts-pn"><img src={FLAG[s.flag].src} alt={FLAG[s.flag].alt} width={16} height={16} />{s.p}</div>
+                    <div className="ts-pd">{s.who}</div>
+                  </div>
+                  <div className="ts-track" aria-hidden="true">
+                    <i className={s.pilot ? 'pilot' : ''} style={{ width: (s.w / 440) * 100 + '%' }} />
+                    <b />
+                  </div>
+                  <div className="ts-v">{s.v}</div>
+                </li>
+              ))}
+            </ul>
+            <p className="ts-foot">White line = goal of 90</p>
+          </div>
+          <div className="ts-box ts-hid" data-r style={d(1)}>
+            <h3 className="ts-bt">Hidden problems found</h3>
+            <div className="ts-big blue">2 of 3</div>
+            <ul className="ts-probs">
+              {HIDDEN.map(([c, ok, t]) => (
+                <li key={c} className={ok ? '' : 'miss'}><span className={'ts-chip ' + (ok ? 'yes' : 'no')}>{c}</span>{t}</li>
+              ))}
+            </ul>
           </div>
         </div>
 
-        <div className="it-note it-gap" data-r>
-          <div className="mono it-k dim">NOTE</div>
-          <p>One participant, so this is a direction, not proof. Quotes are translated from Korean; times are from the session recording. He had done round 1, so Tasks 1 and 2 felt familiar and he didn’t notice the changes.</p>
+        <div className="ts-iter">
+          <div data-r>
+            <Eyebrow label="ITERATE" />
+            <h2 className="ts-h2">So we fixed the start first</h2>
+          </div>
+          <div className="ts-ba">
+            <figure data-r>
+              <div className="ts-bap"><img src={V6 + 'task1.jpg'} alt="Before: the Mapping screen shows the game map with a small tip, “Review the details of each structure and edit anything that looks wrong”" loading="lazy" data-gzoom="true" /></div>
+              <figcaption><b>BEFORE</b>A tip on what to do, but not why</figcaption>
+            </figure>
+            <figure data-r style={d(1)}>
+              <div className="ts-bap after"><img src={V6 + 'after.jpg'} alt="After: a purpose guide on the Mapping screen, “Step 1 · Check your game map. AI read your game and drew its stages. Check they’re right. We’ll track and analyse along this map.” with a Looks right button" loading="lazy" data-gzoom="true" /></div>
+              <figcaption><b className="on">AFTER</b>Says why: this map decides what we track (redrawn)</figcaption>
+            </figure>
+          </div>
+        </div>
+
+        <div className="ts-follow">
+          <div data-r>
+            <h3 className="ts-qt">Then we asked again: is this data really needed?</h3>
+            <p className="ts-sub">Follow-up test with P2, a hobby game creator in his mid-30s. He sorted all 18 metrics from the dashboard.</p>
+          </div>
+          <div className={'ts-frow' + (FOLLOW_GIF ? '' : ' solo')}>
+            {FOLLOW_GIF && (
+              <div className="ts-gif" data-r>
+                <img src={FOLLOW_GIF} alt="Follow-up session with P2, his face covered: he sorts the dashboard’s 18 metrics into must-have, nice to have and not needed" loading="lazy" />
+              </div>
+            )}
+            <div className="ts-sort" data-r style={d(1)}>
+              <div className="ts-counts">
+                <div><b className="blue">16</b><span>must-have</span></div>
+                <div><b>2</b><span>nice to have</span></div>
+                <div><b>0</b><span>not needed</span></div>
+              </div>
+              <div className="ts-take">
+                <div className="ts-tk">WHAT IT MEANS FOR GAMECOVE</div>
+                <p>Not a blank board to build. A finished screen he can switch on, off, or add to.</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -395,12 +450,8 @@ export function Reflection() {
           <img className="rf-photo" data-r style={d(1)} src={P.reflection} alt="Harbor talking through GameCove with her teammate, the research sticky notes on the wall behind them" loading="lazy" />
         </div>
         <div className="rf-next mt-80" data-r>
-          <div className="rf-k">Next steps</div>
-          {[
-            'Test the fixes with one more user on a real desktop screen, and compare before and after.',
-            'Test with adult creators from small studios.',
-            'After launch, track setup completion, AI agent use and weekly return visits.',
-          ].map((t, i) => <p key={i}><span>0{i + 1}</span>{t}</p>)}
+          <h3 className="rf-nh">Next steps</h3>
+          <p className="rf-np">I'll test with adult game creators from small studios and track setup, AI agent use and weekly returns after launch.</p>
         </div>
       </div>
     </section>
@@ -438,69 +489,86 @@ export const PARTS_CSS = `
 .gc4 .fs.on .fs-sk { gap: 24px; }
 .gc4 .fs.on .fs-box { box-shadow: inset 0 0 0 1px var(--line); }
 
-/* test · iterate */
+/* test · iterate (Figma 08 Test + Iterate v3) */
 .gc4 .it { padding-bottom: 120px; }
-.gc4 .it-head { max-width: 820px; }
-.gc4 .it-gap { margin-top: 120px; }
-.gc4 .it-k { font-size: 16px; line-height: 24px; font-weight: 500; letter-spacing: .08em; color: #6FB2FA; }
-.gc4 .it-k.sky { color: #B3D1FF; } .gc4 .it-k.dim { color: var(--dim); }
-.gc4 .it-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
-.gc4 .it-pair.solo { grid-template-columns: minmax(0, 1fr); }
-.gc4 .it-pair.solo .it-take { min-height: 0; }
-.gc4 .it-shot img { width: 100%; aspect-ratio: 744 / 504; object-fit: cover; border: 1px solid var(--line); background: #fff; }
-.gc4 .it-shot figcaption { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px; font-size: 16px; line-height: 24px; color: var(--mute); }
-.gc4 .it-shot figcaption b { font-weight: 500; letter-spacing: .08em; color: var(--dim); }
-.gc4 .it-shot figcaption b.on { color: #6FB2FA; }
-.gc4 .it-round { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
-.gc4 .it-round .it-k { letter-spacing: .12em; }
-.gc4 .it-tag { padding: 8px 16px; border: 1px solid #3898F8; background: #1A3050; font-size: 16px; line-height: 24px; color: #B3D1FF; }
-.gc4 .it-vid { position: relative; height: 100%; min-height: 416px; background: #0C0C0F; border: 1px solid var(--line); overflow: hidden; }
-.gc4 .it-vid button { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; width: 100%; padding: 0; border: 0; background: none; cursor: pointer; }
-.gc4 .it-vid .play { position: relative; display: flex; align-items: center; justify-content: center; width: 72px; height: 72px; border-radius: 50%; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.4); color: #F2F0EC; transition: transform .3s ease, background-color .3s ease; }
-.gc4 .it-vid button:hover .play { transform: scale(1.06); background: rgba(255,255,255,.2); }
-.gc4 .it-vid button:focus-visible { outline: 2px solid #B3D1FF; outline-offset: -4px; }
-.gc4 .it-vid .lab { position: relative; font-size: 16px; line-height: 24px; color: var(--mute); }
-.gc4 .it-vid iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
-.gc4 .it-take { display: flex; flex-direction: column; justify-content: center; gap: 16px; padding: 40px; border: 1px solid #3898F8; background: #1A3050; }
-.gc4 .it-take-h { font-size: 32px; line-height: 40px; font-weight: 500; letter-spacing: -0.01em; color: var(--sand); }
-.gc4 .it-take-p { font-size: 18px; line-height: 28px; color: #C9D6EA; }
-.gc4 .it-finds { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; }
-.gc4 .it-find { display: flex; flex-direction: column; gap: 16px; padding: 32px; background: var(--card); border: 1px solid var(--line); }
-.gc4 .it-find .q { font-size: 20px; line-height: 28px; font-weight: 500; color: var(--sand); }
-.gc4 .it-find .t { font-size: 16px; line-height: 24px; color: var(--dim); }
-.gc4 .it-find hr { width: 100%; height: 1px; margin: 0; border: 0; background: var(--line); }
-.gc4 .it-find .a { font-size: 18px; line-height: 28px; color: var(--mute); }
-.gc4 .cs-stats { display: flex; flex-wrap: wrap; gap: 40px; }
-.gc4 .cs-stats div { display: flex; align-items: baseline; gap: 8px; }
-.gc4 .cs-stats b { font-size: 40px; line-height: 48px; font-weight: 700; color: var(--sand); }
-.gc4 .cs-stats span { font-size: 18px; line-height: 28px; color: var(--mute); }
-.gc4 .cs-top { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
-.gc4 .cs-card { display: flex; flex-direction: column; gap: 16px; padding: 32px; background: var(--card); border: 1px solid var(--line); }
-.gc4 .cs-bar { display: block; width: 32px; height: 4px; background: #FFE299; }
-.gc4 .cs-rank { display: flex; gap: 16px; font-size: 16px; line-height: 24px; }
-.gc4 .cs-rank b { font-weight: 500; letter-spacing: .08em; color: #FFE299; }
-.gc4 .cs-rank span { color: var(--dim); }
-.gc4 .cs-t { font-size: 20px; line-height: 28px; font-weight: 500; color: var(--sand); }
-.gc4 .cs-q { font-size: 18px; line-height: 28px; color: var(--mute); }
-.gc4 .cs-sorted { display: grid; grid-template-columns: minmax(0, 960fr) minmax(0, 536fr); gap: 24px; align-items: start; }
-.gc4 .cs-side { display: flex; flex-direction: column; gap: 24px; }
-.gc4 .cs-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 16px; font-size: 16px; line-height: 24px; }
-.gc4 .cs-head b { font-weight: 500; letter-spacing: .08em; color: var(--sand); }
-.gc4 .cs-head span { color: var(--dim); }
-.gc4 .cs-tier { display: flex; flex-direction: column; gap: 8px; }
-.gc4 .cs-tl { font-size: 16px; line-height: 24px; letter-spacing: .06em; color: var(--dim); }
-.gc4 .cs-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.gc4 .cs-chips.col { flex-direction: column; align-items: flex-start; }
-.gc4 .cs-chip { display: inline-flex; align-items: baseline; gap: 8px; padding: 8px 16px; background: #1F1F24; border: 1px solid var(--line); font-size: 16px; line-height: 24px; color: var(--sand); }
-.gc4 .cs-chip b { font-weight: 500; letter-spacing: .08em; color: var(--dim); }
-.gc4 .cs-empty { display: flex; flex-direction: column; gap: 8px; padding: 32px; border: 1px dashed var(--line); }
-.gc4 .cs-empty p { font-size: 18px; line-height: 28px; color: var(--mute); }
-.gc4 .cs-missing { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
-.gc4 .cs-missing div { display: flex; flex-direction: column; gap: 8px; padding: 24px; background: #FFE299; }
-.gc4 .cs-missing b { font-size: 18px; line-height: 28px; font-weight: 700; color: #1B1B1F; }
-.gc4 .cs-missing p { font-size: 16px; line-height: 24px; color: #3A3524; }
-.gc4 .it-note { display: flex; flex-direction: column; gap: 8px; padding: 32px; background: var(--card); border: 1px solid var(--line); }
-.gc4 .it-note p { font-size: 18px; line-height: 28px; color: var(--mute); }
+.gc4 .ts-head { display: flex; flex-direction: column; gap: 24px; }
+.gc4 .ts-h2 { max-width: 960px; font-size: 48px; line-height: 56px; font-weight: 400; letter-spacing: -0.96px; color: var(--sand); }
+.gc4 .ts-lead { max-width: 720px; font-size: 20px; line-height: 32px; color: #C9CAD0; }
+.gc4 .ts-qt { font-size: 32px; line-height: 40px; font-weight: 400; letter-spacing: -0.32px; color: var(--sand); }
+.gc4 .ts-sub { max-width: 720px; font-size: 18px; line-height: 28px; color: #C9CAD0; }
+.gc4 .ts-big { font-size: 56px; line-height: 64px; font-weight: 400; letter-spacing: -1.12px; }
+.gc4 .ts-big.no { color: #E28B8B; } .gc4 .ts-big.yes { color: #84D48E; } .gc4 .ts-big.blue { color: #3898F8; }
+.gc4 .ts-chip { display: inline-flex; align-items: center; padding: 4px 12px; border: 1px solid; font-size: 16px; line-height: 24px; font-weight: 700; letter-spacing: .08em; white-space: nowrap; }
+.gc4 .ts-chip.no { background: rgba(226,139,139,.12); border-color: #E28B8B; color: #E28B8B; }
+.gc4 .ts-chip.yes { background: rgba(132,212,142,.12); border-color: #84D48E; color: #84D48E; }
+
+/* the 3 questions: text left, screen panel right; stacking cards on wide, tall screens */
+.gc4 .ts-stack { margin-top: 120px; }
+.gc4 .ts-q + .ts-q { margin-top: 80px; }
+.gc4 .ts-card { display: grid; grid-template-columns: 448px minmax(0, 1fr); gap: 48px; align-items: start; background: var(--bg); }
+.gc4 .ts-text { display: flex; flex-direction: column; gap: 24px; }
+.gc4 .ts-n { font-size: 16px; line-height: 24px; color: #3898F8; }
+.gc4 .ts-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.gc4 .ts-task { font-size: 16px; line-height: 24px; letter-spacing: .96px; color: var(--dim); }
+.gc4 .ts-find { display: flex; flex-direction: column; gap: 8px; }
+.gc4 .ts-find p { font-size: 18px; line-height: 28px; color: #C9CAD0; }
+.gc4 .ts-panel { padding: 32px; background: #202026; }
+.gc4 .ts-screen { position: relative; width: 100%; border: 1px solid #34343C; }
+.gc4 .ts-screen img { width: 100%; height: 100%; object-fit: cover; }
+.gc4 .ts-pin { position: absolute; width: 4.545%; aspect-ratio: 1; border: 3px solid; }
+.gc4 .ts-pin.red { border-color: #E28B8B; background: rgba(226,139,139,.18); }
+.gc4 .ts-pin.blue { border-color: #3898F8; background: rgba(56,152,248,.18); }
+.gc4 .ts-call { position: absolute; padding: 8px 16px; border: 1px solid; background: rgba(17,17,20,.94); font-size: 16px; line-height: 24px; color: var(--sand); white-space: nowrap; }
+.gc4 .ts-call.red { border-color: #E28B8B; } .gc4 .ts-call.blue { border-color: #3898F8; }
+.gc4 .ts-stack.on .ts-q { position: sticky; top: calc(max(32px, 50vh - 328px) + var(--i) * 16px); }
+.gc4 .ts-stack.on .ts-card { transform-origin: 50% 0; transform: scale(calc(1 - var(--k, 0) * .05)); filter: brightness(calc(1 - var(--k, 0) * .45)); will-change: transform, filter; }
+
+/* numbers */
+.gc4 .ts-nums { display: grid; grid-template-columns: minmax(0, 880fr) minmax(0, 528fr); gap: 32px; align-items: start; margin-top: 120px; }
+.gc4 .ts-box { display: flex; flex-direction: column; gap: 24px; padding: 40px; background: #17171B; border: 1px solid #26262C; }
+.gc4 .ts-bt { font-size: 24px; line-height: 32px; font-weight: 400; letter-spacing: -0.24px; color: var(--sand); }
+.gc4 .ts-bars { display: flex; flex-direction: column; gap: 16px; margin: 0; padding: 0; list-style: none; }
+.gc4 .ts-bars li { display: grid; grid-template-columns: 232px minmax(0, 440px) auto; gap: 16px; align-items: center; }
+.gc4 .ts-pn { display: flex; align-items: center; gap: 8px; font-size: 16px; line-height: 24px; color: var(--sand); }
+.gc4 .ts-pn img { width: 16px; height: 16px; flex: none; }
+.gc4 .ts-pd { font-size: 16px; line-height: 24px; color: var(--dim); }
+.gc4 .ts-track { position: relative; height: 16px; background: #242A32; }
+.gc4 .ts-track i { position: absolute; left: 0; top: 0; bottom: 0; background: #3898F8; }
+.gc4 .ts-track i.pilot { background: #8A8D96; }
+.gc4 .ts-track b { position: absolute; left: 89.77%; top: -6px; width: 2px; height: 28px; background: rgba(242,240,236,.8); }
+.gc4 .ts-v { font-size: 16px; line-height: 24px; color: var(--sand); }
+.gc4 .ts-foot { font-size: 16px; line-height: 24px; color: var(--dim); }
+.gc4 .ts-probs { display: flex; flex-direction: column; gap: 16px; margin: 0; padding: 0; list-style: none; }
+.gc4 .ts-probs li { display: flex; align-items: center; gap: 16px; font-size: 18px; line-height: 28px; color: var(--sand); }
+.gc4 .ts-probs li.miss { color: var(--dim); }
+
+/* iterate: before / after */
+.gc4 .ts-iter { display: flex; flex-direction: column; gap: 48px; margin-top: 120px; }
+.gc4 .ts-iter .ts-h2 { margin-top: 24px; }
+.gc4 .ts-ba { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
+.gc4 .ts-ba figure { display: flex; flex-direction: column; gap: 16px; }
+.gc4 .ts-bap { padding: 24px; background: #202026; }
+.gc4 .ts-bap img { width: 100%; aspect-ratio: 656 / 441; object-fit: cover; border: 1px solid #34343C; }
+.gc4 .ts-bap.after img { border: 2px solid #3898F8; }
+.gc4 .ts-ba figcaption { display: flex; flex-wrap: wrap; gap: 12px; font-size: 16px; line-height: 24px; color: #C9CAD0; }
+.gc4 .ts-ba figcaption b { font-weight: 700; letter-spacing: .08em; color: var(--dim); }
+.gc4 .ts-ba figcaption b.on { color: #3898F8; }
+
+/* follow-up test: session GIF + card sort */
+.gc4 .ts-follow { display: flex; flex-direction: column; gap: 48px; margin-top: 120px; }
+.gc4 .ts-follow .ts-sub { margin-top: 16px; }
+.gc4 .ts-frow { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; align-items: start; }
+.gc4 .ts-gif { background: #202026; border: 1px solid #34343C; }
+.gc4 .ts-gif img { width: 100%; aspect-ratio: 704 / 343; object-fit: cover; }
+.gc4 .ts-sort { display: flex; flex-direction: column; gap: 24px; }
+.gc4 .ts-counts { display: flex; flex-wrap: wrap; gap: 48px; }
+.gc4 .ts-counts div { display: flex; flex-direction: column; }
+.gc4 .ts-counts b { font-size: 56px; line-height: 64px; font-weight: 400; letter-spacing: -1.12px; color: var(--sand); }
+.gc4 .ts-counts b.blue { color: #3898F8; }
+.gc4 .ts-counts span { font-size: 16px; line-height: 24px; color: #C9CAD0; }
+.gc4 .ts-take { display: flex; flex-direction: column; gap: 12px; padding: 32px; background: #1A3050; }
+.gc4 .ts-tk { font-size: 16px; line-height: 24px; font-weight: 700; letter-spacing: .08em; color: #B3D1FF; }
+.gc4 .ts-take p { max-width: 640px; font-size: 28px; line-height: 40px; color: var(--sand); }
 
 /* final design tour (GameCoveV4.tsx): "Live prototype" as a square box button on the left, tabs on the right, no arrow */
 .gc4 .g-final .g-tour-top { justify-content: space-between; align-items: center; }
@@ -518,28 +586,32 @@ export const PARTS_CSS = `
 .gc4 .rf-take { display: flex; flex-direction: column; gap: 16px; }
 .gc4 .rf-take p { font-size: 18px; line-height: 28px; color: #3D3E44; }
 .gc4 .rf-photo { width: 100%; aspect-ratio: 514 / 343; object-fit: cover; }
-.gc4 .rf-k { padding-bottom: 16px; font-size: 16px; line-height: 24px; font-weight: 500; color: #6B6D76; }
-.gc4 .rf-next p { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 24px; padding: 12px 0; font-size: 22px; line-height: 32px; font-weight: 500; color: #111114; }
-.gc4 .rf-next span { color: #9A9CA3; }
+.gc4 .rf-next { display: flex; flex-direction: column; gap: 16px; }
+.gc4 .rf-nh { font-size: 48px; line-height: normal; font-weight: 400; color: #111114; }
+.gc4 .rf-np { max-width: 808px; font-size: 18px; line-height: 28px; color: #3D3E44; }
 
 /* round shapes that carry meaning stay round */
-.gc .gc4 .it-vid .play { border-radius: 50% !important; }
+.gc .gc4 .ts-pin { border-radius: 50% !important; }
 
 @media (max-width: 1280px) {
-  .gc4 .it-finds { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .gc4 .cs-sorted { grid-template-columns: minmax(0, 1fr); }
+  .gc4 .ts-card { grid-template-columns: 360px minmax(0, 1fr); gap: 40px; }
+  .gc4 .ts-nums { grid-template-columns: minmax(0, 1fr); }
   .gc4 .rf-top { gap: 64px; }
 }
 @media (max-width: 1023px) {
-  .gc4 .fs-intro, .gc4 .it-pair, .gc4 .cs-top, .gc4 .cs-missing, .gc4 .rf-top { grid-template-columns: minmax(0, 1fr); gap: 24px; }
-  .gc4 .it-vid { min-height: 0; aspect-ratio: 16 / 9; height: auto; }
-  .gc4 .it-gap { margin-top: 88px; }
+  .gc4 .fs-intro, .gc4 .ts-card, .gc4 .ts-ba, .gc4 .ts-frow, .gc4 .rf-top { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .gc4 .ts-stack, .gc4 .ts-nums, .gc4 .ts-iter, .gc4 .ts-follow { margin-top: 88px; }
+  .gc4 .ts-h2 { font-size: 40px; line-height: 48px; }
 }
 @media (max-width: 700px) {
-  .gc4 .it-finds { grid-template-columns: minmax(0, 1fr); }
-  .gc4 .it-take, .gc4 .it-find, .gc4 .cs-card, .gc4 .cs-empty, .gc4 .it-note { padding: 24px; }
-  .gc4 .it-take-h { font-size: 24px; line-height: 32px; }
-  .gc4 .rf-next p { grid-template-columns: 32px minmax(0, 1fr); gap: 16px; font-size: 18px; line-height: 28px; }
+  .gc4 .ts-panel, .gc4 .ts-box, .gc4 .ts-take { padding: 24px; }
+  .gc4 .ts-bap { padding: 16px; }
+  .gc4 .ts-call { display: none; }
+  .gc4 .ts-bars li { grid-template-columns: minmax(0, 1fr) auto; }
+  .gc4 .ts-who { grid-column: 1 / -1; }
+  .gc4 .ts-h2, .gc4 .rf-nh { font-size: 32px; line-height: 40px; }
+  .gc4 .ts-big, .gc4 .ts-counts b { font-size: 48px; line-height: 56px; }
+  .gc4 .ts-take p { font-size: 24px; line-height: 32px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .gc4 .fs-lines path, .gc4 .fs .nd { transition: none !important; }

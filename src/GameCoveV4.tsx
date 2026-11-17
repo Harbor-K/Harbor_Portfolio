@@ -11,7 +11,7 @@ import { DsLayers, DS_CSS } from './GameCoveDS'
  *
  * Scroll interactions follow the Trust Bank page:
  *  - soft block reveal as each block enters (1.2s, staggered)
- *  - numbers count up as they scroll in (impact, design-system stats, SUS)
+ *  - Impact numbers stay fixed (v140, Harbor: no count-up)
  *  - HMW questions bounce in one after another
  *  - Final design: pinned tour of the live prototype — tabs 01–03 across the top, each scroll step dims the screen,
  *    lights one area and shows a short caption; then one live screen with its design tokens labelled
@@ -108,22 +108,6 @@ function useOnScroll(fn: () => void) {
     return () => { if (raf) cancelAnimationFrame(raf); removeEventListener('scroll', on); removeEventListener('resize', on) }
   }, [])
 }
-
-/** 0 → 1 as the element scrolls from the bottom of the screen up to its middle (eased) */
-function useCountProgress<T extends HTMLElement>() {
-  const ref = useRef<T>(null)
-  const [p, setP] = useState(0)
-  useOnScroll(() => {
-    if (reducedMotion()) { setP(1); return }
-    const el = ref.current; if (!el) return
-    const t = clamp((innerHeight - el.getBoundingClientRect().top) / (innerHeight * 0.5))
-    setP(1 - (1 - t) * (1 - t))
-  })
-  return [ref, p] as const
-}
-
-/** counts up with p, keeping the target's decimals (85.5) */
-const count = (target: number, p: number) => (target * p).toFixed((String(target).split('.')[1] || '').length)
 
 /** true once the element has scrolled into view */
 function useShownOnce<T extends HTMLElement>(threshold = 0.3) {
@@ -283,7 +267,6 @@ function Hero() {
 /* ---------- overview ---------- */
 
 function Overview() {
-  const [ref, p] = useCountProgress<HTMLDivElement>()
   return (
     <section className="g-sec" data-chapter="Overview">
       <div className="g-wrap">
@@ -298,10 +281,10 @@ function Overview() {
         </div>
         <div className="g-ov" data-r>
           <h3 className="g-ov-k">Impact</h3>
-          <div className="g-stats" ref={ref}>
-            <div><div className="g-num">{count(85.5, p)}</div><div className="g-cap">Ease of use · 5 testers (A+)</div></div>
-            <div><div className="g-num">{Math.round(2 * p)} of 3</div><div className="g-cap">Hidden test problems found</div></div>
-            <div><div className="g-num">{Math.round(3 * p)} of 3</div><div className="g-cap">Main testers suggested a fix</div></div>
+          <div className="g-stats">
+            <div><div className="g-num">85.5</div><div className="g-cap">Ease of use · 5 testers (A+)</div></div>
+            <div><div className="g-num">2 of 3</div><div className="g-cap">Hidden test problems found</div></div>
+            <div><div className="g-num">3 of 3</div><div className="g-cap">Main testers suggested a fix</div></div>
           </div>
         </div>
       </div>

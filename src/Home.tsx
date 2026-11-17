@@ -60,7 +60,7 @@ const PROJECTS: Project[] = [
   },
   {
     title: 'GameCove', sub: 'An AI game-analytics dashboard.', href: '#/gamecove',
-    logo: svgUri(GAMECOVE_LOGO_SVG), gif: GIFS.gameCoveRow, wip: true,
+    logo: svgUri(GAMECOVE_LOGO_SVG), gif: GIFS.gameCoveRow, // v146 (Harbor, Nov 17 21:13): no longer "Coming soon"
   },
   {
     title: 'UTrada', sub: 'Product design for a trading platform.', href: '#/utrada',

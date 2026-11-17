@@ -42,16 +42,24 @@ import React, { useEffect, useRef, useState } from 'react'
  * scrolling): the card underneath simply fades out as the next one slides over it, so only one card shows at a time
  * and nothing peeks out. A little more room between the text and the screenshot (48 → 80). Before / After read
  * AS IS / TO BE.
+ *
+ * v146 (Harbor, Nov 17 21:13): the team photo at the end of Ideate is replaced by Harbor's drawing clip (IDEATE.mov:
+ * her sketching on the iPad next to the wireframe being drawn), played like a GIF (muted, looping, no controls; 3.3 MB
+ * MP4). Reflection's photo is her new takeaway shot (TAKEAWAY.jpg).
  */
 
 const V5 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/gamecove/v5/'
 const P = {
   sketch: [1, 2, 3, 4, 5, 6, 7, 8].map(n => V5 + `sketch-en-${n}.webp`), // Figma 901:1629, English redraws
   photo: V5 + 'photo.webp',
-  reflection: V5 + 'reflection-photo.webp',
+  reflection: V5 + 'reflection-photo.webp', // (v126–v145)
 }
 // v140: Figma "08 Test + Iterate · v3" screens, the redrawn Mapping guide and the tester flags
 const V6 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/gamecove/v6/'
+// v146: Harbor's drawing clip (end of Ideate, 1520×482, 38s loop) and her new Reflection photo (1264×843)
+const IDEATE_VIDEO = V6 + 'ideate.mp4'
+const IDEATE_POSTER = V6 + 'ideate-poster.jpg'
+const TAKEAWAY = V6 + 'takeaway.jpg'
 
 const reducedMotion = () => typeof window !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches
 const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v))
@@ -282,11 +290,30 @@ export function Ideate() {
         <div className="mt-40"><FlowSketch fi={0} /></div>
         <div className="mt-80"><FlowSketch fi={1} /></div>
 
-        {/* stand-in until Harbor's drawing video */}
-        <img className="g-photo5 mt-80" data-r src={P.photo} alt="Harbor talking through the GameCove sketches with her teammate" loading="lazy" />
+        {/* v146: Harbor's drawing clip, GIF-like */}
+        <div className="g-ideate-clip mt-80" data-r>
+          <LoopClip src={IDEATE_VIDEO} poster={IDEATE_POSTER}
+            label="Harbor sketching GameCove's lo-fi wireframes on an iPad: the dashboard layout, the menu and the chart cards take shape, then the board of all the sketches" />
+        </div>
       </div>
     </section>
   )
+}
+
+/** v146: a clip that plays like a GIF (muted, looping, no controls) while it is on screen; the poster stays with reduced
+ * motion. React does not write the muted attribute, so it is set and started here (same as FollowClip below). */
+function LoopClip({ src, poster, label }: { src: string; poster: string; label: string }) {
+  const ref = useRef<HTMLVideoElement>(null)
+  useEffect(() => {
+    const v = ref.current; if (!v) return
+    v.muted = true
+    if (reducedMotion()) return
+    if (!('IntersectionObserver' in window)) { v.play().catch(() => {}); return }
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) v.play().catch(() => {}); else v.pause() }, { threshold: 0.2 })
+    io.observe(v)
+    return () => io.disconnect()
+  }, [])
+  return <video ref={ref} src={src} poster={poster} muted loop playsInline preload="metadata" aria-label={label} />
 }
 
 /* ---------- test · iterate (Figma "08 Test + Iterate · v3", 1773:13708) ---------- */
@@ -524,7 +551,7 @@ export function Reflection() {
               ].map((t, i) => <p key={i}>{t}</p>)}
             </div>
           </div>
-          <img className="rf-photo" data-r style={d(1)} src={P.reflection} alt="Harbor talking through GameCove with her teammate, the research sticky notes on the wall behind them" loading="lazy" />
+          <img className="rf-photo" data-r style={d(1)} src={TAKEAWAY} alt="Harbor walking her teammate through the GameCove design file on her laptop" loading="lazy" />
         </div>
         <div className="rf-next mt-80" data-r>
           <h3 className="rf-nh">Next steps</h3>
@@ -565,6 +592,9 @@ export const PARTS_CSS = `
 .gc4 .fs.on .fl-row .nd { padding: 12px 14px; }
 .gc4 .fs.on .fs-sk { gap: 24px; }
 .gc4 .fs.on .fs-box { box-shadow: inset 0 0 0 1px var(--line); }
+/* v146: the drawing clip at the end of Ideate, full width, square corners */
+.gc4 .g-ideate-clip { background: #111114; }
+.gc4 .g-ideate-clip video { display: block; width: 100%; aspect-ratio: 1520 / 482; object-fit: cover; }
 
 /* define: insight icon on its disc (v142) — the icon sits a little into the disc and bobs */
 .gc4 .in-node { position: relative; width: 80px; height: 72px; }

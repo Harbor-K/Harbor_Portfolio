@@ -208,7 +208,7 @@ const HDR_CSS = `
 type MenuItem = { name: string; sub: string; href: string; gif?: string; img?: string; plain?: boolean; wip?: boolean }
 const MENU: MenuItem[] = [
   { name: 'Trust Bank', sub: 'Rewards UX revamp', href: '#/trust-bank', gif: GIFS.trustBankMenu },
-  { name: 'GameCove', sub: 'AI analytics dashboard', href: '#/gamecove', gif: GIFS.gameCoveMenu, wip: true },
+  { name: 'GameCove', sub: 'AI analytics dashboard', href: '#/gamecove', gif: GIFS.gameCoveMenu }, // v146: no longer "Coming soon"
   { name: 'UTrada', sub: 'Trading platform design system', href: '#/utrada', gif: GIFS.utradaMenu, wip: true },
   { name: 'ETO Markets', sub: 'CRM dashboard', href: '#/eto-markets', gif: GIFS.etoMenu, wip: true },
 ]

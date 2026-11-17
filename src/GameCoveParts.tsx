@@ -37,6 +37,11 @@ import React, { useEffect, useRef, useState } from 'react'
  *    7585, 7595): the disc stays put and the icon sits a little lower, into the disc, and bobs up and down
  *  - Test · Iterate: the section's background is the old panel colour (#202026) so it stands apart from the light
  *    sections around it, and the screens drop their panels: each screenshot runs the full column, with a thin edge
+ *
+ * v143 (Harbor, Nov 17 15:06): the question cards no longer dim or shrink as they stack (no colour change while
+ * scrolling): the card underneath simply fades out as the next one slides over it, so only one card shows at a time
+ * and nothing peeks out. A little more room between the text and the screenshot (48 → 80). Before / After read
+ * AS IS / TO BE.
  */
 
 const V5 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/gamecove/v5/'
@@ -349,7 +354,8 @@ function FollowClip() {
   )
 }
 
-/** stacking cards: on wide, tall screens each question card sticks and the next one slides up over it */
+/** stacking cards: on wide, tall screens each question card sticks and the next one slides up over it while the one
+ * underneath fades out (v143: no dimming or shrinking) */
 function useStack() {
   const ref = useRef<HTMLDivElement>(null)
   const [on, setOn] = useState(false)
@@ -370,7 +376,8 @@ function useStack() {
         const nx = cards[i + 1]
         if (!nx) { c.style.setProperty('--k', '0'); return }
         const a = c.getBoundingClientRect(), b = nx.getBoundingClientRect()
-        c.style.setProperty('--k', String(clamp(1 - (b.top - a.top) / (a.height + 80)).toFixed(3)))
+        const k = clamp(1 - (b.top - a.top) / (a.height + 80)) // 0 = next card still below, 1 = next card on top
+        c.style.setProperty('--k', clamp((k - 0.3) / 0.5).toFixed(3)) // fade out between 30% and 80% of the way
       })
     }
     const go = () => { if (!raf) raf = requestAnimationFrame(run) }
@@ -462,12 +469,12 @@ export function Iterate() {
           </div>
           <div className="ts-ba">
             <figure data-r>
-              <div className="ts-bap"><img src={V6 + 'task1.jpg'} alt="Before: the Mapping screen shows the game map with a small tip, “Review the details of each structure and edit anything that looks wrong”" loading="lazy" /></div>
-              <figcaption><b>BEFORE</b>A tip on what to do, but not why</figcaption>
+              <div className="ts-bap"><img src={V6 + 'task1.jpg'} alt="As is: the Mapping screen shows the game map with a small tip, “Review the details of each structure and edit anything that looks wrong”" loading="lazy" /></div>
+              <figcaption><b>AS IS</b>A tip on what to do, but not why</figcaption>
             </figure>
             <figure data-r style={d(1)}>
-              <div className="ts-bap after"><img src={V6 + 'after.jpg'} alt="After: a purpose guide on the Mapping screen, “Step 1 · Check your game map. AI read your game and drew its stages. Check they’re right. We’ll track and analyse along this map.” with a Looks right button" loading="lazy" /></div>
-              <figcaption><b className="on">AFTER</b>Says why: this map decides what we track (redrawn)</figcaption>
+              <div className="ts-bap after"><img src={V6 + 'after.jpg'} alt="To be: a purpose guide on the Mapping screen, “Step 1 · Check your game map. AI read your game and drew its stages. Check they’re right. We’ll track and analyse along this map.” with a Looks right button" loading="lazy" /></div>
+              <figcaption><b className="on">TO BE</b>Says why: this map decides what we track (redrawn)</figcaption>
             </figure>
           </div>
         </div>
@@ -585,7 +592,7 @@ export const PARTS_CSS = `
 /* the 3 questions: text left, screen panel right; stacking cards on wide, tall screens */
 .gc4 .ts-stack { margin-top: 120px; }
 .gc4 .ts-q + .ts-q { margin-top: 80px; }
-.gc4 .ts-card { display: grid; grid-template-columns: 448px minmax(0, 1fr); gap: 48px; align-items: start; background: var(--bg); }
+.gc4 .ts-card { display: grid; grid-template-columns: 448px minmax(0, 1fr); gap: 80px; align-items: start; background: var(--bg); }
 .gc4 .ts-text { display: flex; flex-direction: column; gap: 24px; }
 .gc4 .ts-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .gc4 .ts-task { font-size: 16px; line-height: 24px; letter-spacing: .96px; color: var(--dim); }
@@ -607,7 +614,7 @@ export const PARTS_CSS = `
 .gc4 .ts-call.red { border-color: #E28B8B; } .gc4 .ts-call.blue { border-color: #3898F8; }
 /* v141: every card sticks at the same top, so no slice of the card underneath (its number or title) peeks out */
 .gc4 .ts-stack.on .ts-q { position: sticky; top: max(32px, calc(50vh - 328px)); }
-.gc4 .ts-stack.on .ts-card { transform-origin: 50% 0; transform: scale(calc(1 - var(--k, 0) * .05)); filter: brightness(calc(1 - var(--k, 0) * .45)); will-change: transform, filter; }
+.gc4 .ts-stack.on .ts-card { opacity: calc(1 - var(--k, 0)); will-change: opacity; }
 
 /* numbers */
 .gc4 .ts-nums { display: grid; grid-template-columns: minmax(0, 880fr) minmax(0, 528fr); gap: 32px; align-items: start; margin-top: 120px; }

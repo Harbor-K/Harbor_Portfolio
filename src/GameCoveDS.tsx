@@ -26,6 +26,15 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
  *    points to the Lobby node), so every group is on the left, level with its spot, and the dashed line is short
  *  - no group can be skipped by a fast scroll: the shown step follows the scroll one step at a time and holds each
  *    group on screen for at least HOLD_MS; each screen also gets more scroll room (120vh instead of 90vh)
+ *
+ * v143 (Harbor Nov 17 15:06): 02 · TYPE goes back to the right for balance (left, right, left). Its line now points to
+ * the "Day 7 retention" card title on the right half of the Retention screen, so the line stays short.
+ *
+ * v144 (Harbor Nov 17 15:49, reference v7labs.com "Bring your own Knowledge"): the section picks up where the tour above
+ * ends. It is pulled up under the tour's last screen (margin -100vh) and stays invisible until it pins; at that moment
+ * it shows the tour's last screen (the AI agent on Overview), flat and in the same place, then, as you scroll on, that
+ * screen shrinks and tilts into the first plane of the stack (turning into Tracking on the way) while the heading
+ * fades in. Labels start once it has landed. Wide screens only, and not with reduced motion.
  */
 
 const F = 'https://raw.githubusercontent.com/Harbor-K/landing_page/main/gamecove/assets/v4/final/'
@@ -33,6 +42,9 @@ const V5 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/gam
 const LATO = '"Lato", sans-serif'
 const HOLD_MS = 1400
 const VH_PER_LAYER = 120
+const INTRO_VH = 100 // v144: scroll spent turning the tour's last screen into the stack
+const TOUR_LAST = F + 'agent.webp' // the tour's last screen (GameCoveV4.tsx TOUR, step 3 · A)
+const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
 
 // sw: a colour swatch · aa: an "Aa" type sample at this size · shape: a component outline (height, corners)
 type Tag = { k: string; v: string; sw?: string; aa?: number; shape?: { h: number; r: number } }
@@ -44,7 +56,7 @@ const LAYERS: Layer[] = [
     { k: 'border-node-0 · 1 · 2', v: 'Node outlines, 3 strengths', sw: 'rgba(255,255,255,.28)' },
     { k: 'bg-node-inset', v: 'Inside each node', sw: '#111114' },
   ] },
-  { name: 'Retention', kind: 'Type', src: V5 + 'retention.webp', alt: 'Retention: Day 1 retention line and the date-cohort table', side: 'l', at: [384, 101], tags: [
+  { name: 'Retention', kind: 'Type', src: V5 + 'retention.webp', alt: 'Retention: Day 1 retention line and the date-cohort table', side: 'r', at: [930, 195], tags: [
     { k: 'Lato 40 Bold', v: 'Page title · Retention', aa: 20 },
     { k: 'Lato 32 Bold', v: 'Key numbers · 6.0%', aa: 18 },
     { k: 'Lato 24 Bold', v: 'Card titles · Day 1 retention', aa: 16 },
@@ -89,6 +101,11 @@ export function DsLayers() {
   const [line, setLine] = useState<{ d: string; x: number; y: number } | null>(null)
   const [gTop, setGTop] = useState<number | null>(null)
   const [scale, setScale] = useState(1)
+  const pinRef = useRef<HTMLDivElement>(null)
+  const [intro, setIntro] = useState(1) // 0 = the flat tour screen, 1 = landed in the stack
+  const [live, setLive] = useState(false) // pinned (shown over the tour's last screen)
+  const [flat, setFlat] = useState<{ dx: number; dy: number; s: number } | null>(null)
+  const landed = intro >= 1
 
   // the scroll sets the target step; the first screen drops in when the section comes into view
   useEffect(() => {
@@ -98,10 +115,20 @@ export function DsLayers() {
       const el = outer.current; if (!el) return
       setScale(clamp((innerHeight - 340) / 520, 0.6, 1))
       const r = el.getBoundingClientRect()
-      if (r.top < innerHeight * 0.6) setInView(true)
-      const travel = el.offsetHeight - innerHeight
+      const wide = matchMedia('(min-width: 1024px)').matches && !reduced()
+      const introPx = wide ? innerHeight * INTRO_VH / 100 : 0
+      setLive(!wide || r.top <= 0.5)
+      if (wide) {
+        const t = clamp(-r.top / introPx)
+        setIntro(v => (Math.abs(v - t) < 0.002 ? v : t))
+        if (r.top <= 0.5) setInView(true)
+      } else {
+        setIntro(1)
+        if (r.top < innerHeight * 0.6) setInView(true)
+      }
+      const travel = el.offsetHeight - innerHeight - introPx
       if (travel <= 0) return
-      const s = Math.min(LAYERS.length - 1, Math.floor(clamp(-r.top / travel) * LAYERS.length))
+      const s = Math.min(LAYERS.length - 1, Math.floor(clamp((-r.top - introPx) / travel) * LAYERS.length))
       setTarget(v => (v === s ? v : s))
     }
     const on = () => { if (!raf) raf = requestAnimationFrame(run) }
@@ -109,6 +136,27 @@ export function DsLayers() {
     addEventListener('scroll', on, { passive: true }); addEventListener('resize', on)
     return () => { if (raf) cancelAnimationFrame(raf); removeEventListener('scroll', on); removeEventListener('resize', on) }
   }, [])
+
+  // where the tour's screen sits while pinned: the flat start of the first plane copies it (measured on resize)
+  useLayoutEffect(() => {
+    const measure = () => {
+      const st = stage.current
+      const sb = document.querySelector<HTMLElement>('.gc4 .g-final .g-stage-box')
+      const tour = sb?.closest<HTMLElement>('.g-tour')
+      if (!st || !sb || !tour) { setFlat(null); return }
+      const b = sb.getBoundingClientRect(), tr = tour.getBoundingClientRect(), sr = st.getBoundingClientRect()
+      const pin = pinRef.current?.getBoundingClientRect()
+      if (!pin) return
+      // the tour pin and this pin both sit at the top of the window when pinned: compare them in pin coordinates
+      const w = b.width, top = b.top - tr.top, left = b.left - tr.left
+      const cx = left + w / 2, cy = top + (w * 0.625) / 2
+      const ox = sr.left - pin.left + sr.width * 0.5, oy = sr.top - pin.top + sr.height * 0.58
+      setFlat({ dx: (cx - ox) / scale, dy: (cy - oy) / scale, s: w / (720 * scale) })
+    }
+    measure()
+    addEventListener('resize', measure)
+    return () => removeEventListener('resize', measure)
+  }, [scale])
 
   // the shown step walks to the target one step at a time, so a fast scroll never skips a group
   useEffect(() => {
@@ -143,16 +191,26 @@ export function DsLayers() {
     const on = () => { until = performance.now() + 200; cancelAnimationFrame(raf); loop() }
     addEventListener('resize', on)
     return () => { cancelAnimationFrame(raf); removeEventListener('resize', on) }
-  }, [step, inView, scale])
+  }, [step, inView, scale, landed])
 
   const L = LAYERS[step]
   const shown = inView || reduced()
+  const e = ease(intro)
+  // first plane while landing: from the flat tour screen to its place in the stack
+  const introStyle = (i: number): React.CSSProperties | undefined => {
+    if (i !== 0 || landed || !flat) return undefined
+    const k = 1 - e
+    return {
+      transform: `translate(${(flat.dx * k).toFixed(1)}px, ${(flat.dy * k).toFixed(1)}px) scale(${(flat.s * k + e).toFixed(4)}) rotateX(${(55 * e).toFixed(2)}deg) rotateZ(${(-38 * e).toFixed(2)}deg)`,
+      transition: 'none', boxShadow: `0 24px 48px rgba(17,17,20,${(0.16 * e).toFixed(3)})`,
+    }
+  }
   return (
     <>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@700&display=swap" />
-      <div ref={outer} className="ds-outer" style={{ height: `${LAYERS.length * VH_PER_LAYER + 60}vh` }}>
-        <div className="ds-pin">
-          <div className="ds-headline">
+      <div ref={outer} className="ds-outer" style={{ height: `${INTRO_VH + LAYERS.length * VH_PER_LAYER + 60}vh` }}>
+        <div className={'ds-pin' + (live ? ' live' : '')} ref={pinRef}>
+          <div className="ds-headline" style={landed ? undefined : { opacity: clamp((e - 0.2) / 0.6), transform: `translateY(${(1 - clamp((e - 0.2) / 0.6)) * 24}px)` }}>
             <div className="g-eyebrow sq-blue"><i aria-hidden="true" />{HEAD.eyebrow}</div>
             <h2 className="g-h2 mt-40">{HEAD.title}</h2>
             <p className="g-body mt-24">{HEAD.body}</p>
@@ -164,22 +222,23 @@ export function DsLayers() {
                   const on = shown && i <= step
                   return (
                     <div key={p.name} className={'ds-plane' + (on ? ' on' : '')}
-                      style={{ zIndex: i, transform: `translateY(${-(i * 64 + (on ? 0 : 160))}px) rotateX(55deg) rotateZ(-38deg)` }}>
+                      style={{ zIndex: i, transform: `translateY(${-(i * 64 + (on ? 0 : 160))}px) rotateX(55deg) rotateZ(-38deg)`, ...introStyle(i) }}>
                       <img src={p.src} alt="" loading="lazy" />
-                      <span className="ds-tab">{p.name}</span>
+                      {i === 0 && !landed && <img className="ds-from" src={TOUR_LAST} alt="" style={{ opacity: 1 - clamp((e - 0.35) / 0.4) }} />}
+                      <span className="ds-tab" style={i === 0 && !landed ? { opacity: clamp((e - 0.6) / 0.4) } : undefined}>{p.name}</span>
                       {i === step && <i ref={dot} className="ds-dot" style={{ left: `${(p.at[0] / 1440) * 100}%`, top: `${(p.at[1] / 900) * 100}%` }} />}
                     </div>
                   )
                 })}
               </div>
             </div>
-            {shown && (
+            {shown && landed && (
               <div key={step} ref={group} className={'ds-group ' + L.side} style={gTop === null ? undefined : { top: `${gTop}px` }}>
                 <div className="ds-k mono"><i />{label(step, L)}</div>
                 <ul>{L.tags.map(t => <TagRow key={t.k} t={t} />)}</ul>
               </div>
             )}
-            {shown && line && (
+            {shown && landed && line && (
               <svg className="ds-lines" aria-hidden="true">
                 <g key={step}>
                   <path d={line.d} />
@@ -217,8 +276,12 @@ export const DS_CSS = `
    (no strip of page showing under it) */
 .gc4 .g-final .g-tour { padding-bottom: 0; }
 
-.gc4 .ds-outer { position: relative; margin-top: 160px; }
-.gc4 .ds-pin { position: sticky; top: 0; height: 100vh; padding: 96px 0 40px; display: flex; flex-direction: column; }
+/* v144: pulled up under the tour's last screen; invisible until it pins, then it covers the tour exactly */
+.gc4 .ds-outer { position: relative; z-index: 3; margin-top: -100vh; }
+.gc4 .ds-pin { position: sticky; top: 0; height: 100vh; padding: 96px 0 40px; display: flex; flex-direction: column; background: #FAFAF9;
+  visibility: hidden; }
+.gc4 .ds-pin.live { visibility: visible; box-shadow: 0 0 0 100vmax #FAFAF9; clip-path: inset(0 -100vmax); } /* covers the page margins too */
+.gc4 .ds-plane img.ds-from { z-index: 1; }
 .gc4 .ds-headline { max-width: 760px; }
 
 .gc4 .ds-stage { position: relative; flex: 1; min-height: 0; }
@@ -268,13 +331,15 @@ export const DS_CSS = `
   .gc4 .ds-tag { width: 256px; }
 }
 @media (max-width: 1023px) {
-  .gc4 .ds-outer { display: none; }
+  .gc4 .ds-outer { display: none; margin-top: 0; }
   .gc4 .ds-flat { display: flex; flex-direction: column; gap: 24px; margin-top: 88px; }
   .gc4 .ds-flat img { width: 100%; height: auto; border: 1px solid #2A2D31; }
   .gc4 .ds-flat-g { display: flex; flex-direction: column; gap: 16px; margin-top: 24px; }
   .gc4 .ds-flat .ds-tag { width: 100%; }
 }
 @media (prefers-reduced-motion: reduce) {
+  .gc4 .ds-outer { margin-top: 160px; }
+  .gc4 .ds-pin { visibility: visible; }
   .gc4 .ds-plane, .gc4 .ds-group, .gc4 .ds-lines g { transition: none !important; animation: none !important; }
 }
 `

@@ -59,6 +59,10 @@ import { DsLayers, DS_CSS } from './GameCoveDS'
  * icons; the caption card no longer sits on the screen. The design system is shown as layers (GameCoveDS.tsx):
  * Colour → Type → Spacing → Screens drop onto an isometric stack as you scroll, then the token map.
  *
+ * v144 (Harbor, Nov 17 15:49, reference v7labs.com): the tour's step caption is one big line (28/36) — the letter, then
+ * the words — without the small "0N · tab" label; the five captions are cut to fit two lines. The design system that
+ * follows picks up where the tour ends (GameCoveDS.tsx).
+ *
  * v142 (Harbor, Nov 17 14:44): Define's insight icons come from InsightIcon (GameCoveParts.tsx), drawn from Figma's own
  * vectors so the icon can bob over its disc; the flat PNGs (IMG5.insight) are no longer used.
  */
@@ -529,11 +533,11 @@ const PW = 1440, PH = 900
 const TABS = ['AI Mapping', 'Goal-based setup', 'AI agent']
 // r = highlighted area on the 1440×900 screen: [x, y, width, height]
 const TOUR: { tab: number; shot: Shot; r: [number, number, number, number]; cap: string; alt: string }[] = [
-  { tab: 0, shot: 'map', r: [283, 428, 1126, 125], cap: 'AI reads the game script and draws it as a map: Lobby → Stage 1–4. The creator checks it before anything is tracked.', alt: 'Tracking: the AI map of Lobby and Stage 1–4, with Stage 3 flagged for review' },
-  { tab: 0, shot: 'ask', r: [1022, 477, 405, 284], cap: 'When the AI can’t tell how a stage ends, it asks instead of guessing. The creator picks the answer.', alt: 'Stage 3 detail panel asking which part is the end point' },
-  { tab: 1, shot: 'goal', r: [636, 390, 566, 143], cap: 'A new board starts from a goal in plain words, not from a blank chart.', alt: 'New analysis board: What would you like to analyze? with three suggested goals' },
-  { tab: 1, shot: 'retention', r: [235, 160, 1182, 734], cap: 'GameCove builds the board for that goal, so you see which day’s players come back.', alt: 'Retention board: Day 1 retention falls from about 22% to 6% over a week, and a date-cohort table shows D1 to D7 return rates for each start day' },
-  { tab: 2, shot: 'agent', r: [990, 62, 436, 806], cap: 'Ask about any page in plain words. The agent explains each chart and suggests the next question.', alt: 'Overview with the AI agent explaining the daily charts' },
+  { tab: 0, shot: 'map', r: [283, 428, 1126, 125], cap: 'AI reads the game script and maps it: Lobby → Stage 1–4. The creator checks it first.', alt: 'Tracking: the AI map of Lobby and Stage 1–4, with Stage 3 flagged for review' },
+  { tab: 0, shot: 'ask', r: [1022, 477, 405, 284], cap: 'When AI can’t tell how a stage ends, it asks instead of guessing.', alt: 'Stage 3 detail panel asking which part is the end point' },
+  { tab: 1, shot: 'goal', r: [636, 390, 566, 143], cap: 'A new board starts from a goal in plain words, not a blank chart.', alt: 'New analysis board: What would you like to analyze? with three suggested goals' },
+  { tab: 1, shot: 'retention', r: [235, 160, 1182, 734], cap: 'GameCove builds the board for that goal: which day’s players come back.', alt: 'Retention board: Day 1 retention falls from about 22% to 6% over a week, and a date-cohort table shows D1 to D7 return rates for each start day' },
+  { tab: 2, shot: 'agent', r: [990, 62, 436, 806], cap: 'Ask about any page in plain words. The agent explains each chart.', alt: 'Overview with the AI agent explaining the daily charts' },
 ]
 const TOUR_SHOTS = Array.from(new Set(TOUR.map(s => s.shot)))
 const pc = (v: number, of: number) => `${(v / of) * 100}%`
@@ -631,8 +635,7 @@ function Tour() {
           <div className="g-tour-top v7">
             <div className="g-tcap" aria-live="polite">
               <div key={step} className={'g-tcap-in' + (lit ? ' lit' : '')}>
-                <div className="g-tcap-k"><b>{letterOf(step)}</b>0{tab + 1} · {TABS[tab]}</div>
-                <p>{TOUR[step].cap}</p>
+                <p className="g-tcap-p"><b>{letterOf(step)}</b><span>{TOUR[step].cap}</span></p>
               </div>
             </div>
             <div className="g-tabs" role="tablist" aria-label="Final design features">
@@ -1070,6 +1073,12 @@ export const GC4_CSS = `
 .gc4 .g-tab .ic svg { display: block; width: 20px; height: 20px; }
 .gc4 .g-final .g-stage-box .g-stage { border-radius: 0; }
 .gc .gc4 .g-tcap-k b { border-radius: 50% !important; }
+/* v144 (Harbor, Nov 17 15:49, reference v7labs.com): the step caption is one big line — the letter, then the words
+   (no small "03 · AI agent" label above; the tab already names it); captions are short enough for two lines */
+.gc4 .g-final .g-tcap .g-tcap-p { display: flex; align-items: flex-start; gap: 16px; margin: 0; font-size: 28px; line-height: 36px; font-weight: 400; letter-spacing: -0.01em; color: var(--sand); }
+.gc4 .g-tcap-p b { flex: none; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; margin-top: 2px; background: var(--blue); color: #FFFFFF; font-size: 16px; line-height: 1; font-weight: 700; }
+.gc .gc4 .g-tcap p.g-tcap-p b { border-radius: 50% !important; }
+@media (max-width: 1280px) { .gc4 .g-final .g-tcap .g-tcap-p { font-size: 24px; line-height: 32px; } }
 @media (max-width: 1280px) {
   .gc4 .g-final .g-tour-top.v7 { grid-template-columns: minmax(0, 1fr) minmax(0, 540px); }
   .gc4 .g-final .g-tour-top.v7 .g-tab { padding: 16px; }

@@ -27,6 +27,16 @@ import React, { useEffect, useRef, useState } from 'react'
  * the 3 questions (their screen cards stack as you scroll, wide and tall screens only), the SUS and hidden-problem cards,
  * the Mapping guide before/after, and the follow-up card sort (the session GIF goes in FOLLOW_GIF). Reflection's next
  * steps are one line now (Figma 1785:424).
+ *
+ * v141 (Harbor, Nov 17 14:08): the 01 / 02 / 03 numbers above each question are gone (they piled up at the top-left as
+ * the cards stacked); no hover zoom on this section's images; the pins pulse in colour; the follow-up clip is on the
+ * left of the card sort, as in Figma.
+ *
+ * v142 (Harbor, Nov 17 14:44):
+ *  - Define's insight icons (InsightIcon, used by GameCoveV4.tsx) are drawn from Figma's own vectors (1621:7572,
+ *    7585, 7595): the disc stays put and the icon sits a little lower, into the disc, and bobs up and down
+ *  - Test · Iterate: the section's background is the old panel colour (#202026) so it stands apart from the light
+ *    sections around it, and the screens drop their panels: each screenshot runs the full column, with a thin edge
  */
 
 const V5 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/gamecove/v5/'
@@ -45,6 +55,48 @@ const d = (n: number) => ({ '--d': n } as React.CSSProperties)
 
 function Eyebrow({ label, sq = 'blue' }: { label: string; sq?: 'grey' | 'blue' | 'sky' }) {
   return <div className={'g-eyebrow sq-' + sq}><i aria-hidden="true" />{label}</div>
+}
+
+/* ---------- define: insight icons (Figma 1621:7572 · 7585 · 7595, 80 × 72) ---------- */
+
+const ICON_PROPS = { fill: 'none', stroke: '#F2F0EC', strokeWidth: 1.5, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
+const INSIGHT_ICONS = [
+  // 01 · a dashboard with a falling line
+  <svg key="1" width="28" height="24" viewBox="0 0 28 24" fill="none">
+    <path {...ICON_PROPS} d="M24.75 0.75H2.35C1.46634 0.75 0.75 1.46634 0.75 2.35V16.75C0.75 17.6337 1.46634 18.35 2.35 18.35H24.75C25.6337 18.35 26.35 17.6337 26.35 16.75V2.35C26.35 1.46634 25.6337 0.75 24.75 0.75Z" />
+    <path {...ICON_PROPS} d="M8.75 23.15H18.35M13.55 18.35V23.15" />
+    <path {...ICON_PROPS} d="M5.5498 6.34998L10.3498 10.35L14.3498 8.74998L19.9498 14.35" />
+    <path {...ICON_PROPS} d="M15.9502 14.35H19.9502V10.35" />
+  </svg>,
+  // 02 · a wrench
+  <svg key="2" width="22" height="22" viewBox="0 0 22 22" fill="none">
+    <path {...ICON_PROPS} d="M16.43 0.956273C15.37 0.670919 14.2521 0.681821 13.1979 0.987791C12.1437 1.29376 11.1936 1.88307 10.4511 2.69157C9.7086 3.50007 9.20213 4.49677 8.98683 5.57315C8.77152 6.64954 8.85563 7.76437 9.23 8.79627L1.39 16.6363C0.97241 17.0747 0.74279 17.6591 0.750173 18.2646C0.757555 18.87 1.00135 19.4486 1.42951 19.8768C1.85767 20.3049 2.43625 20.5487 3.04171 20.5561C3.64717 20.5635 4.23153 20.3339 4.67 19.9163L12.51 12.0763C13.5419 12.4506 14.6567 12.5348 15.7331 12.3194C16.8095 12.1041 17.8062 11.5977 18.6147 10.8552C19.4232 10.1127 20.0125 9.16261 20.3185 8.1084C20.6245 7.05419 20.6354 5.93625 20.35 4.87627L16.75 8.47627L13.55 7.75627L12.83 4.55627L16.43 0.956273Z" />
+  </svg>,
+  // 03 · a person and a crossed-out speech bubble
+  <svg key="3" width="29" height="23" viewBox="0 0 29 23" fill="none">
+    <path {...ICON_PROPS} d="M8.7501 9.95002C11.1802 9.95002 13.1501 7.98008 13.1501 5.55002C13.1501 3.11997 11.1802 1.15002 8.7501 1.15002C6.32004 1.15002 4.3501 3.11997 4.3501 5.55002C4.3501 7.98008 6.32004 9.95002 8.7501 9.95002Z" />
+    <path {...ICON_PROPS} d="M0.75 21.55C0.75 16.75 4.35 13.55 8.75 13.55C13.15 13.55 16.75 16.75 16.75 21.55" />
+    <path {...ICON_PROPS} d="M19.1499 0.75H25.5499C26.0803 0.75 26.589 0.960714 26.9641 1.33579C27.3392 1.71086 27.5499 2.21957 27.5499 2.75V7.95C27.5499 8.48043 27.3392 8.98914 26.9641 9.36421C26.589 9.73929 26.0803 9.95 25.5499 9.95H23.1499L20.7499 12.35V9.95H19.1499C18.6195 9.95 18.1108 9.73929 17.7357 9.36421C17.3606 8.98914 17.1499 8.48043 17.1499 7.95V2.75C17.1499 2.21957 17.3606 1.71086 17.7357 1.33579C18.1108 0.960714 18.6195 0.75 19.1499 0.75Z" />
+    <path {...ICON_PROPS} d="M20.75 3.54999L23.95 6.74999M23.95 3.54999L20.75 6.74999" />
+  </svg>,
+]
+
+/** an insight's icon on its disc: the disc stays, the icon bobs up and down (still with reduced motion) */
+export function InsightIcon({ i }: { i: number }) {
+  return (
+    <div className="in-node" aria-hidden="true">
+      <svg className="in-disc" width="80" height="72" viewBox="0 0 80 72" fill="none">
+        <g transform="translate(3.5 48)">
+          <path d="M0.5 0V6C0.5 9.44781 4.29285 12.7544 11.0442 15.1924C17.7955 17.6304 26.9522 19 36.5 19C46.0478 19 55.2045 17.6304 61.9558 15.1924C68.7072 12.7544 72.5 9.44781 72.5 6V0" fill="#131417" />
+          <path d="M0.5 0V6C0.5 9.44781 4.29285 12.7544 11.0442 15.1924C17.7955 17.6304 26.9522 19 36.5 19C46.0478 19 55.2045 17.6304 61.9558 15.1924C68.7072 12.7544 72.5 9.44781 72.5 6V0" stroke="white" strokeOpacity="0.28" />
+        </g>
+        <g transform="translate(3.5 34.5)">
+          <path d="M36.5 26.5C56.3823 26.5 72.5 20.6797 72.5 13.5C72.5 6.3203 56.3823 0.5 36.5 0.5C16.6177 0.5 0.5 6.3203 0.5 13.5C0.5 20.6797 16.6177 26.5 36.5 26.5Z" fill="#202127" stroke="white" strokeOpacity="0.28" />
+        </g>
+      </svg>
+      <span className="in-ic" style={d(i)}>{INSIGHT_ICONS[i]}</span>
+    </div>
+  )
 }
 
 /* ---------- ideate: user flow → lo-fi wireframes ---------- */
@@ -273,8 +325,29 @@ const SUS: { p: string; flag: 'kr' | 'kg'; who: string; v: string; w: number; pi
 ]
 const FLAG = { kr: { src: V6 + 'flag-kr.svg', alt: 'South Korea' }, kg: { src: V6 + 'flag-kg.svg', alt: 'Kyrgyzstan' } }
 const HIDDEN: [string, boolean, string][] = [['A ✓', true, 'Stage 4 is too hard'], ['B ✓', true, 'New players leave early'], ['C ✗', false, 'Players quit after finishing']]
-// follow-up session (P2), face covered: a GIF goes here once Harbor's recording is in (empty = card sort only)
-const FOLLOW_GIF: string = ''
+// follow-up session (P2), Harbor's clip with his face blurred (1117_1_.mov, 45s). Plays like a GIF: muted, looping, no
+// controls; 2.2 MB as MP4 instead of a GIF many times that size. With reduced motion it stays on the poster frame.
+const FOLLOW_VIDEO = V6 + 'followup.mp4'
+const FOLLOW_POSTER = V6 + 'followup-poster.jpg'
+
+/** the follow-up clip, GIF-like: React does not write the muted attribute, so the browser can refuse autoplay; it is
+ * started here instead (muted), while it is on screen, and paused when it leaves */
+function FollowClip() {
+  const ref = useRef<HTMLVideoElement>(null)
+  useEffect(() => {
+    const v = ref.current; if (!v) return
+    v.muted = true
+    if (reducedMotion()) return
+    if (!('IntersectionObserver' in window)) { v.play().catch(() => {}); return }
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) v.play().catch(() => {}); else v.pause() }, { threshold: 0.2 })
+    io.observe(v)
+    return () => io.disconnect()
+  }, [])
+  return (
+    <video ref={ref} src={FOLLOW_VIDEO} poster={FOLLOW_POSTER} muted loop playsInline preload="metadata"
+      aria-label="Follow-up session with P2, his face blurred: he moves the dashboard’s 18 metric cards into must-have, nice to have and not needed while we talk it through" />
+  )
+}
 
 /** stacking cards: on wide, tall screens each question card sticks and the next one slides up over it */
 function useStack() {
@@ -320,11 +393,10 @@ export function Iterate() {
         </div>
 
         <div className={'ts-stack' + (on ? ' on' : '')} ref={stack}>
-          {QS.map((q, i) => (
-            <article className="ts-q" key={q.n} style={{ '--i': i } as React.CSSProperties}>
+          {QS.map(q => (
+            <article className="ts-q" key={q.n}>
               <div className="ts-card">
                 <div className="ts-text" data-r>
-                  <div className="ts-n">{q.n}</div>
                   <h3 className="ts-qt">{q.q}</h3>
                   <div className="ts-meta">
                     <span className={'ts-chip ' + (q.ok ? 'yes' : 'no')}>{q.ok ? 'YES' : 'NOT YET'}</span>
@@ -337,7 +409,7 @@ export function Iterate() {
                 </div>
                 <figure className="ts-panel" data-r style={d(1)}>
                   <div className="ts-screen" style={{ aspectRatio: q.ar }}>
-                    <img src={q.img} alt={q.alt} loading="lazy" data-gzoom="true" />
+                    <img src={q.img} alt={q.alt} loading="lazy" />
                     {q.marks.map(m => (
                       <React.Fragment key={m.t}>
                         <i className={'ts-pin ' + m.c} aria-hidden="true" style={{ left: m.pin[0] + '%', top: m.pin[1] + '%' }} />
@@ -390,11 +462,11 @@ export function Iterate() {
           </div>
           <div className="ts-ba">
             <figure data-r>
-              <div className="ts-bap"><img src={V6 + 'task1.jpg'} alt="Before: the Mapping screen shows the game map with a small tip, “Review the details of each structure and edit anything that looks wrong”" loading="lazy" data-gzoom="true" /></div>
+              <div className="ts-bap"><img src={V6 + 'task1.jpg'} alt="Before: the Mapping screen shows the game map with a small tip, “Review the details of each structure and edit anything that looks wrong”" loading="lazy" /></div>
               <figcaption><b>BEFORE</b>A tip on what to do, but not why</figcaption>
             </figure>
             <figure data-r style={d(1)}>
-              <div className="ts-bap after"><img src={V6 + 'after.jpg'} alt="After: a purpose guide on the Mapping screen, “Step 1 · Check your game map. AI read your game and drew its stages. Check they’re right. We’ll track and analyse along this map.” with a Looks right button" loading="lazy" data-gzoom="true" /></div>
+              <div className="ts-bap after"><img src={V6 + 'after.jpg'} alt="After: a purpose guide on the Mapping screen, “Step 1 · Check your game map. AI read your game and drew its stages. Check they’re right. We’ll track and analyse along this map.” with a Looks right button" loading="lazy" /></div>
               <figcaption><b className="on">AFTER</b>Says why: this map decides what we track (redrawn)</figcaption>
             </figure>
           </div>
@@ -405,12 +477,10 @@ export function Iterate() {
             <h3 className="ts-qt">Then we asked again: is this data really needed?</h3>
             <p className="ts-sub">Follow-up test with P2, a hobby game creator in his mid-30s. He sorted all 18 metrics from the dashboard.</p>
           </div>
-          <div className={'ts-frow' + (FOLLOW_GIF ? '' : ' solo')}>
-            {FOLLOW_GIF && (
-              <div className="ts-gif" data-r>
-                <img src={FOLLOW_GIF} alt="Follow-up session with P2, his face covered: he sorts the dashboard’s 18 metrics into must-have, nice to have and not needed" loading="lazy" />
-              </div>
-            )}
+          <div className="ts-frow">
+            <div className="ts-gif" data-r>
+              <FollowClip />
+            </div>
             <div className="ts-sort" data-r style={d(1)}>
               <div className="ts-counts">
                 <div><b className="blue">16</b><span>must-have</span></div>
@@ -489,8 +559,18 @@ export const PARTS_CSS = `
 .gc4 .fs.on .fs-sk { gap: 24px; }
 .gc4 .fs.on .fs-box { box-shadow: inset 0 0 0 1px var(--line); }
 
+/* define: insight icon on its disc (v142) — the icon sits a little into the disc and bobs */
+.gc4 .in-node { position: relative; width: 80px; height: 72px; }
+.gc4 .in-disc { position: absolute; inset: 0; }
+.gc4 .in-ic { position: absolute; left: 0; right: 0; bottom: 30px; display: flex; justify-content: center;
+  animation: in-bob 2.4s ease-in-out infinite; animation-delay: calc(var(--d, 0) * .4s); }
+.gc4 .in-ic svg { display: block; }
+@keyframes in-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
 /* test · iterate (Figma 08 Test + Iterate v3) */
-.gc4 .it { padding-bottom: 120px; }
+/* v142: the section has its own background (the old panel colour), so the dark screenshots stand out and the
+   section reads apart from the light Prototype and Reflection around it */
+.gc4 .it { --bg: #202026; padding-bottom: 120px; background: var(--bg); }
 .gc4 .ts-head { display: flex; flex-direction: column; gap: 24px; }
 .gc4 .ts-h2 { max-width: 960px; font-size: 48px; line-height: 56px; font-weight: 400; letter-spacing: -0.96px; color: var(--sand); }
 .gc4 .ts-lead { max-width: 720px; font-size: 20px; line-height: 32px; color: #C9CAD0; }
@@ -507,20 +587,26 @@ export const PARTS_CSS = `
 .gc4 .ts-q + .ts-q { margin-top: 80px; }
 .gc4 .ts-card { display: grid; grid-template-columns: 448px minmax(0, 1fr); gap: 48px; align-items: start; background: var(--bg); }
 .gc4 .ts-text { display: flex; flex-direction: column; gap: 24px; }
-.gc4 .ts-n { font-size: 16px; line-height: 24px; color: #3898F8; }
 .gc4 .ts-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .gc4 .ts-task { font-size: 16px; line-height: 24px; letter-spacing: .96px; color: var(--dim); }
 .gc4 .ts-find { display: flex; flex-direction: column; gap: 8px; }
 .gc4 .ts-find p { font-size: 18px; line-height: 28px; color: #C9CAD0; }
-.gc4 .ts-panel { padding: 32px; background: #202026; }
-.gc4 .ts-screen { position: relative; width: 100%; border: 1px solid #34343C; }
+.gc4 .ts-panel { margin: 0; }
+.gc4 .ts-screen { position: relative; width: 100%; border: 1px solid #3A3A44; box-shadow: 0 24px 48px rgba(0,0,0,.35); }
 .gc4 .ts-screen img { width: 100%; height: 100%; object-fit: cover; }
-.gc4 .ts-pin { position: absolute; width: 4.545%; aspect-ratio: 1; border: 3px solid; }
-.gc4 .ts-pin.red { border-color: #E28B8B; background: rgba(226,139,139,.18); }
-.gc4 .ts-pin.blue { border-color: #3898F8; background: rgba(56,152,248,.18); }
+.gc4 .ts-pin { position: absolute; width: 4.545%; aspect-ratio: 1; border: 3px solid rgb(var(--pc)); background: rgba(var(--pc), .18); animation: ts-pulse 1.6s ease-out infinite; }
+.gc4 .ts-pin.red { --pc: 226, 139, 139; }
+.gc4 .ts-pin.blue { --pc: 56, 152, 248; animation-delay: .8s; }
+/* pins pulse to say "look here": the fill swells in colour and a ring spreads out and fades (no sparkle) */
+@keyframes ts-pulse {
+  0% { background-color: rgba(var(--pc), .18); box-shadow: 0 0 0 0 rgba(var(--pc), .6); }
+  40% { background-color: rgba(var(--pc), .5); }
+  100% { background-color: rgba(var(--pc), .18); box-shadow: 0 0 0 16px rgba(var(--pc), 0); }
+}
 .gc4 .ts-call { position: absolute; padding: 8px 16px; border: 1px solid; background: rgba(17,17,20,.94); font-size: 16px; line-height: 24px; color: var(--sand); white-space: nowrap; }
 .gc4 .ts-call.red { border-color: #E28B8B; } .gc4 .ts-call.blue { border-color: #3898F8; }
-.gc4 .ts-stack.on .ts-q { position: sticky; top: calc(max(32px, 50vh - 328px) + var(--i) * 16px); }
+/* v141: every card sticks at the same top, so no slice of the card underneath (its number or title) peeks out */
+.gc4 .ts-stack.on .ts-q { position: sticky; top: max(32px, calc(50vh - 328px)); }
 .gc4 .ts-stack.on .ts-card { transform-origin: 50% 0; transform: scale(calc(1 - var(--k, 0) * .05)); filter: brightness(calc(1 - var(--k, 0) * .45)); will-change: transform, filter; }
 
 /* numbers */
@@ -547,8 +633,7 @@ export const PARTS_CSS = `
 .gc4 .ts-iter .ts-h2 { margin-top: 24px; }
 .gc4 .ts-ba { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
 .gc4 .ts-ba figure { display: flex; flex-direction: column; gap: 16px; }
-.gc4 .ts-bap { padding: 24px; background: #202026; }
-.gc4 .ts-bap img { width: 100%; aspect-ratio: 656 / 441; object-fit: cover; border: 1px solid #34343C; }
+.gc4 .ts-bap img { width: 100%; aspect-ratio: 656 / 441; object-fit: cover; border: 1px solid #3A3A44; box-shadow: 0 24px 48px rgba(0,0,0,.35); }
 .gc4 .ts-bap.after img { border: 2px solid #3898F8; }
 .gc4 .ts-ba figcaption { display: flex; flex-wrap: wrap; gap: 12px; font-size: 16px; line-height: 24px; color: #C9CAD0; }
 .gc4 .ts-ba figcaption b { font-weight: 700; letter-spacing: .08em; color: var(--dim); }
@@ -558,8 +643,8 @@ export const PARTS_CSS = `
 .gc4 .ts-follow { display: flex; flex-direction: column; gap: 48px; margin-top: 120px; }
 .gc4 .ts-follow .ts-sub { margin-top: 16px; }
 .gc4 .ts-frow { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; align-items: start; }
-.gc4 .ts-gif { background: #202026; border: 1px solid #34343C; }
-.gc4 .ts-gif img { width: 100%; aspect-ratio: 704 / 343; object-fit: cover; }
+.gc4 .ts-gif { background: #111114; border: 1px solid #3A3A44; }
+.gc4 .ts-gif video { display: block; width: 100%; aspect-ratio: 704 / 343; object-fit: cover; }
 .gc4 .ts-sort { display: flex; flex-direction: column; gap: 24px; }
 .gc4 .ts-counts { display: flex; flex-wrap: wrap; gap: 48px; }
 .gc4 .ts-counts div { display: flex; flex-direction: column; }
@@ -605,8 +690,7 @@ export const PARTS_CSS = `
   .gc4 .ts-h2 { font-size: 40px; line-height: 48px; }
 }
 @media (max-width: 700px) {
-  .gc4 .ts-panel, .gc4 .ts-box, .gc4 .ts-take { padding: 24px; }
-  .gc4 .ts-bap { padding: 16px; }
+  .gc4 .ts-box, .gc4 .ts-take { padding: 24px; }
   .gc4 .ts-call { display: none; }
   .gc4 .ts-bars li { grid-template-columns: minmax(0, 1fr) auto; }
   .gc4 .ts-who { grid-column: 1 / -1; }
@@ -616,5 +700,6 @@ export const PARTS_CSS = `
 }
 @media (prefers-reduced-motion: reduce) {
   .gc4 .fs-lines path, .gc4 .fs .nd { transition: none !important; }
+  .gc4 .ts-pin, .gc4 .in-ic { animation: none; }
 }
 `

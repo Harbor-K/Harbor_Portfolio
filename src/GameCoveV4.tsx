@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { Ideate, Iterate, Reflection, PARTS_CSS } from './GameCoveParts'
+import { Ideate, Iterate, Reflection, InsightIcon, PARTS_CSS } from './GameCoveParts'
 import { DsLayers, DS_CSS } from './GameCoveDS'
 
 /**
@@ -58,6 +58,9 @@ import { DsLayers, DS_CSS } from './GameCoveDS'
  * strip like V7's: the step caption (A / B / C) on the left where the button was, the 3 feature tabs on the right with
  * icons; the caption card no longer sits on the screen. The design system is shown as layers (GameCoveDS.tsx):
  * Colour → Type → Spacing → Screens drop onto an isometric stack as you scroll, then the token map.
+ *
+ * v142 (Harbor, Nov 17 14:44): Define's insight icons come from InsightIcon (GameCoveParts.tsx), drawn from Figma's own
+ * vectors so the icon can bob over its disc; the flat PNGs (IMG5.insight) are no longer used.
  */
 
 const L = 'https://raw.githubusercontent.com/Harbor-K/landing_page/main/gamecove/assets/'
@@ -460,7 +463,7 @@ function Define() {
         <div className="g-insc mt-40">
           {INSIGHTS.map((s, i) => (
             <div className="insc" key={i} data-r style={d(i)}>
-              <img src={IMG5.insight[i]} alt="" aria-hidden="true" />
+              <InsightIcon i={i} />
               <div className="insc-k">INSIGHT 0{i + 1}</div>
               <h4 className="insc-t">{s.t}</h4>
               <p className="insc-q">“{s.q}”</p>

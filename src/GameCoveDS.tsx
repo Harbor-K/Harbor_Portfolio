@@ -3,9 +3,9 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 /**
  * GameCove design system on the real design (v136, Harbor Nov 16, reference: v7labs.com "Build your own Interfaces").
  * Pinned while scrolling, the three live screens stack up one at a time — Tracking, then Retention on top of it, then
- * Overview on top — each with its name on a tab. Each time a screen lands, ONE label group appears beside it (left,
- * right, left) with a single dashed line to the spot on that screen, and the previous group goes away: one screen,
- * one group, nothing else on screen at once (Harbor: "하나는 하나끼리만").
+ * Overview on top — each with its name on a tab. Each time a screen lands, ONE label group appears beside it with a
+ * single dashed line to the spot on that screen, and the previous group goes away: one screen, one group, nothing else
+ * on screen at once (Harbor: "하나는 하나끼리만").
  * The heading sits on the left with the same eyebrow / title / body styles as "The final design: 3 features" above.
  *
  * v139 (Harbor Nov 17, Figma "Scroll states · 07 Final design · design system", file 44기 김지현 4차 랜딩페이지, node
@@ -17,26 +17,34 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
  *    leaves alone only elements whose inline style names Lato.
  *  - 03 · COMPONENTS on Overview: KPI card, Filter and select, AI Agent button, each with a small blue-outlined shape
  *    (#17171B fill, 1.5px #3898F8 edge; 6 / 4 / 8 corners); the line points to the first KPI card
- * Body copy: "Colour, type and components from one set of tokens, on a 4px grid". The motion is unchanged.
+ * Body copy: "Colour, type and components from one set of tokens, on a 4px grid".
  * Small screens (≤ 1023px): each screen, then its labels, one after another.
  * v133: this replaces the token-map block that followed it in GameCoveV4.tsx (hidden by DS_CSS below).
+ *
+ * v142 (Harbor Nov 17 14:44):
+ *  - each group sits next to the spot it points to: all three spots are on the left half of their screens (01 now
+ *    points to the Lobby node), so every group is on the left, level with its spot, and the dashed line is short
+ *  - no group can be skipped by a fast scroll: the shown step follows the scroll one step at a time and holds each
+ *    group on screen for at least HOLD_MS; each screen also gets more scroll room (120vh instead of 90vh)
  */
 
 const F = 'https://raw.githubusercontent.com/Harbor-K/landing_page/main/gamecove/assets/v4/final/'
 const V5 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/gamecove/v5/'
 const LATO = '"Lato", sans-serif'
+const HOLD_MS = 1400
+const VH_PER_LAYER = 120
 
 // sw: a colour swatch · aa: an "Aa" type sample at this size · shape: a component outline (height, corners)
 type Tag = { k: string; v: string; sw?: string; aa?: number; shape?: { h: number; r: number } }
 // kind: the part of the system the group shows · side: where the group sits · at: the spot its line points to (1440×900)
 type Layer = { name: string; kind: string; src: string; alt: string; side: 'l' | 'r'; at: [number, number]; tags: Tag[] }
 const LAYERS: Layer[] = [
-  { name: 'Tracking', kind: 'Colour', src: F + 'map.webp', alt: 'Tracking: the AI map of Lobby and Stage 1–4', side: 'l', at: [846, 486], tags: [
+  { name: 'Tracking', kind: 'Colour', src: F + 'map.webp', alt: 'Tracking: the AI map of Lobby and Stage 1–4', side: 'l', at: [384, 486], tags: [
     { k: 'bg-tracking-canvas', v: 'Map canvas', sw: '#111114' },
     { k: 'border-node-0 · 1 · 2', v: 'Node outlines, 3 strengths', sw: 'rgba(255,255,255,.28)' },
     { k: 'bg-node-inset', v: 'Inside each node', sw: '#111114' },
   ] },
-  { name: 'Retention', kind: 'Type', src: V5 + 'retention.webp', alt: 'Retention: Day 1 retention line and the date-cohort table', side: 'r', at: [384, 101], tags: [
+  { name: 'Retention', kind: 'Type', src: V5 + 'retention.webp', alt: 'Retention: Day 1 retention line and the date-cohort table', side: 'l', at: [384, 101], tags: [
     { k: 'Lato 40 Bold', v: 'Page title · Retention', aa: 20 },
     { k: 'Lato 32 Bold', v: 'Key numbers · 6.0%', aa: 18 },
     { k: 'Lato 24 Bold', v: 'Card titles · Day 1 retention', aa: 16 },
@@ -74,12 +82,15 @@ export function DsLayers() {
   const stage = useRef<HTMLDivElement>(null)
   const group = useRef<HTMLDivElement>(null)
   const dot = useRef<HTMLElement>(null)
+  const [target, setTarget] = useState(0)
   const [step, setStep] = useState(0)
+  const stepAt = useRef(0)
   const [inView, setInView] = useState(false)
   const [line, setLine] = useState<{ d: string; x: number; y: number } | null>(null)
+  const [gTop, setGTop] = useState<number | null>(null)
   const [scale, setScale] = useState(1)
 
-  // the step follows the scroll; the first screen drops in when the section comes into view
+  // the scroll sets the target step; the first screen drops in when the section comes into view
   useEffect(() => {
     let raf = 0
     const run = () => {
@@ -91,7 +102,7 @@ export function DsLayers() {
       const travel = el.offsetHeight - innerHeight
       if (travel <= 0) return
       const s = Math.min(LAYERS.length - 1, Math.floor(clamp(-r.top / travel) * LAYERS.length))
-      setStep(v => (v === s ? v : s))
+      setTarget(v => (v === s ? v : s))
     }
     const on = () => { if (!raf) raf = requestAnimationFrame(run) }
     run()
@@ -99,16 +110,31 @@ export function DsLayers() {
     return () => { if (raf) cancelAnimationFrame(raf); removeEventListener('scroll', on); removeEventListener('resize', on) }
   }, [])
 
-  // one dashed line: from the label group's title to its spot on the newest screen (measured while the screen settles)
+  // the shown step walks to the target one step at a time, so a fast scroll never skips a group
+  useEffect(() => {
+    if (step === target) return
+    const wait = reduced() ? 0 : Math.max(0, stepAt.current + HOLD_MS - performance.now())
+    const t = setTimeout(() => {
+      stepAt.current = performance.now()
+      setStep(s => s + Math.sign(target - s))
+    }, wait)
+    return () => clearTimeout(t)
+  }, [step, target])
+
+  // the group sits level with its spot; one dashed line runs from the group's title to the spot
   useLayoutEffect(() => {
     let raf = 0, until = performance.now() + 1600
     const measure = () => {
       const st = stage.current, g = group.current, d = dot.current
       if (!st || !g || !d) return
-      const sr = st.getBoundingClientRect(), k = g.querySelector('.ds-k')!.getBoundingClientRect(), b = d.getBoundingClientRect()
+      const sr = st.getBoundingClientRect(), b = d.getBoundingClientRect()
+      const y1 = b.top - sr.top
+      const top = clamp(y1 - 12, 0, Math.max(0, sr.height - g.offsetHeight))
+      setGTop(v => (v !== null && Math.abs(v - top) < 0.5 ? v : top))
+      const k = g.querySelector('.ds-k')!.getBoundingClientRect()
       const left = LAYERS[step].side === 'l'
       const x0 = (left ? k.right + 16 : k.left - 16) - sr.left, y0 = k.top + k.height / 2 - sr.top
-      const x1 = b.left - sr.left, y1 = b.top - sr.top
+      const x1 = b.left - sr.left
       const xm = left ? Math.min(x0 + 120, x1) : Math.max(x0 - 120, x1)
       setLine({ d: `M${x0.toFixed(1)} ${y0.toFixed(1)} H${xm.toFixed(1)} L${x1.toFixed(1)} ${y1.toFixed(1)}`, x: x1, y: y1 })
     }
@@ -124,7 +150,7 @@ export function DsLayers() {
   return (
     <>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@700&display=swap" />
-      <div ref={outer} className="ds-outer" style={{ height: `${LAYERS.length * 90 + 60}vh` }}>
+      <div ref={outer} className="ds-outer" style={{ height: `${LAYERS.length * VH_PER_LAYER + 60}vh` }}>
         <div className="ds-pin">
           <div className="ds-headline">
             <div className="g-eyebrow sq-blue"><i aria-hidden="true" />{HEAD.eyebrow}</div>
@@ -148,7 +174,7 @@ export function DsLayers() {
               </div>
             </div>
             {shown && (
-              <div key={step} ref={group} className={'ds-group ' + L.side}>
+              <div key={step} ref={group} className={'ds-group ' + L.side} style={gTop === null ? undefined : { top: `${gTop}px` }}>
                 <div className="ds-k mono"><i />{label(step, L)}</div>
                 <ul>{L.tags.map(t => <TagRow key={t.k} t={t} />)}</ul>
               </div>
@@ -208,12 +234,12 @@ export const DS_CSS = `
   font-size: 24px; line-height: 32px; color: var(--sand); white-space: nowrap; }
 .gc4 .ds-dot { position: absolute; width: 1px; height: 1px; }
 
-/* one label group at a time, beside the stack (V7: AGENTS on the left, REQUESTS on the right) */
-.gc4 .ds-group { position: absolute; z-index: 2; top: 50%; display: flex; flex-direction: column; gap: 16px; transform: translateY(-50%);
-  animation: ds-in .6s var(--ease) .35s both; }
+/* one label group at a time, beside the stack and level with its spot (v142: top is set from the spot) */
+.gc4 .ds-group { position: absolute; z-index: 2; top: 50%; display: flex; flex-direction: column; gap: 16px;
+  animation: ds-in .5s var(--ease) .1s both; }
 .gc4 .ds-group.l { left: 0; }
 .gc4 .ds-group.r { right: 0; align-items: flex-end; }
-@keyframes ds-in { from { opacity: 0; transform: translateY(calc(-50% + 12px)); } to { opacity: 1; transform: translateY(-50%); } }
+@keyframes ds-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 .gc4 .ds-k { display: flex; align-items: center; gap: 8px; font-size: 16px; line-height: 24px; letter-spacing: .06em; color: var(--sand); }
 .gc4 .ds-k i { width: 12px; height: 12px; background: var(--blue); }
 .gc4 .ds-group.r .ds-k { flex-direction: row-reverse; }
@@ -233,7 +259,7 @@ export const DS_CSS = `
 .gc4 .ds-lines { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
 .gc4 .ds-lines path { fill: none; stroke: var(--blue); stroke-width: 1.5; stroke-dasharray: 6 4; }
 .gc4 .ds-lines circle { fill: var(--blue); stroke: #FFFFFF; stroke-width: 2; }
-.gc4 .ds-lines g { animation: ds-fade .6s ease .6s both; }
+.gc4 .ds-lines g { animation: ds-fade .4s ease .3s both; }
 @keyframes ds-fade { from { opacity: 0; } to { opacity: 1; } }
 .gc4 .vh-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .gc4 .ds-flat { display: none; }

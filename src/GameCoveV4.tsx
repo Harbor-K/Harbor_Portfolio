@@ -63,6 +63,11 @@ import { DsLayers, DS_CSS } from './GameCoveDS'
  * the words — without the small "0N · tab" label; the five captions are cut to fit two lines. The design system that
  * follows picks up where the tour ends (GameCoveDS.tsx).
  *
+ * v145 (Harbor, Nov 17 20:32): Lucas's story is Harbor's image as it is (Figma "user-story", 960×639; the same art as
+ * IMG5.story), no longer the panning motion video. Only the motion's ending stays, on panel 6: as the story comes into
+ * view the red ring draws around 61% and then the −1% sticker pops (Figma "user-story · motion" layers
+ * "Red ring · 61%" and "Sticker · −1%", same place, size and tilt). It plays again each time the story comes back.
+ *
  * v142 (Harbor, Nov 17 14:44): Define's insight icons come from InsightIcon (GameCoveParts.tsx), drawn from Figma's own
  * vectors so the icon can bob over its disc; the flat PNGs (IMG5.insight) are no longer used.
  */
@@ -422,7 +427,43 @@ function Empathize() {
 
 /* ---------- define ---------- */
 
-/** Lucas's story: plays from panel 1 the moment it comes into view (again each time it comes back), pauses when it leaves */
+/**
+ * v145: Lucas's story, still, with the motion's ending on panel 6 (red ring around 61%, then the −1% sticker).
+ * Ring and sticker sit in the image's own 1520×1011 coordinates (Figma user-story · motion, node 1661:9944), so they
+ * scale with it. They run when 60% of the story is on screen and reset once it is fully off screen.
+ */
+function StoryStill({ label }: { label: string }) {
+  const ref = useRef<HTMLElement>(null)
+  const [on, setOn] = useState(false)
+  useEffect(() => {
+    const el = ref.current; if (!el) return
+    if (reducedMotion() || !('IntersectionObserver' in window)) { setOn(true); return }
+    const io = new IntersectionObserver(([e]) => {
+      if (e.intersectionRatio >= 0.6) setOn(true)
+      else if (!e.isIntersecting) setOn(false)
+    }, { threshold: [0, 0.6] })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+  return (
+    <figure ref={ref} className={'st-still' + (on ? ' on' : '')} role="img" aria-label={label}>
+      <img src={IMG5.story} alt="" loading="lazy" />
+      <svg viewBox="0 0 1520 1011" preserveAspectRatio="none" aria-hidden="true">
+        <g transform="matrix(0.99756 -0.06976 0.06976 0.99756 1234 742)">
+          <ellipse className="st-ring" cx="62" cy="34" rx="60" ry="32" pathLength={1} />
+        </g>
+        <g transform="matrix(0.99027 0.13917 -0.13917 0.99027 1372 724)">
+          <g className="st-tag">
+            <rect width="92" height="56" rx="8" />
+            <text x="46" y="29" textAnchor="middle" dominantBaseline="central">−1%</text>
+          </g>
+        </g>
+      </svg>
+    </figure>
+  )
+}
+
+/** (v129–v144) Lucas's story as a motion video: plays from panel 1 the moment it comes into view. Kept, not used. */
 function StoryVideo({ label }: { label: string }) {
   const ref = useRef<HTMLVideoElement>(null)
   useEffect(() => {
@@ -480,7 +521,7 @@ function Define() {
           <p className="g-cap mt-8">Lucas is our persona, built from our interviews with 2 teen game creators. His game and numbers are examples.</p>
         </div>
         <div className="g-story mt-40" data-r>
-          <StoryVideo label="User story in 6 panels: 1 Launch day — my game is live. 2 Players leave — players left 62%. 3 Only totals — average playtime 4 min, drop-off 62%; it doesn’t say where. 4 Asking around — everyone says something different. 5 Fix everything — lower difficulty, new music, faster ball. 6 Nothing changed — players left 61%; what should I fix first?" />
+          <StoryStill label="User story in 6 panels: 1 Launch day — my game is live. 2 Players leave — players left 62%. 3 Only totals — average playtime 4 min, drop-off 62%; it doesn’t say where. 4 Asking around — everyone says something different. 5 Fix everything — lower difficulty, new music, faster ball. 6 Nothing changed — players left 61%, down 1 point; what should I fix first?" />
         </div>
 
         <div className="g-hmw5 mt-40" data-r>
@@ -931,6 +972,16 @@ export const GC4_CSS = `
 .gc4 .ins-note::before { content: ""; position: absolute; left: -16px; top: 50%; width: 8px; height: 8px; margin-top: -4px; border-radius: 50%; background: #7DD3FC; }
 .gc4 .g-story img { width: 100%; height: auto; }
 .gc4 .g-story video { display: block; width: 100%; max-width: 960px; height: auto; aspect-ratio: 960 / 640; background: #FFFFFF; }
+/* v145: the story as a still, with the ring and sticker drawn over panel 6 */
+.gc4 .g-story .st-still { position: relative; width: 100%; max-width: 960px; aspect-ratio: 1520 / 1011; margin: 0; background: #FFFFFF; }
+.gc4 .g-story .st-still img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.gc4 .st-still svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.gc4 .st-ring { fill: none; stroke: #F04D30; stroke-width: 4; stroke-dasharray: 1 1; stroke-dashoffset: 1; }
+.gc4 .st-still.on .st-ring { stroke-dashoffset: 0; transition: stroke-dashoffset .7s cubic-bezier(.45, 0, .2, 1) .6s; }
+.gc4 .st-tag { transform-box: fill-box; transform-origin: 50% 50%; transform: scale(0); opacity: 0; }
+.gc4 .st-still.on .st-tag { transform: none; opacity: 1; transition: transform .5s cubic-bezier(.34, 1.56, .64, 1) 1.4s, opacity .15s ease 1.4s; }
+.gc4 .st-tag rect { fill: #F04D30; }
+.gc4 .st-tag text { fill: #FFFFFF; font-size: 32px; font-weight: 700; }
 .gc4 .g-hmw5 { padding: 56px; background: var(--skybg); }
 .gc4 .hmw5-q { font-size: 36px; font-weight: 700; line-height: 48px; letter-spacing: -0.01em; color: var(--sand); }
 .gc4 .hmw5-p { font-size: 20px; line-height: 1.6; color: var(--text); }
@@ -1092,6 +1143,7 @@ export const GC4_CSS = `
 }
 @media (prefers-reduced-motion: reduce) {
   .gc4 [data-r] { opacity: 1 !important; transform: none !important; transition: none !important; }
+  .gc4 .st-ring, .gc4 .st-tag { transition: none !important; }
   .gc4 .fix-inner, .gc4 .g-stage img, .gc4 .g-spot, .gc4 .g-spot b, .gc4 .g-capcard, .gc4 .g-tab i, .gc4 .g-anno *, .gc4 .g-anno-lines polyline, .gc4 .emp-body, .gc4 .emp-layer, .gc4 .g-pan { transition: none !important; }
 }
 `

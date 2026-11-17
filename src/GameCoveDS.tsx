@@ -35,6 +35,13 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
  * it shows the tour's last screen (the AI agent on Overview), flat and in the same place, then, as you scroll on, that
  * screen shrinks and tilts into the first plane of the stack (turning into Tracking on the way) while the heading
  * fades in. Labels start once it has landed. Wide screens only, and not with reduced motion.
+ *
+ * v145 (Harbor Nov 17 20:32):
+ *  - the label group no longer drops out when you scroll back up: it stays until the first screen has visibly left
+ *    its place in the stack (eased landing 85% or more) and fades out with it, re-measuring its spot as the screen
+ *    moves, instead of vanishing the moment the landing starts to rewind
+ *  - the component outlines keep their corners (6 / 4 / 8): the page's square-corner rule was flattening them
+ *  - 02 · TYPE: the card-title example names the card its line points to (Day 7 retention)
  */
 
 const F = 'https://raw.githubusercontent.com/Harbor-K/landing_page/main/gamecove/assets/v4/final/'
@@ -44,6 +51,7 @@ const HOLD_MS = 1400
 const VH_PER_LAYER = 120
 const INTRO_VH = 100 // v144: scroll spent turning the tour's last screen into the stack
 const TOUR_LAST = F + 'agent.webp' // the tour's last screen (GameCoveV4.tsx TOUR, step 3 · A)
+const LABEL_E = 0.85 // v145: labels stay on until the eased landing drops below this, and fade out with it
 const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
 
 // sw: a colour swatch · aa: an "Aa" type sample at this size · shape: a component outline (height, corners)
@@ -59,7 +67,7 @@ const LAYERS: Layer[] = [
   { name: 'Retention', kind: 'Type', src: V5 + 'retention.webp', alt: 'Retention: Day 1 retention line and the date-cohort table', side: 'r', at: [930, 195], tags: [
     { k: 'Lato 40 Bold', v: 'Page title · Retention', aa: 20 },
     { k: 'Lato 32 Bold', v: 'Key numbers · 6.0%', aa: 18 },
-    { k: 'Lato 24 Bold', v: 'Card titles · Day 1 retention', aa: 16 },
+    { k: 'Lato 24 Bold', v: 'Card titles · Day 7 retention', aa: 16 },
   ] },
   { name: 'Overview', kind: 'Components', src: F + 'overview.webp', alt: 'Overview: key numbers, drops and daily charts', side: 'l', at: [296, 286], tags: [
     { k: 'KPI card', v: '16 corners · 24 padding', shape: { h: 28, r: 6 } },
@@ -74,7 +82,7 @@ const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v))
 
 function Swatch({ t }: { t: Tag }) {
   if (t.aa) return <i className="sw aa" style={{ fontSize: `${t.aa}px`, fontFamily: LATO }}>Aa</i>
-  if (t.shape) return <i className="sw cp"><b style={{ height: `${t.shape.h}px`, borderRadius: `${t.shape.r}px` }} /></i>
+  if (t.shape) return <i className="sw cp"><b style={{ height: `${t.shape.h}px`, '--r': `${t.shape.r}px` } as React.CSSProperties} /></i>
   return <i className="sw" style={{ background: `linear-gradient(${t.sw}, ${t.sw}), #111114` }} />
 }
 
@@ -106,6 +114,11 @@ export function DsLayers() {
   const [live, setLive] = useState(false) // pinned (shown over the tour's last screen)
   const [flat, setFlat] = useState<{ dx: number; dy: number; s: number } | null>(null)
   const landed = intro >= 1
+  const e = ease(intro)
+  // v145: the labels for 01 stay while the first screen is still (almost) in its place, so scrolling back up
+  // doesn't make them blink out the moment the landing starts to rewind
+  const labelsOn = landed || (e >= LABEL_E && step === 0)
+  const measureRef = useRef<() => void>(() => {})
 
   // the scroll sets the target step; the first screen drops in when the section comes into view
   useEffect(() => {
@@ -186,16 +199,19 @@ export function DsLayers() {
       const xm = left ? Math.min(x0 + 120, x1) : Math.max(x0 - 120, x1)
       setLine({ d: `M${x0.toFixed(1)} ${y0.toFixed(1)} H${xm.toFixed(1)} L${x1.toFixed(1)} ${y1.toFixed(1)}`, x: x1, y: y1 })
     }
+    measureRef.current = measure
     const loop = () => { measure(); if (performance.now() < until) raf = requestAnimationFrame(loop) }
     loop()
     const on = () => { until = performance.now() + 200; cancelAnimationFrame(raf); loop() }
     addEventListener('resize', on)
     return () => { cancelAnimationFrame(raf); removeEventListener('resize', on) }
-  }, [step, inView, scale, landed])
+  }, [step, inView, scale, labelsOn])
+
+  // v145: while the first screen is still settling, its spot moves with the scroll, so the group and line follow it
+  useLayoutEffect(() => { if (labelsOn && !landed) measureRef.current() }, [intro, labelsOn, landed])
 
   const L = LAYERS[step]
   const shown = inView || reduced()
-  const e = ease(intro)
   // first plane while landing: from the flat tour screen to its place in the stack
   const introStyle = (i: number): React.CSSProperties | undefined => {
     if (i !== 0 || landed || !flat) return undefined
@@ -232,19 +248,21 @@ export function DsLayers() {
                 })}
               </div>
             </div>
-            {shown && landed && (
-              <div key={step} ref={group} className={'ds-group ' + L.side} style={gTop === null ? undefined : { top: `${gTop}px` }}>
-                <div className="ds-k mono"><i />{label(step, L)}</div>
-                <ul>{L.tags.map(t => <TagRow key={t.k} t={t} />)}</ul>
+            {shown && labelsOn && (
+              <div className="ds-labels" style={landed ? undefined : { opacity: clamp((e - LABEL_E) / (1 - LABEL_E)) }}>
+                <div key={step} ref={group} className={'ds-group ' + L.side} style={gTop === null ? undefined : { top: `${gTop}px` }}>
+                  <div className="ds-k mono"><i />{label(step, L)}</div>
+                  <ul>{L.tags.map(t => <TagRow key={t.k} t={t} />)}</ul>
+                </div>
+                {line && (
+                  <svg className="ds-lines" aria-hidden="true">
+                    <g key={step}>
+                      <path d={line.d} />
+                      <circle cx={line.x} cy={line.y} r="5" />
+                    </g>
+                  </svg>
+                )}
               </div>
-            )}
-            {shown && landed && line && (
-              <svg className="ds-lines" aria-hidden="true">
-                <g key={step}>
-                  <path d={line.d} />
-                  <circle cx={line.x} cy={line.y} r="5" />
-                </g>
-              </svg>
             )}
           </div>
           <p className="vh-only">
@@ -298,6 +316,7 @@ export const DS_CSS = `
 .gc4 .ds-dot { position: absolute; width: 1px; height: 1px; }
 
 /* one label group at a time, beside the stack and level with its spot (v142: top is set from the spot) */
+.gc4 .ds-labels { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
 .gc4 .ds-group { position: absolute; z-index: 2; top: 50%; display: flex; flex-direction: column; gap: 16px;
   animation: ds-in .5s var(--ease) .1s both; }
 .gc4 .ds-group.l { left: 0; }
@@ -315,6 +334,8 @@ export const DS_CSS = `
   font-style: normal; font-weight: 700; line-height: 1; }
 .gc4 .ds-tag .sw.cp { display: flex; align-items: center; border: 0; background: none; }
 .gc4 .ds-tag .sw.cp b { display: block; width: 32px; background: #17171B; border: 1.5px solid #3898F8; box-sizing: border-box; }
+/* v145: the page squares every corner (index.css, 0px !important); these outlines show the component's own corners */
+.gc .gc4 .ds-group .ds-tag .sw.cp b, .gc .gc4 .ds-flat .ds-tag .sw.cp b { border-radius: var(--r, 0px) !important; }
 .gc4 .ds-tag .kv { display: flex; flex-direction: column; min-width: 0; }
 .gc4 .ds-tag .kv b { font-size: 16px; line-height: 24px; font-weight: 400; color: var(--sand); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .gc4 .ds-tag .kv span { font-size: 16px; line-height: 24px; color: var(--mute); }

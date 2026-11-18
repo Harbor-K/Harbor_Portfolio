@@ -1,5 +1,6 @@
 import "./index.css";
 import "./favicon";
+import "./siteMeta";
 import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
 import { Home } from "./Home";
@@ -20,6 +21,8 @@ import { useScreenInit } from "./useScreenInit.js";
 // and stays mounted across page changes, so it never doubles up or restarts.
 // Browser tab (v83): Harbor-mark icon, a title per page, and "Still here?" while the tab is in the background (tabMeta.ts).
 // Browser-tab icon (v120): the filled H favicon, black in light mode and inverted in dark mode (favicon.ts).
+// Site meta (v22, Nov 18): the "Made in South Korea" / "Published … KST" comments at the top of the page and Microsoft
+// Clarity tracking on harborkim.com only (siteMeta.ts).
 // Any other hash (#projects, #contact…) is a section of the main page. An old "#/projects" link lands on Selected work.
 // Opening a page always jumps to its top instantly (not the site's smooth scroll), so a case study's full-screen intro
 // starts from the top even when you arrive from the bottom of another page.

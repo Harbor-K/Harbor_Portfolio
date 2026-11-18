@@ -46,6 +46,9 @@ const WAIT_MS = 2500 // longest wait for the video to start before the hold begi
 const DARK = '#0B0B0D'
 
 const reducedMotion = () => typeof window !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches
+// v147 (Harbor, Nov 18): no full-screen opening on phones and small tablets (≤ 900px, the header's mobile breakpoint): a wide
+// film cropped to a tall screen hid most of it and held the page for seconds. Wider screens are unchanged.
+const phone = () => typeof window !== 'undefined' && matchMedia('(max-width: 900px)').matches
 const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v))
 // quart in-out: quick through the middle, soft at both ends
 const ease = (t: number) => (t < 0.5 ? 8 * t * t * t * t : 1 - Math.pow(-2 * t + 2, 4) / 2)
@@ -169,7 +172,7 @@ function useHeroIntro(on: boolean, onDone: () => void) {
 }
 
 export function GameCove() {
-  const [introOn] = useState(() => !reducedMotion())
+  const [introOn] = useState(() => !reducedMotion() && !phone())
   const [intro, setIntro] = useState(introOn)
   const away = useHeadroom()
 

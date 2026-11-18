@@ -86,7 +86,9 @@ export function useCaseIntro(on: boolean, slot: React.RefObject<HTMLDivElement>,
   const done = useRef(onDone); done.current = onDone
   useLayoutEffect(() => {
     const s = slot.current, b = box.current, m = media.current
-    if (!on || !s || !b) { done.current(); return }
+    // v147 (Harbor, Nov 18): no full-screen opening on phones and small tablets (≤ 900px): the wide film cropped to a
+    // tall screen hid most of it and held the page for seconds. Wider screens are unchanged.
+    if (!on || !s || !b || matchMedia('(max-width: 900px)').matches) { done.current(); return }
     const root = document.documentElement
     const keep = { overflow: root.style.overflow, gutter: root.style.getPropertyValue('scrollbar-gutter') }
     scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior })

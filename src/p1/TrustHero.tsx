@@ -29,6 +29,9 @@ const HOLD_MS = 2500;
 const ANIM_MS = 1000;
 
 const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+// v147 (Harbor, Nov 18): no full-screen opening on phones and small tablets (≤ 900px, the header's mobile breakpoint): a wide
+// film cropped to a tall screen hid most of it and held the page for seconds. Wider screens are unchanged.
+const phone = () => typeof window !== 'undefined' && window.matchMedia('(max-width: 900px)').matches;
 const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 // quart in-out: quick through the middle, soft at both ends
 const ease = (t: number) => (t < 0.5 ? 8 * t * t * t * t : 1 - Math.pow(-2 * t + 2, 4) / 2);
@@ -193,7 +196,7 @@ function SoundMotion({ src, poster, label, quiet }: { src: string; poster: strin
 export function HeroSection() {
   const slot = useRef<HTMLDivElement>(null);
   const box = useRef<HTMLDivElement>(null);
-  const [intro] = useState(() => !reducedMotion());
+  const [intro] = useState(() => !reducedMotion() && !phone());
   const [running, setRunning] = useState(intro); // true until the video has settled in its place
 
   // set before the first paint, so the page opens on the full-screen video

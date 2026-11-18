@@ -34,9 +34,12 @@ const LINKS = {
 const CHAPTERS = ['Overview', 'Process', 'Discover', 'Define', 'Develop', 'Deliver', 'Test', 'Reflection']
 
 const reducedMotion = () => typeof window !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches
+// v147 (Harbor, Nov 18): no full-screen opening on phones and small tablets (≤ 900px, the header's mobile breakpoint): a wide
+// film cropped to a tall screen hid most of it and held the page for seconds. Wider screens are unchanged.
+const phone = () => typeof window !== 'undefined' && matchMedia('(max-width: 900px)').matches
 
 export function TrustBank() {
-  const [intro, setIntro] = useState(() => !reducedMotion())
+  const [intro, setIntro] = useState(() => !reducedMotion() && !phone())
   const away = useHeadroom()
 
   useEffect(() => { scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior }) }, [])

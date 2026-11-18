@@ -46,6 +46,14 @@ import React, { useEffect, useRef, useState } from 'react'
  * v146 (Harbor, Nov 17 21:13): the team photo at the end of Ideate is replaced by Harbor's drawing clip (IDEATE.mov:
  * her sketching on the iPad next to the wireframe being drawn), played like a GIF (muted, looping, no controls; 3.3 MB
  * MP4). Reflection's photo is her new takeaway shot (TAKEAWAY.jpg).
+ *
+ * v147 (Harbor, Nov 18: “mobile should work and read well; the desktop must not change”). Phone-only (≤ 700px) fixes,
+ * all inside media queries or hidden above them, so wider screens render exactly as before:
+ *  - the two user flows run top to bottom (arrows point down) instead of a row you had to swipe sideways
+ *  - the question screenshots' callouts, hidden on phones because they don't fit, are listed under the screenshot
+ *    with their pin colour (the pins stay on the screen)
+ *  - the GIF-like clips: if the phone refuses to start them (e.g. iPhone Low Power Mode), a tap starts them; the
+ *    muted attribute is also written on the element so mobile browsers allow autoplay
  */
 
 const V5 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/gamecove/v5/'
@@ -304,16 +312,25 @@ export function Ideate() {
  * motion. React does not write the muted attribute, so it is set and started here (same as FollowClip below). */
 function LoopClip({ src, poster, label }: { src: string; poster: string; label: string }) {
   const ref = useRef<HTMLVideoElement>(null)
-  useEffect(() => {
-    const v = ref.current; if (!v) return
-    v.muted = true
-    if (reducedMotion()) return
-    if (!('IntersectionObserver' in window)) { v.play().catch(() => {}); return }
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) v.play().catch(() => {}); else v.pause() }, { threshold: 0.2 })
-    io.observe(v)
-    return () => io.disconnect()
-  }, [])
+  useEffect(() => clipAutoplay(ref.current), [])
   return <video ref={ref} src={src} poster={poster} muted loop playsInline preload="metadata" aria-label={label} />
+}
+
+/** v147: start a muted clip while it is on screen, pause it when it leaves. The muted attribute is written on the element
+ * (React only sets the property) so mobile browsers allow it; if the browser still refuses (iPhone Low Power Mode),
+ * a tap on the clip starts it. Returns the cleanup. */
+function clipAutoplay(v: HTMLVideoElement | null) {
+  if (!v) return
+  v.muted = true; v.defaultMuted = true; v.setAttribute('muted', '')
+  if (reducedMotion()) return
+  let blocked = false
+  const tap = () => { if (blocked) { blocked = false; v.play().catch(() => { blocked = true }) } }
+  const play = () => v.play().catch(() => { blocked = true })
+  v.addEventListener('click', tap)
+  if (!('IntersectionObserver' in window)) { play(); return () => v.removeEventListener('click', tap) }
+  const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) play(); else v.pause() }, { threshold: 0.2 })
+  io.observe(v)
+  return () => { io.disconnect(); v.removeEventListener('click', tap) }
 }
 
 /* ---------- test · iterate (Figma "08 Test + Iterate · v3", 1773:13708) ---------- */
@@ -366,15 +383,7 @@ const FOLLOW_POSTER = V6 + 'followup-poster.jpg'
  * started here instead (muted), while it is on screen, and paused when it leaves */
 function FollowClip() {
   const ref = useRef<HTMLVideoElement>(null)
-  useEffect(() => {
-    const v = ref.current; if (!v) return
-    v.muted = true
-    if (reducedMotion()) return
-    if (!('IntersectionObserver' in window)) { v.play().catch(() => {}); return }
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) v.play().catch(() => {}); else v.pause() }, { threshold: 0.2 })
-    io.observe(v)
-    return () => io.disconnect()
-  }, [])
+  useEffect(() => clipAutoplay(ref.current), [])
   return (
     <video ref={ref} src={FOLLOW_VIDEO} poster={FOLLOW_POSTER} muted loop playsInline preload="metadata"
       aria-label="Follow-up session with P2, his face blurred: he moves the dashboard’s 18 metric cards into must-have, nice to have and not needed while we talk it through" />
@@ -451,6 +460,10 @@ export function Iterate() {
                       </React.Fragment>
                     ))}
                   </div>
+                  {/* v147: phones only — the callouts as a list under the screen (hidden above 700px) */}
+                  <ul className="ts-legend" aria-hidden="true">
+                    {q.marks.map(m => <li key={m.t} className={m.c}><i />{m.t}</li>)}
+                  </ul>
                 </figure>
               </div>
             </article>
@@ -642,6 +655,7 @@ export const PARTS_CSS = `
 }
 .gc4 .ts-call { position: absolute; padding: 8px 16px; border: 1px solid; background: rgba(17,17,20,.94); font-size: 16px; line-height: 24px; color: var(--sand); white-space: nowrap; }
 .gc4 .ts-call.red { border-color: #E28B8B; } .gc4 .ts-call.blue { border-color: #3898F8; }
+.gc4 .ts-legend { display: none; } /* v147: phones only, see the 700px block */
 /* v141: every card sticks at the same top, so no slice of the card underneath (its number or title) peeks out */
 .gc4 .ts-stack.on .ts-q { position: sticky; top: max(32px, calc(50vh - 328px)); }
 .gc4 .ts-stack.on .ts-card { opacity: calc(1 - var(--k, 0)); will-change: opacity; }
@@ -729,6 +743,19 @@ export const PARTS_CSS = `
 @media (max-width: 700px) {
   .gc4 .ts-box, .gc4 .ts-take { padding: 24px; }
   .gc4 .ts-call { display: none; }
+  /* v147: the callouts as a list under the screenshot, each with its pin colour */
+  .gc4 .ts-legend { display: flex; flex-direction: column; gap: 8px; margin: 16px 0 0; padding: 0; list-style: none; }
+  .gc4 .ts-legend li { display: flex; align-items: flex-start; gap: 8px; font-size: 16px; line-height: 24px; color: var(--sand); }
+  .gc4 .ts-legend li i { flex: none; width: 16px; height: 16px; margin-top: 4px; border: 3px solid #E28B8B; background: rgba(226,139,139,.18); }
+  .gc4 .ts-legend li.blue i { border-color: #3898F8; background: rgba(56,152,248,.18); }
+  .gc .gc4 .ts-legend li i { border-radius: 50% !important; }
+  /* v147: the user flows run top to bottom (no sideways swipe); arrows point down */
+  .gc4 .fs .fl-scroll { overflow: visible; }
+  .gc4 .fs .fl-row { flex-direction: column; align-items: stretch; gap: 0; min-width: 0; }
+  .gc4 .fs .fl-row > .nd, .gc4 .fs .fl-row > .fl-paths, .gc4 .fs .fl-paths .nd { width: 100%; }
+  .gc4 .fs .fl-arr { width: 100%; height: 40px; align-items: center; justify-content: center; }
+  .gc4 .fs .fl-arr svg { transform: rotate(90deg); }
+  .gc4 .fs .fl-arr .yes { left: calc(50% + 24px); bottom: auto; top: 50%; transform: translateY(-50%); margin: 0; }
   .gc4 .ts-bars li { grid-template-columns: minmax(0, 1fr) auto; }
   .gc4 .ts-who { grid-column: 1 / -1; }
   .gc4 .ts-h2, .gc4 .rf-nh { font-size: 32px; line-height: 40px; }

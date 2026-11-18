@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import { CSS, IMG3 } from './portfolio'
 import { SideToc, useHeadroom } from './CaseNav'
 import { SiteHeaderB } from './SiteHeaderB'
-import { UTradaV3 } from './UTradaV3'
+import { UTradaV6 } from './UTradaV6'
 import { EtoV3 } from './EtoV3'
 
 // Case-study skeletons for Harbor to fill in herself: UTrada (#/utrada) and, since v117, ETO Markets (#/eto-markets) —
@@ -163,7 +163,8 @@ function CaseSkeleton({ d }: { d: CaseData }) {
 
 // v134 (Harbor, Nov 16): UTrada has its own page now, built from Figma "UTrada_v.3 · Design" (UTradaV3.tsx), with the
 // full-screen intro film like Trust Bank and GameCove. The UT skeleton data above is kept for reference only.
-export function UTrada() { return <UTradaV3 /> }
+// v148 (Harbor, Nov 18): rebuilt from Figma "UTrada_v.6 · Final" (1890:1214) with GameCove's motion (UTradaV6.tsx).
+export function UTrada() { return <UTradaV6 /> }
 // v135: ETO Markets is now the full case study built from Harbor's Figma (EtoV3.tsx); the old skeleton data stays below, unused.
 export function EtoMarkets() { return <EtoV3 /> }
 

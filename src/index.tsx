@@ -1,4 +1,5 @@
 import "./index.css";
+import "./favicon";
 import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
 import { Home } from "./Home";
@@ -18,6 +19,7 @@ import { useScreenInit } from "./useScreenInit.js";
 // The line cursor (cursor.tsx) runs on every page — since v81 the main page too (Harbor, Nov 9). It is mounted once here
 // and stays mounted across page changes, so it never doubles up or restarts.
 // Browser tab (v83): Harbor-mark icon, a title per page, and "Still here?" while the tab is in the background (tabMeta.ts).
+// Browser-tab icon (v120): the filled H favicon, black in light mode and inverted in dark mode (favicon.ts).
 // Any other hash (#projects, #contact…) is a section of the main page. An old "#/projects" link lands on Selected work.
 // Opening a page always jumps to its top instantly (not the site's smooth scroll), so a case study's full-screen intro
 // starts from the top even when you arrive from the bottom of another page.

@@ -1,8 +1,8 @@
 import { useEffect } from 'react'
 
 // Browser tab (v89, Harbor, Nov 9):
-// - Icon: whatever Harbor sets in Magic Patterns → Publish → Edit Metadata → Favicon. The site no longer replaces it
-//   (v83–v88 swapped in its own icon at runtime, which is why the Publish favicon never showed).
+// - Icon: since v120 set by favicon.ts (filled H, inverted in dark mode). It overrides the Publish → Edit Metadata →
+//   Favicon setting once the page loads; keep the light H there too for link previews and the first moment of loading.
 // - Title: the main page uses the Default Title from the same Publish settings (read from the page as it loads);
 //   the other pages put their name first, e.g. "Trust Bank · Harbor(Jihyun) Kim".
 // - While you are on another tab the title says "Still here?"; coming back puts the page's title back.

@@ -74,14 +74,18 @@ function useOnScroll(fn: () => void) {
   }, [])
 }
 
-/** true once the element has scrolled into view */
+/** true once the element has scrolled into view: `threshold` of it is visible, or it fills a third of the screen
+ *  (so very tall or very wide blocks, like the journey map on a phone, still start) */
 function useShownOnce<T extends HTMLElement>(threshold = 0.3) {
   const ref = useRef<T>(null)
   const [shown, setShown] = useState(false)
   useEffect(() => {
     const el = ref.current; if (!el) return
     if (reducedMotion() || !('IntersectionObserver' in window)) { setShown(true); return }
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setShown(true); io.disconnect() } }, { threshold })
+    const steps = Array.from({ length: 21 }, (_, i) => i / 20)
+    const io = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting && (e.intersectionRatio >= threshold || e.intersectionRect.height >= innerHeight / 3)) { setShown(true); io.disconnect() }
+    }, { threshold: steps })
     io.observe(el); return () => io.disconnect()
   }, [threshold])
   return [ref, shown] as const
@@ -459,51 +463,51 @@ function JourneyMap() {
   return (
     <div className="u6-scroll u6-jm-scroll">
       <div ref={ref} className={'u6-jm' + (shown ? ' on' : '')} role="table" aria-label="Journey map: where a first-time trader slows down">
-        <div className="row" role="row">
-          <div className="lab" role="rowheader">STAGE</div>
-          {STAGES.map((s, i) => <div key={s} className="cell" role="cell" style={col(i)}><span className="num">{i + 1}</span><b className="stage">{s}</b></div>)}
+        <div className="jr" role="row">
+          <div className="jl" role="rowheader">STAGE</div>
+          {STAGES.map((s, i) => <div key={s} className="jc" role="cell" style={col(i)}><span className="jnum">{i + 1}</span><b className="jstage">{s}</b></div>)}
         </div>
-        <div className="row" role="row">
-          <div className="lab" role="rowheader">WHAT THEY DO</div>
-          {DOING.map((s, i) => <div key={s} className="cell" role="cell" style={col(i)}><p>{s}</p></div>)}
+        <div className="jr" role="row">
+          <div className="jl" role="rowheader">WHAT THEY DO</div>
+          {DOING.map((s, i) => <div key={s} className="jc" role="cell" style={col(i)}><p>{s}</p></div>)}
         </div>
-        <div className="row" role="row">
-          <div className="lab" role="rowheader">WHAT THEY ASK</div>
-          {ASKING.map((s, i) => <div key={s} className="cell" role="cell" style={col(i)}><p className="ask">{s}</p></div>)}
+        <div className="jr" role="row">
+          <div className="jl" role="rowheader">WHAT THEY ASK</div>
+          {ASKING.map((s, i) => <div key={s} className="jc" role="cell" style={col(i)}><p className="jask">{s}</p></div>)}
         </div>
-        <div className="row feel" role="row">
-          <div className="lab" role="rowheader">HOW THEY FEEL<br />(assumed)</div>
-          <div className="feel-cell" role="cell" aria-label={'Feelings, in order: ' + FEEL.map(f => f.w).join(', ')}>
-            <i className="line" aria-hidden="true" />
+        <div className="jr jfeel" role="row">
+          <div className="jl" role="rowheader">HOW THEY FEEL<br />(assumed)</div>
+          <div className="jfeel-cell" role="cell" aria-label={'Feelings, in order: ' + FEEL.map(f => f.w).join(', ')}>
+            <i className="jline" aria-hidden="true" />
             {FEEL.map((f, i) => (
-              <div key={f.w} className={'pt' + (f.good ? ' good' : '')} aria-hidden="true"
+              <div key={f.w} className={'jpt' + (f.good ? ' good' : '')} aria-hidden="true"
                 style={{ left: `${((i + 0.5) / 6) * 100}%`, '--y': `${f.y - 104}px`, '--c': i } as React.CSSProperties}>
-                <span className="dot" />
-                <span className="w">{f.w}</span>
+                <span className="jdot" />
+                <span className="jw">{f.w}</span>
               </div>
             ))}
           </div>
         </div>
-        <div className="row" role="row">
-          <div className="lab" role="rowheader">RISK OF LEAVING</div>
+        <div className="jr" role="row">
+          <div className="jl" role="rowheader">RISK OF LEAVING</div>
           {RISK.map(([w, n], i) => (
-            <div key={i} className="cell" role="cell" style={col(i)}>
-              <b className="risk">{w}</b>
-              <span className="bars" aria-hidden="true">{[0, 1, 2, 3].map(k => <i key={k} className={k < n ? 'f' : ''} style={{ '--k': k } as React.CSSProperties} />)}</span>
+            <div key={i} className="jc" role="cell" style={col(i)}>
+              <b className="jrisk">{w}</b>
+              <span className="jbars" aria-hidden="true">{[0, 1, 2, 3].map(k => <i key={k} className={k < n ? 'f' : ''} style={{ '--k': k } as React.CSSProperties} />)}</span>
             </div>
           ))}
         </div>
-        <div className="row" role="row">
-          <div className="lab" role="rowheader">SCREEN THAT ANSWERS</div>
+        <div className="jr" role="row">
+          <div className="jl" role="rowheader">SCREEN THAT ANSWERS</div>
           {SCREEN_CHIPS.map((cs, i) => (
-            <div key={i} className="cell chips" role="cell" style={col(i)}>
-              {cs.map(c => <span key={c.t} className={'chip' + (c.concept ? ' concept' : '')}>{c.t}</span>)}
+            <div key={i} className="jc jchips" role="cell" style={col(i)}>
+              {cs.map(c => <span key={c.t} className={'jchip' + (c.concept ? ' concept' : '')}>{c.t}</span>)}
             </div>
           ))}
         </div>
-        <div className="row" role="row">
-          <div className="lab" role="rowheader">WHERE THIS COMES FROM</div>
-          {EVIDENCE.map((s, i) => <div key={i} className="cell" role="cell" style={col(i)}><p className="ev">{s}</p></div>)}
+        <div className="jr" role="row">
+          <div className="jl" role="rowheader">WHERE THIS COMES FROM</div>
+          {EVIDENCE.map((s, i) => <div key={i} className="jc" role="cell" style={col(i)}><p className="jev">{s}</p></div>)}
         </div>
       </div>
     </div>
@@ -693,7 +697,7 @@ export function UTradaV6() {
                   <article key={f.big} className="u6-find">
                     <div className="k">{f.src}</div>
                     <div className="big">{f.big}</div>
-                    <p className="lead">{f.lead}</p>
+                    <p className="flead">{f.lead}</p>
                     <p className="det">{f.detail}</p>
                     <div className="meant"><div className="k em">WHAT IT MEANT FOR UTRADA</div><p>{f.meant}</p></div>
                     <p className="ref">{f.ref}</p>
@@ -1009,7 +1013,7 @@ const U6_CSS = `
 .u6 .u6-finds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; align-items: stretch; }
 .u6 .u6-find { display: flex; flex-direction: column; gap: 16px; height: 100%; padding: 32px; background: #FFFFFF; border: 1px solid var(--line2); }
 .u6 .u6-find .big { font-size: 56px; font-weight: 700; line-height: 64px; letter-spacing: -0.02em; color: var(--pu); }
-.u6 .u6-find .lead { font-size: 18px; line-height: 28px; }
+.u6 .u6-find .flead { font-size: 18px; line-height: 28px; }
 .u6 .u6-find .det, .u6 .u6-find .ref { font-size: 16px; line-height: 24px; color: var(--mute); }
 .u6 .u6-find .meant { display: flex; flex-direction: column; gap: 8px; padding-top: 16px; border-top: 1px solid var(--line2); }
 .u6 .u6-find .k.em { color: var(--pu); }
@@ -1046,38 +1050,38 @@ const U6_CSS = `
 
 /* journey map */
 .u6 .u6-jm { display: flex; flex-direction: column; border: 1px solid var(--line2); background: #FFFFFF; }
-.u6 .u6-jm .row { display: grid; grid-template-columns: 176px repeat(6, minmax(0, 1fr)); border-bottom: 1px solid var(--line2); }
-.u6 .u6-jm .row:last-child { border-bottom: 0; }
-.u6 .u6-jm .lab { padding: 24px 16px 24px 24px; background: var(--soft); font-size: 16px; font-weight: 500; line-height: 24px; letter-spacing: .06em; color: var(--mute); position: sticky; left: 0; z-index: 2; }
-.u6 .u6-jm .cell { display: flex; flex-direction: column; gap: 8px; padding: 24px 16px; border-left: 1px solid var(--line2);
+.u6 .u6-jm .jr { display: grid; grid-template-columns: 176px repeat(6, minmax(0, 1fr)); border-bottom: 1px solid var(--line2); }
+.u6 .u6-jm .jr:last-child { border-bottom: 0; }
+.u6 .u6-jm .jl { padding: 24px 16px 24px 24px; background: var(--soft); font-size: 16px; font-weight: 500; line-height: 24px; letter-spacing: .06em; color: var(--mute); position: sticky; left: 0; z-index: 2; }
+.u6 .u6-jm .jc { display: flex; flex-direction: column; gap: 8px; padding: 24px 16px; border-left: 1px solid var(--line2);
   opacity: 0; transform: translateY(12px); transition: opacity .6s ease, transform .8s var(--ease); transition-delay: calc(var(--c, 0) * 110ms); }
-.u6 .u6-jm.on .cell { opacity: 1; transform: none; }
-.u6 .u6-jm .num { font-size: 16px; font-weight: 500; line-height: 24px; color: var(--pu); }
-.u6 .u6-jm .stage { font-size: 24px; font-weight: 700; line-height: 32px; letter-spacing: -0.005em; }
+.u6 .u6-jm.on .jc { opacity: 1; transform: none; }
+.u6 .u6-jm .jnum { font-size: 16px; font-weight: 500; line-height: 24px; color: var(--pu); }
+.u6 .u6-jm .jstage { font-size: 24px; font-weight: 700; line-height: 32px; letter-spacing: -0.005em; }
 .u6 .u6-jm p { font-size: 16px; line-height: 24px; }
-.u6 .u6-jm p.ask { font-weight: 500; }
-.u6 .u6-jm p.ev { color: var(--mute); }
-.u6 .u6-jm .feel .feel-cell { position: relative; grid-column: 2 / -1; height: 224px; border-left: 1px solid var(--line2); }
-.u6 .u6-jm .feel .line { position: absolute; left: 0; right: 0; top: 104px; height: 1px; background: var(--line2); }
-.u6 .u6-jm .pt { position: absolute; top: 104px; width: 0; height: 0; }
-.u6 .u6-jm .pt .dot { position: absolute; left: -7px; top: -7px; width: 14px; height: 14px; box-sizing: border-box; border: 2px solid var(--pu); background: #FFFFFF; border-radius: 50% !important;
+.u6 .u6-jm p.jask { font-weight: 500; }
+.u6 .u6-jm p.jev { color: var(--mute); }
+.u6 .u6-jm .jfeel .jfeel-cell { position: relative; grid-column: 2 / -1; height: 224px; border-left: 1px solid var(--line2); }
+.u6 .u6-jm .jfeel .jline { position: absolute; left: 0; right: 0; top: 104px; height: 1px; background: var(--line2); }
+.u6 .u6-jm .jpt { position: absolute; top: 104px; width: 0; height: 0; }
+.u6 .u6-jm .jpt .jdot { position: absolute; left: -7px; top: -7px; width: 14px; height: 14px; box-sizing: border-box; border: 2px solid var(--pu); background: #FFFFFF; border-radius: 50% !important;
   opacity: 0; transform: translateY(0); transition: opacity .3s ease, transform 1s cubic-bezier(0.34, 1.56, 0.64, 1); transition-delay: calc(var(--c, 0) * 160ms + 500ms); }
-.u6 .u6-jm .pt.good .dot { background: var(--pu); }
-.u6 .u6-jm.on .pt .dot { opacity: 1; transform: translateY(var(--y)); }
-.u6 .u6-jm.on .pt.good .dot { animation: u6-pulse 1.8s ease-out calc(var(--c, 0) * 160ms + 1.6s) infinite; }
+.u6 .u6-jm .jpt.good .jdot { background: var(--pu); }
+.u6 .u6-jm.on .jpt .jdot { opacity: 1; transform: translateY(var(--y)); }
+.u6 .u6-jm.on .jpt.good .jdot { animation: u6-pulse 1.8s ease-out calc(var(--c, 0) * 160ms + 1.6s) infinite; }
 @keyframes u6-pulse { 0% { box-shadow: 0 0 0 0 rgba(var(--pu-rgb), .5); } 100% { box-shadow: 0 0 0 14px rgba(var(--pu-rgb), 0); } }
-.u6 .u6-jm .pt .w { position: absolute; left: 0; top: 12px; transform: translate(-50%, var(--y)); white-space: nowrap; font-size: 16px; line-height: 24px; color: var(--mute);
+.u6 .u6-jm .jpt .jw { position: absolute; left: 0; top: 12px; transform: translate(-50%, var(--y)); white-space: nowrap; font-size: 16px; line-height: 24px; color: var(--mute);
   opacity: 0; transition: opacity .5s ease; transition-delay: calc(var(--c, 0) * 160ms + 1.1s); }
-.u6 .u6-jm .pt.good .w { top: -34px; color: var(--ink); }
-.u6 .u6-jm.on .pt .w { opacity: 1; }
-.u6 .u6-jm .risk { font-size: 16px; font-weight: 600; line-height: 24px; }
-.u6 .u6-jm .bars { display: flex; gap: 8px; }
-.u6 .u6-jm .bars i { position: relative; width: 24px; height: 8px; background: var(--line2); overflow: hidden; }
-.u6 .u6-jm .bars i.f::after { content: ''; position: absolute; inset: 0; background: var(--pu); transform: scaleX(0); transform-origin: left; transition: transform .35s ease; transition-delay: calc(var(--c, 0) * 110ms + var(--k, 0) * 120ms + 900ms); }
-.u6 .u6-jm.on .bars i.f::after { transform: scaleX(1); }
-.u6 .u6-jm .chips { gap: 8px; }
-.u6 .u6-jm .chip { display: block; padding: 8px; background: #000D0F; border: 1px solid #000D0F; color: #FFFFFF; font-size: 16px; font-weight: 500; line-height: 24px; }
-.u6 .u6-jm .chip.concept { background: #FFFFFF; border-color: #737378; color: var(--mute); }
+.u6 .u6-jm .jpt.good .jw { top: -34px; color: var(--ink); }
+.u6 .u6-jm.on .jpt .jw { opacity: 1; }
+.u6 .u6-jm .jrisk { font-size: 16px; font-weight: 600; line-height: 24px; }
+.u6 .u6-jm .jbars { display: flex; gap: 8px; }
+.u6 .u6-jm .jbars i { position: relative; width: 24px; height: 8px; background: var(--line2); overflow: hidden; }
+.u6 .u6-jm .jbars i.f::after { content: ''; position: absolute; inset: 0; background: var(--pu); transform: scaleX(0); transform-origin: left; transition: transform .35s ease; transition-delay: calc(var(--c, 0) * 110ms + var(--k, 0) * 120ms + 900ms); }
+.u6 .u6-jm.on .jbars i.f::after { transform: scaleX(1); }
+.u6 .u6-jm .jchips { gap: 8px; }
+.u6 .u6-jm .jchip { display: block; padding: 8px; background: #000D0F; border: 1px solid #000D0F; color: #FFFFFF; font-size: 16px; font-weight: 500; line-height: 24px; }
+.u6 .u6-jm .jchip.concept { background: #FFFFFF; border-color: #737378; color: var(--mute); }
 
 /* develop: screen cards that stack (GameCove test cards) */
 .u6 .u6-sq + .u6-sq { margin-top: 120px; }
@@ -1188,17 +1192,17 @@ const U6_CSS = `
   .u6 .u6-find, .u6 .u6-princ .pc, .u6 .u6-gaps .gp, .u6 .u6-tasks .tk, .u6 .u6-goals .bounce > div { padding: 24px; }
   .u6 .u6-find .big { font-size: 40px; line-height: 48px; }
   .u6 .u6-insight { padding: 24px; font-size: 20px; line-height: 28px; }
-  .u6 .u6-jm .lab { width: 128px; box-sizing: border-box; padding: 16px; }
-  .u6 .u6-jm .row { grid-template-columns: 128px repeat(6, minmax(0, 1fr)); }
+  .u6 .u6-jm .jl { width: 128px; box-sizing: border-box; padding: 16px; }
+  .u6 .u6-jm .jr { grid-template-columns: 128px repeat(6, minmax(0, 1fr)); }
   .u6 .u6-jm { min-width: 1100px; }
   .u6 .u6-list li { gap: 16px; }
   .u6 .u6-closing .ph { aspect-ratio: 4 / 3; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .u6 [data-r], .u6 .u6-dg *, .u6 .u6-mt tbody tr, .u6 .u6-jm .cell, .u6 .u6-jm .pt *, .u6 .u6-jm .bars i::after { opacity: 1 !important; transition: none !important; animation: none !important; }
-  .u6 [data-r], .u6 .u6-jm .cell, .u6 .u6-mt tbody tr { transform: none !important; }
-  .u6 .u6-jm .pt .dot { transform: translateY(var(--y)) !important; }
-  .u6 .u6-jm .bars i.f::after { transform: none !important; }
+  .u6 [data-r], .u6 .u6-dg *, .u6 .u6-mt tbody tr, .u6 .u6-jm .jc, .u6 .u6-jm .jpt *, .u6 .u6-jm .jbars i::after { opacity: 1 !important; transition: none !important; animation: none !important; }
+  .u6 [data-r], .u6 .u6-jm .jc, .u6 .u6-mt tbody tr { transform: none !important; }
+  .u6 .u6-jm .jpt .jdot { transform: translateY(var(--y)) !important; }
+  .u6 .u6-jm .jbars i.f::after { transform: none !important; }
   .u6 .u6-dsc-body, .u6 .u6-dsc-layer { transition: none !important; }
 }
 `

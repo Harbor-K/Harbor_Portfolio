@@ -11,7 +11,7 @@ export const manifest = {
   },
   sections: {
     sec_dbckwq: { name: "Main page", x: 0, y: -536.35, width: 6320, height: 1460 },
-    sec_landng: { name: "Landing pages", x: 8.92, y: 1572.64, width: 2240, height: 1460 },
+    sec_landng: { name: "About me", x: 8.92, y: 1572.64, width: 2240, height: 1460 },
     sec_tbcase: { name: "Case studies", x: 5.88, y: 3816.74, width: 8360, height: 1460 },
   },
   layers: [

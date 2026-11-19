@@ -27,6 +27,7 @@ import { GIFS, useGifSrc } from './gifPlay'
 // - Media: every project shows Harbor's 384×224 GIF (gifPlay.ts; v138: UTrada and ETO Markets too), started from its
 //   first frame each time the row is pointed at.
 // v135: the ETO Markets logo at rest is Harbor's logo.svg (mark + ETO MARKETS, 181×62, #E2E1E0) at its own size.
+// v28 (Harbor, Nov 19): UTrada's line now says what the case study is about (trust before the first deposit).
 // Footer: Footer.tsx, rendered by index.tsx under every page.
 // Type: Roboto everywhere (index.css).
 
@@ -63,7 +64,7 @@ const PROJECTS: Project[] = [
     logo: svgUri(GAMECOVE_LOGO_SVG), gif: GIFS.gameCoveRow, // v146 (Harbor, Nov 17 21:13): no longer "Coming soon"
   },
   {
-    title: 'UTrada', sub: 'Product design for a trading platform.', href: '#/utrada',
+    title: 'UTrada', sub: 'Helping first-time traders trust a new broker.', href: '#/utrada',
     logo: svgUri(UTRADA_LOGO_SVG), gif: GIFS.utradaRow, wip: true,
   },
   {

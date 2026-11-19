@@ -1,6 +1,6 @@
 import React from 'react'
 import { UTradaV7 } from './UTradaV7'
-import { EtoV3 } from './EtoV3'
+import { EtoV4 } from './EtoV4'
 
 // Case-study routes: UTrada (#/utrada) and ETO Markets (#/eto-markets), rendered by index.tsx.
 // v134 (Nov 16): UTrada got its own page from Figma "UTrada_v.3 · Design" (UTradaV3.tsx).
@@ -8,7 +8,9 @@ import { EtoV3 } from './EtoV3'
 // v21 (Nov 18, editor version): rebuilt again from Harbor's revised "UTrada_v.6 · Final (Trust Bank level)" frame —
 // purple Process scene, broker diagram, trust chart, three screen panels (UTradaV7.tsx). V3 and V6 stay in the
 // design, unused, so an older version can be brought back by changing the line below.
-// v135: ETO Markets is the full case study built from Harbor's Figma (EtoV3.tsx).
+// v135: ETO Markets became the full case study built from Harbor's Figma (EtoV3.tsx).
+// v28 (Nov 19): ETO Markets rebuilt from Figma "06 ETO Markets — 1920 · v3" (1813:20918), framed around IB partners
+// (EtoV4.tsx). EtoV3 stays in the design, unused.
 // The old "fill in the TBD" skeleton that used to live here was unused since v134 and has been removed.
 
 export const ETO_IMG = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/eto/'
@@ -25,4 +27,4 @@ const U7_FIX = `
 `
 
 export function UTrada() { return <><style>{U7_FIX}</style><UTradaV7 /></> }
-export function EtoMarkets() { return <EtoV3 /> }
+export function EtoMarkets() { return <EtoV4 /> }

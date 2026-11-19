@@ -36,6 +36,8 @@ import { CaseFilm, useCaseIntro } from './CaseFilm'
  * title > body order reads at a glance).
  * Assets: Harbor-K/harbor-pf assets/eto/v3 (film, mark, research photos, prototype stills), v4 (architecture diagram)
  * and v5 (old portal, broker logos, the three dashboard layers, slider cards, office photo — exported from 982:162 at 2x).
+ * Nov 19 (Harbor): TIMELINE written like the other case studies (length, then months): 3 months, November 2022 –
+ * January 2023. Class names that the site's shared styles also use (card, bar, lead, arrows) were renamed e5-….
  */
 
 const A3 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/eto/v3/'
@@ -314,7 +316,7 @@ function TierStack() {
           {TIERS.map(t => (
             <div key={t.n} className={'e5-tierlab l' + t.n + ' ' + t.side + (hot === t.n ? ' on' : '')} style={{ top: pct(t.top, 840) }}
               tabIndex={0} onMouseEnter={() => setHot(t.n)} onMouseLeave={() => setHot(0)} onFocus={() => setHot(t.n)} onBlur={() => setHot(0)}>
-              <span className="lead" aria-hidden="true"><i /></span>
+              <span className="e5-lead" aria-hidden="true"><i /></span>
               <div className="tx">
                 <div className={'tn' + (t.n === 1 ? ' red' : '')}>TIER {t.n}</div>
                 <h3>{t.t}</h3>
@@ -517,14 +519,14 @@ function Slider() {
         onClickCapture={e => { if (drag.current?.moved) e.preventDefault() }}>
         {SLIDES.map((s, i) => (
           <div key={s.n} className={'e5-slide' + (i === idx ? ' on' : '')} role="group" aria-roledescription="slide" aria-label={`${s.n} of 04, ${s.t}`} aria-hidden={i !== idx || undefined}>
-            <div className="card"><img src={s.src} alt={s.alt} width={2400} height={1280} loading={i < 2 ? 'eager' : 'lazy'} decoding="async" draggable={false} /></div>
+            <div className="e5-card"><img src={s.src} alt={s.alt} width={2400} height={1280} loading={i < 2 ? 'eager' : 'lazy'} decoding="async" draggable={false} /></div>
             <div className="cap"><h3>{s.n}. {s.t}</h3><p>{s.d}</p></div>
           </div>
         ))}
       </div>
       <div className="e5-sl-ctrl">
         <div className="count" aria-live="polite"><b>{SLIDES[idx].n}</b> / {String(SLIDES.length).padStart(2, '0')}</div>
-        <div className="arrows">
+        <div className="e5-arrows">
           <button type="button" onClick={() => go(idx - 1)} aria-label="Previous screen"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg></button>
           <button type="button" onClick={() => go(idx + 1)} aria-label="Next screen"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg></button>
         </div>
@@ -616,7 +618,7 @@ export function EtoV5() {
               <div className="e5-box" ref={box}><CaseFilm src={IMG.video} poster={IMG.poster} label={FILM_LABEL} quiet={intro} introRef={media} /></div>
             </div>
             <div className="e5-meta">
-              <div><div className="k">TIMELINE</div><p>9 months, in-house<br />Dashboard redesigned for this case study</p></div>
+              <div><div className="k">TIMELINE</div><p>3 months<br />November 2022 – January 2023</p></div>
               <div><div className="k">ROLE</div><p>UI &amp; UX designer<br />Web, tablet, iOS and Android</p></div>
               <div><div className="k">INDUSTRY</div><p>Fintech, online trading, CRM</p></div>
             </div>
@@ -840,7 +842,7 @@ export function EtoV5() {
                       return (
                         <div key={w} className={'rr ' + w}>
                           <span className="lab">{w === 'before' ? 'AS-IS' : 'TO-BE'}</span>
-                          <span className="bar">
+                          <span className="e5-bar">
                             {r.squares
                               ? <span className="sq">{Array.from({ length: v.w }, (_, i) => <i key={i} style={{ '--d': `${i * 70}ms` } as React.CSSProperties} />)}</span>
                               : <i style={{ width: `${v.w * 65}%` }} />}
@@ -968,7 +970,7 @@ const E5_CSS = `
 .e5 .e5-bm-t { width: 100%; min-width: 640px; border-collapse: collapse; background: #FFFFFF; box-shadow: 0 0 0 1px #E2D3D4; font-size: 16px; line-height: 24px; }
 .e5 .e5-bm-t thead th { height: 48px; padding: 0 12px; background: #F7EFEF; text-align: center; vertical-align: middle; transition: background-color .2s; }
 .e5 .e5-bm-t thead th.crit { text-align: left; padding-left: 24px; font-weight: 500; color: var(--ash); }
-.e5 .e5-bm-t thead img { display: inline-block; height: 28px; width: auto; max-width: 106px; object-fit: contain; vertical-align: middle; mix-blend-mode: multiply; }
+.e5 .e5-bm-t thead img { display: inline-block; height: 28px; width: auto; max-width: 106px; object-fit: contain; vertical-align: middle; }
 .e5 .e5-bm-t tbody th { width: 34%; padding: 0 12px 0 24px; text-align: left; font-weight: 500; color: var(--ink); }
 .e5 .e5-bm-t tbody tr { height: 56px; border-top: 1px solid #F0E6E6; }
 .e5 .e5-bm-t td { text-align: center; vertical-align: middle; transition: background-color .2s; }
@@ -1029,11 +1031,11 @@ const E5_CSS = `
 .e5 .e5-tierlab.l3 { transform: translateY(calc(var(--o) * -1)); }
 .e5 .e5-tierlab.right { left: 67.78%; }
 .e5 .e5-tierlab.left { right: 67.78%; flex-direction: row-reverse; text-align: right; }
-.e5 .e5-tierlab .lead { position: relative; flex: none; width: 72px; height: 2px; margin-top: 61px; background: var(--ink); }
-.e5 .e5-tierlab .lead i { position: absolute; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--ink); }
-.e5 .e5-tierlab.right .lead { margin-right: 16px; } .e5 .e5-tierlab.right .lead i { left: -4px; }
-.e5 .e5-tierlab.left .lead { margin-left: 16px; } .e5 .e5-tierlab.left .lead i { right: -4px; }
-.e5 .e5-tierlab.l1 .lead, .e5 .e5-tierlab.l1 .lead i { background: var(--red); }
+.e5 .e5-tierlab .e5-lead { position: relative; flex: none; width: 72px; height: 2px; margin-top: 61px; background: var(--ink); }
+.e5 .e5-tierlab .e5-lead i { position: absolute; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--ink); }
+.e5 .e5-tierlab.right .e5-lead { margin-right: 16px; } .e5 .e5-tierlab.right .e5-lead i { left: -4px; }
+.e5 .e5-tierlab.left .e5-lead { margin-left: 16px; } .e5 .e5-tierlab.left .e5-lead i { right: -4px; }
+.e5 .e5-tierlab.l1 .e5-lead, .e5 .e5-tierlab.l1 .e5-lead i { background: var(--red); }
 .e5 .e5-tierlab .tx { flex: 1; min-width: 0; max-width: 320px; }
 .e5 .tn { font-size: 16px; font-weight: 500; line-height: 24px; color: var(--ash); }
 .e5 .tn.red { color: var(--red); }
@@ -1136,19 +1138,19 @@ const E5_CSS = `
   padding: 0 calc((100% - var(--sw)) / 2); cursor: grab; outline: none; -webkit-user-select: none; user-select: none; }
 .e5 .e5-track::-webkit-scrollbar { display: none; }
 .e5 .e5-track.dragging { cursor: grabbing; scroll-snap-type: none; }
-.e5 .e5-track:focus-visible .e5-slide.on .card { box-shadow: 0 0 0 1px var(--cline), 0 0 0 4px rgba(0,13,16,.25); }
+.e5 .e5-track:focus-visible .e5-slide.on .e5-card { box-shadow: 0 0 0 1px var(--cline), 0 0 0 4px rgba(0,13,16,.25); }
 .e5 .e5-slide { flex: none; width: var(--sw); scroll-snap-align: center; opacity: .4; transition: opacity .4s ease; }
 .e5 .e5-slide.on { opacity: 1; }
-.e5 .e5-slide .card { box-shadow: 0 0 0 1px var(--cline); background: var(--canvas); overflow: hidden; }
-.e5 .e5-slide .card img { display: block; width: 100%; height: auto; pointer-events: none; transform: scale(.98); transition: transform .6s cubic-bezier(.22,1,.36,1); }
-.e5 .e5-slide.on .card img { transform: none; }
+.e5 .e5-slide .e5-card { box-shadow: 0 0 0 1px var(--cline); background: var(--canvas); overflow: hidden; }
+.e5 .e5-slide .e5-card img { display: block; width: 100%; height: auto; pointer-events: none; transform: scale(.98); transition: transform .6s cubic-bezier(.22,1,.36,1); }
+.e5 .e5-slide.on .e5-card img { transform: none; }
 .e5 .e5-slide .cap { margin-top: 24px; padding-right: 120px; }
 .e5 .e5-slide .cap h3 { font-size: 20px; font-weight: 700; line-height: 28px; }
 .e5 .e5-slide .cap p { margin-top: 4px; font-size: 16px; line-height: 24px; color: var(--grey); }
 .e5 .e5-sl-ctrl { position: absolute; right: calc((100% - var(--sw)) / 2); bottom: 0; display: flex; align-items: center; gap: 24px; pointer-events: none; }
 .e5 .e5-sl-ctrl .count { font-size: 16px; line-height: 24px; color: var(--grey); font-variant-numeric: tabular-nums; }
 .e5 .e5-sl-ctrl .count b { color: var(--ink); font-weight: 700; }
-.e5 .e5-sl-ctrl .arrows { display: flex; gap: 8px; pointer-events: auto; }
+.e5 .e5-sl-ctrl .e5-arrows { display: flex; gap: 8px; pointer-events: auto; }
 .e5 .e5-sl-ctrl button { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 0; background: #231F20; color: #FFFFFF; cursor: pointer; transition: background-color .2s; }
 .e5 .e5-sl-ctrl button:hover { background: var(--red); }
 .e5 .e5-sl-ctrl button:focus-visible { outline: 2px solid var(--red); outline-offset: 3px; }
@@ -1175,13 +1177,13 @@ const E5_CSS = `
 .e5 .e5-rcard .rr { display: flex; align-items: center; gap: 16px; font-size: 16px; line-height: 24px; }
 .e5 .e5-rcard .lab { flex: none; width: 56px; font-weight: 500; color: var(--ash); }
 .e5 .e5-rcard .rr.after .lab { color: var(--ink); font-weight: 700; }
-.e5 .e5-rcard .bar { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; }
-.e5 .e5-rcard .bar > i { display: block; flex: none; height: 16px; background: #C8C8CC; transform-origin: left; transform: scaleX(0); transition: transform 1s cubic-bezier(.22,1,.36,1) .2s; }
-.e5 .e5-rcard .rr.after .bar > i { background: var(--red); transition-delay: .5s; }
+.e5 .e5-rcard .e5-bar { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; }
+.e5 .e5-rcard .e5-bar > i { display: block; flex: none; height: 16px; background: #C8C8CC; transform-origin: left; transform: scaleX(0); transition: transform 1s cubic-bezier(.22,1,.36,1) .2s; }
+.e5 .e5-rcard .rr.after .e5-bar > i { background: var(--red); transition-delay: .5s; }
 .e5 .e5-rcard .sq { display: flex; gap: 4px; }
 .e5 .e5-rcard .sq i { display: block; width: 20px; height: 16px; background: #C8C8CC; transform: scale(0); transition: transform .4s cubic-bezier(.34,1.56,.64,1) var(--d, 0s); }
 .e5 .e5-rcard .rr.after .sq i { background: var(--red); }
-.e5 [data-r].in .e5-rcard .bar > i, .e5 [data-r].in .e5-rcard .sq i { transform: none; }
+.e5 [data-r].in .e5-rcard .e5-bar > i, .e5 [data-r].in .e5-rcard .sq i { transform: none; }
 .e5 .e5-rcard .val { flex: none; font-weight: 500; color: var(--grey); font-variant-numeric: tabular-nums; }
 .e5 .e5-rcard .rr.after .val { color: var(--ink); font-weight: 700; }
 .e5 .e5-quote { display: grid; grid-template-columns: 48px minmax(0, 1fr) 48px; gap: 48px; }
@@ -1194,7 +1196,7 @@ const E5_CSS = `
 .e5 .e5-take { position: relative; overflow: hidden; min-height: clamp(720px, 46vw, 880px); padding: 120px 0 288px; background: #1A1A1A; color: #FFFFFF; }
 .e5 .e5-take .bg { position: absolute; z-index: 0; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 70%; transform: scale(1.12); will-change: transform; }
 .e5 .e5-take .e5-w { position: relative; z-index: 2; }
-.e5 .e5-take .t { margin-top: 24px; max-width: 1100px; font-size: 56px; font-weight: 700; line-height: 64px; color: #FFFFFF; }
+.e5 .e5-take .t { margin-top: 24px; max-width: 1000px; font-size: 56px; font-weight: 700; line-height: 64px; color: #FFFFFF; }
 .e5 .e5-take .d { margin-top: 48px; max-width: 960px; font-size: 20px; line-height: 32px; color: rgba(255,255,255,.82); }
 
 /* next case study */
@@ -1211,7 +1213,7 @@ const E5_CSS = `
   .e5 .e5-cols4 { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 40px; }
   .e5 .e5-define, .e5 .e5-bench { grid-template-columns: minmax(0, 1fr); gap: 48px; }
   .e5 .e5-tierlab h3 { font-size: 24px; line-height: 32px; }
-  .e5 .e5-tierlab .lead { margin-top: 53px; }
+  .e5 .e5-tierlab .e5-lead { margin-top: 53px; }
   .e5 .e5-mbox { grid-template-columns: repeat(4, minmax(0, 1fr)); row-gap: 32px; }
 }
 @media (max-width: 1100px) {
@@ -1271,7 +1273,7 @@ const E5_CSS = `
 }
 @media (prefers-reduced-motion: reduce) {
   .e5 [data-r] { opacity: 1 !important; transform: none !important; transition: none !important; }
-  .e5 .e5-bm-t .e5-mark, .e5 .e5-rlist li, .e5 .d-col i, .e5 .d-track i, .e5 .e5-rcard .bar i, .e5 .e5-rcard .sq i { transform: none !important; opacity: 1 !important; transition: none !important; }
+  .e5 .e5-bm-t .e5-mark, .e5 .e5-rlist li, .e5 .d-col i, .e5 .d-track i, .e5 .e5-rcard .e5-bar i, .e5 .e5-rcard .sq i { transform: none !important; opacity: 1 !important; transition: none !important; }
   .e5 .d-val { opacity: 1 !important; }
   .e5 .e5-ring::before, .e5 .e5-ring::after { animation: none !important; }
   .e5 .e5-take .bg { transform: none !important; }

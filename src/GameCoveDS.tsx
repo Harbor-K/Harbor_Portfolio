@@ -1,4 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { DataVisuals } from './GameCoveDV'
 
 /**
  * GameCove design system on the real design (v136, Harbor Nov 16, reference: v7labs.com "Build your own Interfaces").
@@ -42,6 +43,9 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
  *    moves, instead of vanishing the moment the landing starts to rewind
  *  - the component outlines keep their corners (6 / 4 / 8): the page's square-corner rule was flattening them
  *  - 02 · TYPE: the card-title example names the card its line points to (Day 7 retention)
+ *
+ * v30 (Harbor Nov 19): the "Data visuals" section (Figma 2044:3514, GameCoveDV.tsx) follows right under this one, with
+ * charts that answer the pointer like the GameCove dashboard.
  */
 
 const F = 'https://raw.githubusercontent.com/Harbor-K/landing_page/main/gamecove/assets/v4/final/'
@@ -283,6 +287,8 @@ export function DsLayers() {
           </div>
         ))}
       </div>
+      {/* v30: Data visuals (Figma 2044:3514) right under the design system */}
+      <DataVisuals />
     </>
   )
 }

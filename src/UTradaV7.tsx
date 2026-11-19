@@ -18,7 +18,7 @@ import { CaseFilm, useCaseIntro } from './CaseFilm'
  * Motion:
  * - opening film fills the screen, then settles under the headline (CaseFilm.tsx; skipped on phones)
  * - soft reveal on blocks, bouncing card rows (as on GameCove / Trust Bank)
- * - Process: Figma's loop (1906:2811) — pills slide in one by one, connectors draw, chips fade in, the story card
+ * - Process (Nov 19: follows the scroll, one stage per step; was Figma's 10s loop, 1906:2811) — pills slide in one by one, connectors draw, chips fade in, the story card
  *   changes DISCOVER → DEFINE → DEVELOP → DELIVER; runs while the section is on screen
  * - Discover: the diagram builds node by node; the history rail fills 2018 → 2024; table marks pop row by row
  * - Define: the trust line draws, dots and risk bars come in; hover or click a stage to read its moment
@@ -170,8 +170,8 @@ function Label({ children, light }: { children: string; light?: boolean }) {
 /* ---------- content (Figma 1890:1214, word for word) ---------- */
 
 const OVERVIEW = [
-  { t: 'Challenge', b: 'In 2024, UTrada rebranded and opened its first Australian office. To new visitors, it was a name they had never heard of — and they had no easy way to check if their money would be safe.' },
-  { t: 'Business objective', b: 'Turn first-time visitors into customers who confirm their ID and add money. To do that, people had to trust UTrada before signing up.' },
+  // Nov 19 (Harbor): the business objective is part of the challenge now, so it has no row of its own
+  { t: 'Challenge', b: 'In 2024, UTrada rebranded and opened its first Australian office. To new visitors, it was a name they had never heard of — and they had no easy way to check if their money would be safe. The business needed first-time visitors to confirm their ID and add money. To do that, people had to trust UTrada before signing up.' },
   { t: 'Solution', b: 'I found the 5 moments when people hesitate. Each one got a screen that answers its question right there.' },
 ]
 const IMPACT = [
@@ -310,15 +310,48 @@ const TASKS = [
   'Find where to get help before adding money.',
 ]
 
-/* ---------- Process: story card + flow, Figma's 10s loop ---------- */
+/* ---------- Process: story card + flow, one step per scroll (Nov 19) ---------- */
 
+/**
+ * Nov 19 (Harbor): the 10s loop felt too slow, so the scene now follows the scroll instead of a clock. It stays pinned
+ * while you scroll through it and each scroll step brings in the next stage: its pill slides in, the connector draws,
+ * the chip appears and the story card changes DISCOVER → DEFINE → DEVELOP → DELIVER. Scrolling back steps back.
+ * Narrow or short screens and reduced motion: the finished picture (or the list on small screens), no pinning.
+ */
 function ProcessScene() {
-  const [ref, on] = useOnScreen<HTMLDivElement>()
+  const wide = useWide()
+  const outer = useRef<HTMLDivElement>(null)
+  const pin = useRef<HTMLDivElement>(null)
+  const N = STAGES_P.length
+  const [step, setStep] = useState(wide ? -1 : N - 1)
+  useEffect(() => {
+    if (!wide) { setStep(N - 1); return }
+    let raf = 0
+    const run = () => {
+      raf = 0
+      const el = outer.current, p = pin.current; if (!el || !p) return
+      const r = el.getBoundingClientRect()
+      const top = parseFloat(getComputedStyle(p).top) || 0
+      const travel = el.offsetHeight - p.offsetHeight
+      let s = -1
+      if (r.top < innerHeight * 0.55) s = Math.min(N - 1, Math.floor(clamp((top - r.top) / Math.max(1, travel)) * N))
+      setStep(v => (v === s ? v : s))
+    }
+    const on = () => { if (!raf) raf = requestAnimationFrame(run) }
+    run()
+    addEventListener('scroll', on, { passive: true }); addEventListener('resize', on)
+    return () => { if (raf) cancelAnimationFrame(raf); removeEventListener('scroll', on); removeEventListener('resize', on) }
+  }, [wide, N])
+  const cls = (base: string, on: boolean) => base + (on ? ' on' : '')
   return (
-    <div ref={ref} className={'u7-proc' + (on ? ' play' : '')}>
+    <div ref={outer} className={'u7-proc-outer' + (wide ? ' pinned' : '')} style={wide ? { height: `calc(656px + ${N * 55}vh)` } : undefined}>
+      <div ref={pin} className="u7-proc-pin">
+        <Label light>PROCESS</Label>
+        <h2 className="u7-h2 light mt48">From first look to launch</h2>
+    <div className="u7-proc">
       <div className="u7-proc-cards">
         {STAGES_P.map((s, i) => (
-          <div key={s.k} className={'u7-story c' + i} aria-hidden={i !== 3}>
+          <div key={s.k} className={'u7-story c' + i + (i === step ? ' on' : i < step ? ' past' : '')} aria-hidden={i !== Math.max(0, step)}>
             <div className="k">{s.k}</div>
             <h3>{s.t}</h3>
             <ul>{s.items.map(x => <li key={x}>· {x}</li>)}</ul>
@@ -327,17 +360,17 @@ function ProcessScene() {
       </div>
       <div className="u7-flow" aria-hidden="true">
         <svg className="u7-flow-lines" width="480" height="456" viewBox="0 0 480 456" fill="none">
-          <path className="cn cn1" d="M108 72 V172 H160" pathLength={1} />
-          <path className="cn cn2" d="M108 172 V300 H160" pathLength={1} />
-          <path className="cn cn3" d="M108 300 V428 H160" pathLength={1} />
+          <path className={cls('cn cn1', step >= 1)} d="M108 72 V172 H160" pathLength={1} />
+          <path className={cls('cn cn2', step >= 2)} d="M108 172 V300 H160" pathLength={1} />
+          <path className={cls('cn cn3', step >= 3)} d="M108 300 V428 H160" pathLength={1} />
         </svg>
         {STAGES_P.map((s, i) => (
-          <div key={s.k} className={'u7-pill p' + i}>
+          <div key={s.k} className={cls('u7-pill p' + i, step >= i)}>
             <span className="tile" style={{ background: s.tile }}>{s.icon}</span>
             <span className="t">{s.t}</span>
           </div>
         ))}
-        {STAGES_P.slice(1).map((s, i) => <span key={s.k} className={'u7-chip h' + (i + 1)}>{s.k}</span>)}
+        {STAGES_P.slice(1).map((s, i) => <span key={s.k} className={cls('u7-chip h' + (i + 1), step >= i + 1)}>{s.k}</span>)}
       </div>
       {/* small screens: the four steps as a list */}
       <ol className="u7-proc-list">
@@ -349,6 +382,8 @@ function ProcessScene() {
           </li>
         ))}
       </ol>
+    </div>
+      </div>
     </div>
   )
 }
@@ -670,8 +705,6 @@ export function UTradaV7() {
         <section className="u7-sec u7-pr" data-chapter="Process">
           <i className="glow" aria-hidden="true" />
           <div className="u7-w">
-            <Label light>PROCESS</Label>
-            <h2 className="u7-h2 light mt48" data-r>From first look to launch</h2>
             <ProcessScene />
           </div>
         </section>
@@ -991,6 +1024,20 @@ const U7_CSS = `
 .u7 .u7-proc.play .h1 { animation-name: u7-h1; } .u7 .u7-proc.play .h2 { animation-name: u7-h2; } .u7 .u7-proc.play .h3 { animation-name: u7-h3; }
 .u7 .u7-proc.play .c0 { animation-name: u7-c0; } .u7 .u7-proc.play .c1 { animation-name: u7-c1; }
 .u7 .u7-proc.play .c2 { animation-name: u7-c2; } .u7 .u7-proc.play .c3 { animation-name: u7-c3; }
+/* Nov 19 (Harbor): Process follows the scroll (one stage per scroll step) instead of the 10s loop */
+/* sticky needs the section to clip instead of hide its overflow */
+.u7 .u7-pr { overflow: clip; }
+.u7 .u7-proc-outer.pinned { position: relative; }
+.u7 .u7-proc-outer.pinned .u7-proc-pin { position: sticky; top: max(96px, calc(50vh - 328px)); }
+.u7 .u7-proc .u7-pill { opacity: 0; transform: translateX(-24px); transition: opacity .5s ease, transform .7s cubic-bezier(.22,1,.36,1); }
+.u7 .u7-proc .u7-pill.on { opacity: 1; transform: none; }
+.u7 .u7-proc .cn { transition: stroke-dashoffset .6s ease; }
+.u7 .u7-proc .cn.on { stroke-dashoffset: 0; }
+.u7 .u7-proc .u7-chip { transition: opacity .4s ease .35s; }
+.u7 .u7-proc .u7-chip.on { opacity: 1; }
+.u7 .u7-proc-cards .u7-story { transform: translateY(24px); transition: opacity .5s ease, transform .7s cubic-bezier(.22,1,.36,1); }
+.u7 .u7-proc-cards .u7-story.on { opacity: 1; transform: none; transition-delay: .1s; }
+.u7 .u7-proc-cards .u7-story.past { opacity: 0; transform: translateY(-24px); }
 @keyframes u7-p0 { 0%, 2% { opacity: 0; transform: translateX(-24px); } 6% { opacity: 1; transform: translateX(-3px); } 7%, 100% { opacity: 1; transform: none; } }
 @keyframes u7-p1 { 0%, 30% { opacity: 0; transform: translateX(-24px); } 34% { opacity: 1; transform: translateX(-3px); } 35%, 100% { opacity: 1; transform: none; } }
 @keyframes u7-p2 { 0%, 54% { opacity: 0; transform: translateX(-24px); } 58% { opacity: 1; transform: translateX(-3px); } 59%, 100% { opacity: 1; transform: none; } }

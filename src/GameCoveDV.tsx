@@ -15,8 +15,11 @@ import React, { useMemo, useRef, useState } from 'react'
  * Numbers: the BounceBounce dummy data v8 (whdhrrk/gamecove data/source/v8-rework/v8-review-tables.md, Last 7 days
  * Sep 16–22) and the live dashboard's own tooltips — nothing estimated. Traffic shares are the dashboard's Overview card.
  * Site rules kept: Roboto (index.css), nothing under 16px, 1440 container. The dark chart cards keep the product's
- * rounded corners (16 / 8), like the design-system outlines above them. The page squares every corner with
- * ".gc .gc4 :not(.g-radii i)", so the rounding overrides here start with ".gc .gc4 .dv" to outrank it.
+ * rounded corners (16 / 8), like the design-system outlines above them.
+ * v31 (Harbor Nov 19): titles no longer break (the class "lg" clashed with a 16px legend swatch on the page, now "big"),
+ * the chart cards fade out at the bottom of their light card instead of a hard cut, every row fits above the fade,
+ * date labels stay on one line, and the cohort tooltip opens above its cell. Light cards are white on the section's
+ * #F1F1EE so they stand out.
  */
 
 /* ---------- data ---------- */
@@ -168,7 +171,7 @@ function NewReturning() {
 function Traffic() {
   return (
     <div className="dv-chart dv-tr">
-      <div className="dv-ct lg">Traffic sources <Info /></div>
+      <div className="dv-ct big">Traffic sources <Info /></div>
       <ul>
         {TRAFFIC.map((s, i) => (
           <li key={s.id} className="dv-tr-row" style={{ '--d': `${i * 90}ms` } as React.CSSProperties}>
@@ -219,7 +222,7 @@ function Cohort() {
   const [tip, setTip] = useState<{ r: number; c: number } | null>(null)
   return (
     <div className="dv-chart dv-co">
-      <div className="dv-ct lg">Date cohort retention <Info /></div>
+      <div className="dv-ct big">Date cohort retention <Info /></div>
       <table onPointerLeave={() => setTip(null)}>
         <thead><tr><th className="dc">Date cohort</th><th className="u">Users</th>{[1, 2, 3, 4, 5, 6].map(n => <th key={n}>D{n}</th>)}</tr></thead>
         <tbody>
@@ -262,23 +265,25 @@ export function DataVisuals() {
       <div className="dv-grid">
         <article className="dv-card tall g1" data-r>
           <div className="dv-tx"><h3>{CARDS.players.t}</h3><p>{CARDS.players.d}</p></div>
-          <div className="dv-slot nr"><NewReturning /></div>
-          <div className="dv-slot tr"><Traffic /></div>
+          <div className="dv-clip">
+            <div className="dv-slot nr"><NewReturning /></div>
+            <div className="dv-slot tr"><Traffic /></div>
+          </div>
         </article>
         <article className="dv-card g2" data-r>
           <div className="dv-tx"><h3>{CARDS.quit.t}</h3><p>{CARDS.quit.d}</p></div>
-          <div className="dv-slot ex"><ExitRate /></div>
+          <div className="dv-clip"><div className="dv-slot ex"><ExitRate /></div></div>
         </article>
         <article className="dv-card g3" data-r>
           <div className="dv-tx"><h3>{CARDS.back.t}</h3><p>{CARDS.back.d}</p></div>
-          <div className="dv-slot co"><Cohort /></div>
+          <div className="dv-clip"><div className="dv-slot co"><Cohort /></div></div>
         </article>
       </div>
     </section>
   )
 }
 
-const GLOW = (x: string, y: string) => `radial-gradient(380px circle at ${x} ${y}, rgba(56,152,248,.28) 0, rgba(142,194,255,.12) 190px, rgba(244,244,242,0) 380px)`
+const GLOW = (x: string, y: string) => `radial-gradient(380px circle at ${x} ${y}, rgba(56,152,248,.28) 0, rgba(142,194,255,.12) 190px, rgba(255,255,255,0) 380px)`
 
 export const DV_CSS = `
 .gc4 .dv { margin-top: 160px; }
@@ -286,7 +291,7 @@ export const DV_CSS = `
 .gc4 .dv-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: 492px 492px; gap: 16px; margin-top: 56px; }
 
 /* the light cards: Figma 712 × 1000 / 712 × 492, 40px padding, a soft blue glow from one corner */
-.gc4 .dv-card { position: relative; overflow: hidden; padding: 40px; background-color: #F4F4F2; transition: background-position .8s cubic-bezier(.22,1,.36,1); }
+.gc4 .dv-card { position: relative; overflow: hidden; padding: 40px; background-color: #FFFFFF; transition: background-position .8s cubic-bezier(.22,1,.36,1); }
 .gc4 .dv-card.tall { grid-row: span 2; }
 .gc4 .dv-card.g1 { background-image: ${GLOW('95%', '102%')}; }
 .gc4 .dv-card.g2 { background-image: ${GLOW('104%', '-8%')}; }
@@ -295,24 +300,28 @@ export const DV_CSS = `
 .gc4 .dv-tx h3 { margin: 0; font-size: 20px; font-weight: 500; line-height: 28px; color: #111114; }
 .gc4 .dv-tx p { margin: 8px 0 0; font-size: 16px; line-height: 24px; color: #6E7078; }
 
-/* the dark chart cards sit in the light card and run off its edge, like Figma */
+/* the dark chart cards sit in the light card and run off its edge, like Figma; v31 (Harbor Nov 19): instead of a hard
+   cut at the card's edge they fade out over its last 88px */
+.gc4 .dv-clip { position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+  -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 88px), transparent); mask-image: linear-gradient(180deg, #000 calc(100% - 88px), transparent); }
+.gc4 .dv-clip .dv-slot { pointer-events: auto; }
 .gc4 .dv-slot { position: absolute; z-index: 1; transition: transform .6s cubic-bezier(.22,1,.36,1); }
-.gc4 .dv-slot.nr { left: 40px; right: 40px; top: 168px; }
-.gc4 .dv-slot.tr { left: 40px; right: 56px; top: 600px; }
+.gc4 .dv-slot.nr { left: 40px; right: 40px; top: 152px; }
+.gc4 .dv-slot.tr { left: 40px; right: 56px; top: 544px; }
 .gc4 .dv-slot.ex { left: 40px; right: 40px; top: 148px; }
-.gc4 .dv-slot.co { left: 40px; right: 0; top: 136px; }
+.gc4 .dv-slot.co { left: 40px; right: 0; top: 128px; }
 .gc4 .dv-card:hover .dv-slot { transform: translateY(-6px); }
 
 .gc4 .dv-chart { position: relative; padding: 24px; background: #17171B; color: #F2F0EC; box-shadow: inset 0 0 0 1px #2A2A30; }
 .gc .gc4 .dv .dv-chart { border-radius: 16px !important; }
 .gc4 .dv-ct { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 700; line-height: 26px; color: #F2F0EC; }
-.gc4 .dv-ct.lg { font-size: 24px; line-height: 32px; }
+.gc4 .dv-ct.big { font-size: 24px; line-height: 32px; }
 .gc4 .dv-info { flex: none; color: #A7A9B0; }
 .gc4 .dv-sub { margin-top: 12px; font-size: 16px; line-height: 24px; color: #A7A9B0; }
 .gc4 .dv-big { font-size: 28px; font-weight: 700; line-height: 36px; color: #F2F0EC; }
 
 /* new and returning users */
-.gc4 .dv-nr-body { display: grid; grid-template-columns: 40px minmax(0, 1fr); grid-template-rows: 200px auto; column-gap: 8px; margin-top: 16px; }
+.gc4 .dv-nr-body { display: grid; grid-template-columns: 40px minmax(0, 1fr); grid-template-rows: 176px auto; column-gap: 8px; margin-top: 16px; }
 .gc4 .dv-yax { display: flex; flex-direction: column; justify-content: space-between; margin: -12px 0; font-size: 16px; line-height: 24px; color: #666970; text-align: right; }
 .gc4 .dv-plot { position: relative; cursor: crosshair; touch-action: pan-y; }
 .gc4 .dv-plot svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
@@ -322,7 +331,7 @@ export const DV_CSS = `
 .gc4 .dv-line.new { stroke: #3898F8; }
 .gc4 .dv-line.ret { stroke: #8A8D96; }
 .gc4 .dv-xax { grid-column: 2; display: flex; justify-content: space-between; margin: 8px -24px 0; font-size: 16px; line-height: 24px; color: #666970; }
-.gc4 .dv-xax span { width: 48px; text-align: center; }
+.gc4 .dv-xax span { width: 48px; text-align: center; white-space: nowrap; display: flex; justify-content: center; }
 .gc4 .dv-dot { position: absolute; z-index: 2; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; pointer-events: none; }
 .gc4 .dv-dot.new { background: #3898F8; box-shadow: 0 0 0 4px rgba(56,152,248,.28); }
 .gc4 .dv-dot.ret { background: #8A8D96; box-shadow: 0 0 0 4px rgba(138,141,150,.28); }
@@ -339,16 +348,16 @@ export const DV_CSS = `
 .gc4 .dv-tip.light b { font-weight: 700; }
 
 /* traffic sources (Figma shows this card zoomed in, so its type runs larger) */
-.gc4 .dv-tr { padding: 40px 32px; }
-.gc4 .dv-tr ul { list-style: none; margin: 32px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.gc4 .dv-tr-row { position: relative; padding: 12px 12px 16px; margin: 0 -12px; cursor: default; }
+.gc4 .dv-tr { padding: 32px 32px 40px; }
+.gc4 .dv-tr ul { list-style: none; margin: 24px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.gc4 .dv-tr-row { position: relative; padding: 10px 12px 12px; margin: 0 -12px; cursor: default; }
 .gc4 .dv-tr-row::before { content: ""; position: absolute; inset: 0; background: rgba(242,240,236,.08); opacity: 0; transition: opacity .2s ease; }
 .gc .gc4 .dv .dv-tr-row::before { border-radius: 8px !important; }
 .gc4 .dv-tr-row:hover::before { opacity: 1; }
 .gc4 .dv-tr-row .l { position: relative; display: flex; align-items: center; gap: 12px; font-size: 20px; line-height: 28px; color: #F2F0EC; }
 .gc4 .dv-tr-row .l span { flex: 1; min-width: 0; }
 .gc4 .dv-tr-row .l b { font-weight: 400; }
-.gc4 .dv-track { position: relative; height: 4px; margin-top: 12px; background: #24262B; }
+.gc4 .dv-track { position: relative; height: 4px; margin-top: 10px; background: #24262B; }
 .gc4 .dv-track i { display: block; height: 100%; background: #3898F8; transform-origin: left; transform: scaleX(0); transition: transform 1s cubic-bezier(.22,1,.36,1) var(--d, 0s); }
 .gc .gc4 .dv .dv-track, .gc .gc4 .dv .dv-track i { border-radius: 2px !important; }
 .gc4 .r-in .dv-track i { transform: none; }
@@ -381,28 +390,29 @@ export const DV_CSS = `
 .gc4 .dv-tip.dark .s { color: #8A8D96; }
 
 /* date cohort retention */
-.gc4 .dv-co { padding: 32px 24px 24px 24px; }
-.gc4 .dv-co table { width: 100%; margin-top: 24px; border-collapse: separate; border-spacing: 0 6px; font-size: 16px; line-height: 24px; }
-.gc4 .dv-co th { padding: 0 4px 6px; font-weight: 400; color: #8A8D96; text-align: center; }
+.gc4 .dv-co { padding: 24px 24px 24px 24px; }
+.gc4 .dv-co table { width: 100%; margin-top: 12px; border-collapse: separate; border-spacing: 0 4px; font-size: 16px; line-height: 24px; }
+.gc4 .dv-co th { padding: 0 4px 2px; font-weight: 400; color: #8A8D96; text-align: center; }
 .gc4 .dv-co th.dc, .gc4 .dv-co td.dc { text-align: left; padding-left: 0; }
 .gc4 .dv-co th.u, .gc4 .dv-co td.u { text-align: right; padding-right: 16px; }
 .gc4 .dv-co td { padding: 0 3px; color: #C9CAD0; text-align: center; white-space: nowrap; }
-.gc4 .dv-cell { position: relative; display: flex; align-items: center; justify-content: center; height: 30px; color: #F2F0EC; cursor: default; outline: none;
+.gc4 .dv-cell { position: relative; display: flex; align-items: center; justify-content: center; height: 28px; color: #F2F0EC; cursor: default; outline: none;
   background: rgba(56,152,248,var(--a)); transition: box-shadow .15s ease, filter .15s ease; }
 .gc .gc4 .dv .dv-cell { border-radius: 6px !important; }
 .gc4 .dv-cell.on, .gc4 .dv-cell:focus-visible { box-shadow: inset 0 0 0 1px rgba(242,240,236,.7); filter: brightness(1.15); }
 .gc4 .dv-co .na { color: #666970; }
-.gc4 .dv-tip.light.cell { left: 50%; top: calc(100% + 8px); display: flex; flex-direction: column; text-align: left; filter: none; }
-.gc4 .dv-tip.light.cell.to-left { left: auto; right: 0; }
+.gc4 .dv-tip.light.cell { left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%); display: flex; flex-direction: column; text-align: left; filter: none; }
+.gc4 .dv-tip.light.cell.to-left { left: auto; right: 0; transform: none; }
 
 @media (max-width: 1280px) {
-  .gc4 .dv-ct.lg { font-size: 20px; line-height: 28px; }
+  .gc4 .dv-ct.big { font-size: 20px; line-height: 28px; }
   .gc4 .dv-tr-row .l { font-size: 18px; }
 }
 @media (max-width: 1023px) {
   .gc4 .dv { margin-top: 120px; }
   .gc4 .dv-grid { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
   .gc4 .dv-card, .gc4 .dv-card.tall { grid-row: auto; padding: 24px; }
+  .gc4 .dv-clip { position: static; -webkit-mask-image: none; mask-image: none; pointer-events: auto; }
   .gc4 .dv-slot { position: relative; left: auto !important; right: auto !important; top: auto !important; margin-top: 24px; }
   .gc4 .dv-card:hover .dv-slot { transform: none; }
   .gc4 .dv-co { overflow-x: auto; }

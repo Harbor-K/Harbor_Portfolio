@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { CSS } from './portfolio'
 import { SideToc, useHeadroom } from './CaseNav'
 import { SiteHeaderB } from './SiteHeaderB'
@@ -14,19 +14,19 @@ import { CaseFilm, useCaseIntro } from './CaseFilm'
  * the portal menu before/after; a before/after slider; result cards; the office photo behind the takeaways.
  *
  * Interactions (Harbor asked Claude to choose them):
- * - Overview and Results: the numbers count up once they come into view.
+ * - Numbers stay as they are (Nov 19, Harbor: no count-up anywhere on the page).
  * - Discover: the three pins on the old portal pulse one after another. In Define, each rule's pin badge is a button
  *   that scrolls back up to that pin and makes it pulse.
  * - Benchmark: rows come in one by one; pointing at a broker's logo highlights its column.
  * - IB dashboard, three layers: as the canvas scrolls into view, the layers move apart from a stack to Figma's spacing.
  *   Pointing at a tier's label brings its layer forward and fades the other two.
- * - Dashboard concept: KPI numbers count up, the daily bars grow day by day, the funnel fills step by step;
+ * - Dashboard concept: the daily bars grow day by day, the funnel fills step by step;
  *   "Share registration link" answers "Link copied" for 2 seconds (sample, nothing is copied).
  * - Menu before/after: pointing at (or clicking) a tag in the legend — New, Split, Moved, Renamed — lights up only
  *   the menu items with that tag.
- * - Before → After: a sideways slider (Figma's carousel). Swipe or trackpad-scroll sideways, drag with the mouse,
- *   use the arrow buttons (they loop from the last slide to the first) or the keyboard arrows. The slides beside the
- *   current one stay dimmed.
+ * - Before → After (Nov 19, Harbor: people don't press the arrows): no buttons or dragging. The slider stays pinned
+ *   while you scroll down, and each scroll step moves it on to the next screen, 01 → 04; scrolling up goes back.
+ *   The slides beside the current one stay dimmed. Small or short screens: the four screens one under another.
  * - Prototype stills lift on hover. Takeaways: the office photo moves slower than the page (light parallax).
  * Everything is shown as-is (no motion) with prefers-reduced-motion.
  *
@@ -453,87 +453,62 @@ function MenuBeforeAfter() {
   )
 }
 
-/** Before → After: the sideways slider */
+/** Before → After: pinned while scrolling; each scroll step moves to the next screen (Nov 19) */
+const SLIDE_WIDE_Q = '(min-width: 1024px) and (min-height: 640px)'
 function Slider() {
-  const ref = useRef<HTMLDivElement>(null)
+  const outer = useRef<HTMLDivElement>(null)
+  const pin = useRef<HTMLDivElement>(null)
+  const N = SLIDES.length
   const [idx, setIdx] = useState(0)
-  const drag = useRef<{ x: number; left: number; moved: boolean } | null>(null)
-
-  const step = useCallback(() => {
-    const el = ref.current
-    if (!el) return 1
-    const s = el.querySelector<HTMLElement>('.e5-slide')
-    const gap = parseFloat(getComputedStyle(el).columnGap || '40') || 40
-    return (s ? s.offsetWidth : 1) + gap
-  }, [])
-  const go = useCallback((i: number) => {
-    const el = ref.current
-    if (!el) return
-    const n = SLIDES.length, to = (i + n) % n
-    el.scrollTo({ left: to * step(), behavior: reducedMotion() ? 'auto' : 'smooth' })
-  }, [step])
-
+  const [wide, setWide] = useState(() => typeof window !== 'undefined' && matchMedia(SLIDE_WIDE_Q).matches && !reducedMotion())
   useEffect(() => {
-    const el = ref.current
-    if (!el) return
+    const mq = matchMedia(SLIDE_WIDE_Q)
+    const set = () => setWide(mq.matches && !reducedMotion())
+    set(); mq.addEventListener('change', set)
+    return () => mq.removeEventListener('change', set)
+  }, [])
+  useEffect(() => {
+    if (!wide) return
     let raf = 0
-    const run = () => { raf = 0; setIdx(Math.max(0, Math.min(SLIDES.length - 1, Math.round(el.scrollLeft / step())))) }
+    const run = () => {
+      raf = 0
+      const el = outer.current, p = pin.current; if (!el || !p) return
+      const travel = el.offsetHeight - p.offsetHeight
+      const f = clamp01(-el.getBoundingClientRect().top / Math.max(1, travel))
+      const i = Math.min(N - 1, Math.floor(f * N))
+      setIdx(v => (v === i ? v : i))
+    }
     const on = () => { if (!raf) raf = requestAnimationFrame(run) }
-    el.addEventListener('scroll', on, { passive: true })
-    addEventListener('resize', on)
-    return () => { if (raf) cancelAnimationFrame(raf); el.removeEventListener('scroll', on); removeEventListener('resize', on) }
-  }, [step])
-
-  // mouse drag (touch and trackpads scroll natively)
-  const down = (e: React.PointerEvent) => {
-    if (e.pointerType !== 'mouse' || e.button !== 0 || !ref.current) return
-    drag.current = { x: e.clientX, left: ref.current.scrollLeft, moved: false }
-    ref.current.setPointerCapture(e.pointerId)
-    ref.current.classList.add('dragging')
-  }
-  const move = (e: React.PointerEvent) => {
-    const d = drag.current, el = ref.current
-    if (!d || !el) return
-    const dx = e.clientX - d.x
-    if (Math.abs(dx) > 4) d.moved = true
-    el.scrollLeft = d.left - dx
-  }
-  const up = () => {
-    const d = drag.current, el = ref.current
-    if (!d || !el) return
-    drag.current = null
-    el.classList.remove('dragging')
-    const dx = el.scrollLeft - d.left, s = step()
-    const from = Math.round(d.left / s)
-    go(Math.abs(dx) > s * 0.15 ? from + Math.sign(dx) : from)
-  }
-  const key = (e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowRight') { e.preventDefault(); go(idx + 1) }
-    if (e.key === 'ArrowLeft') { e.preventDefault(); go(idx - 1) }
-  }
+    run()
+    addEventListener('scroll', on, { passive: true }); addEventListener('resize', on)
+    return () => { if (raf) cancelAnimationFrame(raf); removeEventListener('scroll', on); removeEventListener('resize', on) }
+  }, [wide, N])
 
   return (
-    <div className="e5-slider" data-r>
-      <div ref={ref} className="e5-track" tabIndex={0} role="region" aria-roledescription="carousel" aria-label="Before and after screens, use the arrow keys to move"
-        onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onKeyDown={key}
-        onClickCapture={e => { if (drag.current?.moved) e.preventDefault() }}>
-        {SLIDES.map((s, i) => (
-          <div key={s.n} className={'e5-slide' + (i === idx ? ' on' : '')} role="group" aria-roledescription="slide" aria-label={`${s.n} of 04, ${s.t}`} aria-hidden={i !== idx || undefined}>
-            <div className="e5-card"><img src={s.src} alt={s.alt} width={2400} height={1280} loading={i < 2 ? 'eager' : 'lazy'} decoding="async" draggable={false} /></div>
-            <div className="cap"><h3>{s.n}. {s.t}</h3><p>{s.d}</p></div>
+    <div ref={outer} className={'e5-slider' + (wide ? ' pinned' : '')} style={wide ? { height: `calc(100vh + ${N * 70}vh)` } : undefined}>
+      <div ref={pin} className="e5-sl-pin">
+        <div className="e5-track" role="region" aria-roledescription="carousel" aria-label="Before and after screens, scroll to move through them">
+          <div className="e5-rail" style={wide ? { transform: `translate3d(calc(${-idx} * (var(--sw) + var(--gap))), 0, 0)` } : undefined}>
+            {SLIDES.map((s, i) => (
+              <div key={s.n} className={'e5-slide' + (!wide || i === idx ? ' on' : '')} role="group" aria-roledescription="slide" aria-label={`${s.n} of 04, ${s.t}`}>
+                <div className="e5-card"><img src={s.src} alt={s.alt} width={2400} height={1280} loading={i < 2 ? 'eager' : 'lazy'} decoding="async" draggable={false} /></div>
+                <div className="cap"><h3>{s.n}. {s.t}</h3><p>{s.d}</p></div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-      <div className="e5-sl-ctrl">
-        <div className="count" aria-live="polite"><b>{SLIDES[idx].n}</b> / {String(SLIDES.length).padStart(2, '0')}</div>
-        <div className="e5-arrows">
-          <button type="button" onClick={() => go(idx - 1)} aria-label="Previous screen"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M10 3L5 8l5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg></button>
-          <button type="button" onClick={() => go(idx + 1)} aria-label="Next screen"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg></button>
         </div>
+        {wide && (
+          <div className="e5-sl-foot" aria-hidden="true">
+            <div className="count"><b>{SLIDES[idx].n}</b> / {String(N).padStart(2, '0')}</div>
+            <div className="ticks">{SLIDES.map((s, i) => <i key={s.n} className={i <= idx ? 'on' : undefined} />)}</div>
+          </div>
+        )}
       </div>
     </div>
   )
 }
+
+const clamp01 = (v: number) => Math.min(1, Math.max(0, v))
 
 /* ---------- page ---------- */
 
@@ -545,7 +520,7 @@ export function EtoV5() {
   const box = useRef<HTMLDivElement>(null)
   const media = useRef<HTMLVideoElement>(null)
   useCaseIntro(introOn, slot, box, media, () => setIntro(false))
-  useCountUp('.e5')
+  // Nov 19: no count-up (useCountUp is kept above, unused)
 
   // Discover pins: pulse one after another when the old portal comes into view; Define's pin badges point back here
   const [pinsOn, setPinsOn] = useState(false)
@@ -1132,28 +1107,32 @@ const E5_CSS = `
 .e5 .e5-lg[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--ink); }
 .e5 .e5-lg:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
-/* before → after slider */
-.e5 .e5-slider { position: relative; --sw: min(1200px, calc(100vw - 64px)); }
-.e5 .e5-track { display: flex; gap: 40px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none;
-  padding: 0 calc((100% - var(--sw)) / 2); cursor: grab; outline: none; -webkit-user-select: none; user-select: none; }
-.e5 .e5-track::-webkit-scrollbar { display: none; }
-.e5 .e5-track.dragging { cursor: grabbing; scroll-snap-type: none; }
-.e5 .e5-track:focus-visible .e5-slide.on .e5-card { box-shadow: 0 0 0 1px var(--cline), 0 0 0 4px rgba(0,13,16,.25); }
-.e5 .e5-slide { flex: none; width: var(--sw); scroll-snap-align: center; opacity: .4; transition: opacity .4s ease; }
+/* before → after (Nov 19): pinned; the rail moves one screen per scroll step */
+.e5 .e5-slider { position: relative; --gap: 40px; --sw: min(1200px, calc(100vw - 64px)); }
+.e5 .e5-slider.pinned { --sw: min(1200px, calc(100vw - 64px), calc((100vh - 280px) * 1.875)); }
+.e5 .e5-sl-pin { display: flex; flex-direction: column; justify-content: center; }
+.e5 .e5-slider.pinned .e5-sl-pin { position: sticky; top: 0; height: 100vh; padding-top: 72px; box-sizing: border-box; }
+.e5 .e5-track { overflow: hidden; }
+.e5 .e5-rail { display: flex; gap: var(--gap); padding-left: calc((100% - var(--sw)) / 2); transition: transform .9s cubic-bezier(.22,1,.36,1); will-change: transform; }
+.e5 .e5-slide { flex: none; width: var(--sw); opacity: .35; transition: opacity .5s ease; }
 .e5 .e5-slide.on { opacity: 1; }
 .e5 .e5-slide .e5-card { box-shadow: 0 0 0 1px var(--cline); background: var(--canvas); overflow: hidden; }
 .e5 .e5-slide .e5-card img { display: block; width: 100%; height: auto; pointer-events: none; transform: scale(.98); transition: transform .6s cubic-bezier(.22,1,.36,1); }
 .e5 .e5-slide.on .e5-card img { transform: none; }
-.e5 .e5-slide .cap { margin-top: 24px; padding-right: 120px; }
+.e5 .e5-slide .cap { margin-top: 24px; padding-right: 200px; }
 .e5 .e5-slide .cap h3 { font-size: 20px; font-weight: 700; line-height: 28px; }
 .e5 .e5-slide .cap p { margin-top: 4px; font-size: 16px; line-height: 24px; color: var(--grey); }
-.e5 .e5-sl-ctrl { position: absolute; right: calc((100% - var(--sw)) / 2); bottom: 0; display: flex; align-items: center; gap: 24px; pointer-events: none; }
-.e5 .e5-sl-ctrl .count { font-size: 16px; line-height: 24px; color: var(--grey); font-variant-numeric: tabular-nums; }
-.e5 .e5-sl-ctrl .count b { color: var(--ink); font-weight: 700; }
-.e5 .e5-sl-ctrl .e5-arrows { display: flex; gap: 8px; pointer-events: auto; }
-.e5 .e5-sl-ctrl button { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 0; background: #231F20; color: #FFFFFF; cursor: pointer; transition: background-color .2s; }
-.e5 .e5-sl-ctrl button:hover { background: var(--red); }
-.e5 .e5-sl-ctrl button:focus-visible { outline: 2px solid var(--red); outline-offset: 3px; }
+.e5 .e5-sl-foot { display: flex; align-items: center; justify-content: flex-end; gap: 24px; width: var(--sw); margin: -52px auto 0; }
+.e5 .e5-sl-foot .count { font-size: 16px; line-height: 24px; color: var(--grey); font-variant-numeric: tabular-nums; }
+.e5 .e5-sl-foot .count b { color: var(--ink); font-weight: 700; }
+.e5 .e5-sl-foot .ticks { display: flex; gap: 8px; }
+.e5 .e5-sl-foot .ticks i { display: block; width: 24px; height: 2px; background: var(--cline); transition: background-color .4s ease; }
+.e5 .e5-sl-foot .ticks i.on { background: var(--ink); }
+/* small or short screens: the four screens one under another */
+.e5 .e5-slider:not(.pinned) .e5-rail { flex-direction: column; gap: 56px; width: var(--sw); margin: 0 auto; padding-left: 0; transition: none; }
+.e5 .e5-slider:not(.pinned) .e5-slide { opacity: 1; }
+.e5 .e5-slider:not(.pinned) .e5-slide .e5-card img { transform: none; }
+.e5 .e5-slider:not(.pinned) .e5-slide .cap { padding-right: 0; }
 
 /* prototype */
 .e5 .e5-links { display: flex; flex-wrap: wrap; gap: 16px; }
@@ -1236,15 +1215,12 @@ const E5_CSS = `
   .e5 .e5-results { grid-template-columns: minmax(0, 1fr); }
   .e5 .e5-arch { width: 100%; overflow-x: auto; }
   .e5 .e5-arch .e5-canvas { width: 1200px; }
-  .e5 .e5-slide .cap { padding-right: 0; padding-bottom: 64px; }
-  .e5 .e5-sl-ctrl { bottom: 0; }
   .e5 .e5-quote { grid-template-columns: 32px minmax(0, 1fr); gap: 24px; }
   .e5 .e5-quote .c { display: none; }
 }
 @media (max-width: 700px) {
   .e5 .e5-w { width: calc(100vw - 40px); }
   .e5 .e5-slider { --sw: calc(100vw - 40px); }
-  .e5 .e5-track { gap: 16px; }
   .e5 .e5-hero { padding: 104px 0 88px; }
   .e5 .e5-h1 { font-size: 40px; line-height: 48px; }
   .e5 .e5-sec { padding: 88px 0; }
@@ -1277,6 +1253,6 @@ const E5_CSS = `
   .e5 .d-val { opacity: 1 !important; }
   .e5 .e5-ring::before, .e5 .e5-ring::after { animation: none !important; }
   .e5 .e5-take .bg { transform: none !important; }
-  .e5 .e5-track { scroll-behavior: auto; }
+  .e5 .e5-rail { transition: none; }
 }
 `

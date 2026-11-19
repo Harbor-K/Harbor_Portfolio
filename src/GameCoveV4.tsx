@@ -59,6 +59,8 @@ import { DsLayers, DS_CSS } from './GameCoveDS'
  * icons; the caption card no longer sits on the screen. The design system is shown as layers (GameCoveDS.tsx):
  * Colour → Type → Spacing → Screens drop onto an isometric stack as you scroll, then the token map.
  *
+ * v31 (Harbor, Nov 19): the design system moved out of this section into its own part (DesignSystem below).
+ *
  * v144 (Harbor, Nov 17 15:49, reference v7labs.com): the tour's step caption is one big line (28/36) — the letter, then
  * the words — without the small "0N · tab" label; the five captions are cut to fit two lines. The design system that
  * follows picks up where the tour ends (GameCoveDS.tsx).
@@ -101,7 +103,7 @@ const IMG5 = {
   iterBefore: V5 + 'iter-before.webp', iterAfter: V5 + 'iter-after.webp',
 }
 
-export const GC4_CHAPTERS = ['Overview', 'Process', 'Empathize', 'Define', 'Ideate', 'Prototype', 'Iterate', 'Reflection']
+export const GC4_CHAPTERS = ['Overview', 'Process', 'Empathize', 'Define', 'Ideate', 'Prototype', 'Design system', 'Iterate', 'Reflection']
 
 /* ---------- helpers ---------- */
 
@@ -716,7 +718,6 @@ function FinalDesign() {
           <a className="g-live mt-40" href={VIBE_URL} target="_blank" rel="noreferrer">Live prototype<span aria-hidden="true">↗</span><span className="sr-only"> (opens in a new tab)</span></a>
         </div>
         <Tour />
-        <DsLayers />
         <div className="g-ds" data-r>
           <p className="g-body w-760">Every colour in the code is a token named by its job. 38 of the 108 are just for charts, because reading data is what GameCove is for. Here is one live screen with its tokens labelled.</p>
         </div>
@@ -724,6 +725,19 @@ function FinalDesign() {
           <img src={IMG5.dsMap2} alt="Design system map. 01 Value, the hex in the code: #E28B8B, #F2F0EC, #3898F8, #17171B. 02 Token, named by its job: text-critical (drops), text-primary (key numbers), chart-series-primary (chart line and area), bg-surface (cards). 03 On screen: lines lead from each token to where it is used on the live Overview screen of Tower Escape." loading="lazy" data-gzoom="true" />
         </figure>
       </div>
+    </section>
+  )
+}
+
+/**
+ * v31 (Harbor, Nov 19): the design system is its own part, so it can't get lost after the tour — its own section,
+ * its own chapter in the side contents and its own background. It no longer continues from the tour's last screen
+ * (GameCoveDS.tsx): it simply arrives as you scroll. Data visuals follow inside it.
+ */
+function DesignSystem() {
+  return (
+    <section className="g-sec g-final g-dssec" data-chapter="Design system">
+      <div className="g-wrap"><DsLayers /></div>
     </section>
   )
 }
@@ -756,6 +770,7 @@ export function GameCoveV4Body() {
       <Define />
       <Ideate />
       <FinalDesign />
+      <DesignSystem />
       <Iterate />
       <Reflection />
     </div>
@@ -1081,6 +1096,10 @@ export const GC4_CSS = `
   .gc4 .g-final { margin-top: 88px; padding-bottom: 88px; }
   .gc4 .g-capcard { top: 12px; left: 12px; max-width: 70%; padding: 12px 14px; }
 }
+
+/* ================= v31 (Nov 19): design system as its own part ================= */
+.gc4 .g-final.g-dssec { --dsbg: #F1F1EE; margin-top: 0; padding-top: 0; padding-bottom: 120px; background: var(--dsbg); border-top: 1px solid #E3E4E8; }
+@media (max-width: 1023px) { .gc4 .g-final.g-dssec { padding-top: 88px; } }
 
 /* ================= v125 ================= */
 .gc4 .mt-32 { margin-top: 32px; } .gc4 .mt-56 { margin-top: 56px; } .gc4 .mt-64 { margin-top: 64px; }

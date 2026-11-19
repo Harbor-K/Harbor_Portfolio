@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { FOOTER_LOGO_SVG } from './harborLogo'
 import { AI_ICONS } from './aiIcons'
+import { RESUME_URL } from './resumeLink'
 
 // Site footer — Harbor's Figma "footer.ft" in the main page frame (44기 김지현 4차 PF, node 538:6543 / 671:1071), built to the
 // frame exactly. index.tsx renders it under every page (main, About, Trust Bank, GameCove, UTrada, ETO Markets); the
@@ -28,7 +29,7 @@ import { AI_ICONS } from './aiIcons'
 // Lines are drawn inside boxes (inset shadows), like Figma's inside strokes, so no line adds to a size.
 // Interactions: links and the logo brighten on hover; the logo and "Home" go to the top of the main page;
 // "Resume" opens her CV in a new tab, like the header's Resume button (v108; v114: the PDF on Google Drive; Nov 19: the
-// latest CV PDF);
+// latest CV PDF, from resumeLink.ts);
 // "Back to top ↑" scrolls this page to the top (its arrow nudges up on hover).
 
 const MAIL = 'harborkim0328@gmail.com'
@@ -37,7 +38,7 @@ const F = {
   instagram: 'https://instagram.com/harbor_0328',
   email: `mailto:${MAIL}`,
   cal: 'https://cal.com/harbor-kim-wqsmkt/30min',
-  resume: 'https://drive.google.com/file/d/1LD5iYbYAhTgi9o5GxjTwOryE0hhYd_pY/view?usp=sharing',
+  resume: RESUME_URL,
 }
 const SANS = '"Helvetica Neue", Helvetica, Arial, sans-serif'
 const SERIF = '"Newsreader", Georgia, "Times New Roman", serif'

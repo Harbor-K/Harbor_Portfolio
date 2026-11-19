@@ -6,7 +6,8 @@ import { GIFS, gifMs, useGifSrc } from './gifPlay'
 //
 // Layout (Figma main frame 530:5259, header.hdrb): 1440 container, 64px tall, three columns — Harbor logo (78×19) |
 // Projects ▾ (96×24, 8px side padding) · 40px · About me | LinkedIn ↗ (8px to the arrow) · 32px · Resume (40px, 16px
-// side padding). 16/24. v108 (Harbor): Resume opens her CV in a new tab — v114: the PDF on Google Drive.
+// side padding). 16/24. v108 (Harbor): Resume opens her CV in a new tab — v114: the PDF on Google Drive; Nov 19: the
+// latest CV PDF.
 //
 // Projects menu (Harbor's Figma "Main · Projects menu open" 538:9995; with ETO Markets 776:92): one compact panel,
 // 652×360, centred under the Projects trigger, 8px below the header —
@@ -44,7 +45,7 @@ export type HeaderMode = 'overlay' | 'light' | 'dark'
 
 const LINKS = {
   linkedin: 'https://www.linkedin.com/in/harborkim/',
-  resume: 'https://drive.google.com/file/d/1HVj_RZWRWKovvyIbYKPlQfGkQrecxC1B/view?usp=sharing',
+  resume: 'https://drive.google.com/file/d/1LD5iYbYAhTgi9o5GxjTwOryE0hhYd_pY/view?usp=sharing',
 }
 
 function ArrowUpRight() {

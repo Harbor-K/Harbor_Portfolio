@@ -27,7 +27,8 @@ import { AI_ICONS } from './aiIcons'
 //   All rights reserved." on the left and "Back to top ↑" on the right, 16/24 #8C8C8C.
 // Lines are drawn inside boxes (inset shadows), like Figma's inside strokes, so no line adds to a size.
 // Interactions: links and the logo brighten on hover; the logo and "Home" go to the top of the main page;
-// "Resume" opens her CV in a new tab, like the header's Resume button (v108; v114: the PDF on Google Drive);
+// "Resume" opens her CV in a new tab, like the header's Resume button (v108; v114: the PDF on Google Drive; Nov 19: the
+// latest CV PDF);
 // "Back to top ↑" scrolls this page to the top (its arrow nudges up on hover).
 
 const MAIL = 'harborkim0328@gmail.com'
@@ -36,7 +37,7 @@ const F = {
   instagram: 'https://instagram.com/harbor_0328',
   email: `mailto:${MAIL}`,
   cal: 'https://cal.com/harbor-kim-wqsmkt/30min',
-  resume: 'https://drive.google.com/file/d/1HVj_RZWRWKovvyIbYKPlQfGkQrecxC1B/view?usp=sharing',
+  resume: 'https://drive.google.com/file/d/1LD5iYbYAhTgi9o5GxjTwOryE0hhYd_pY/view?usp=sharing',
 }
 const SANS = '"Helvetica Neue", Helvetica, Arial, sans-serif'
 const SERIF = '"Newsreader", Georgia, "Times New Roman", serif'

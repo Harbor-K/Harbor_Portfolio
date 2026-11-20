@@ -22,8 +22,9 @@ import { CaseFilm, useCaseIntro } from './CaseFilm'
  *   Pointing at a tier's label brings its layer forward and fades the other two.
  * - Dashboard concept: the daily bars grow day by day, the funnel fills step by step;
  *   "Share registration link" answers "Link copied" for 2 seconds (sample, nothing is copied).
- * - Menu before/after: pointing at (or clicking) a tag in the legend — New, Split, Moved, Renamed — lights up only
- *   the menu items with that tag.
+ * - Menu before/after (Nov 20, Harbor: show what changed as you scroll): one menu, pinned while you scroll; each step
+ *   makes one change to the 2022 menu (Split, Split, Moved, Renamed, New) and lights the changed column. Small or short
+ *   screens: the two tables with the legend that lights up one kind of change.
  * - Before → After (Nov 19, Harbor: people don't press the arrows): no buttons or dragging. The slider stays pinned
  *   while you scroll down, and each scroll step moves it on to the next screen, 01 → 04; scrolling up goes back.
  *   The slides beside the current one stay dimmed. Small or short screens: the four screens one under another.
@@ -453,6 +454,106 @@ function MenuBeforeAfter() {
   )
 }
 
+/**
+ * The menu, before and after — Nov 20 (Harbor): one menu instead of two stacked tables. It stays pinned while you scroll
+ * and each scroll step makes one change to the 2022 menu, so you see what changed and where: Dashboard and Inbox split
+ * into tabs, Download moves up, Client Support is renamed, and the header gets Deposit Now and the ETO Blog bar.
+ * Narrow or short screens and reduced motion: the before / after tables (MenuBeforeAfter).
+ */
+type MenuMove = { id: string; before: MenuCol; after: MenuCol; at: number; from: number; to: number; moveAt?: number }
+const MENU_MOVES: MenuMove[] = [
+  { id: 'hdr', before: MENU_BEFORE[0], after: MENU_AFTER[0], at: 5, from: 0, to: 0 },
+  { id: 'dash', before: MENU_BEFORE[1], after: MENU_AFTER[1], at: 1, from: 1, to: 1 },
+  { id: 'inbox', before: MENU_BEFORE[2], after: MENU_AFTER[2], at: 2, from: 2, to: 2 },
+  { id: 'clients', before: MENU_BEFORE[3], after: MENU_AFTER[4], at: 5, from: 3, to: 4, moveAt: 3 },
+  { id: 'account', before: MENU_BEFORE[4], after: MENU_AFTER[5], at: 5, from: 4, to: 5, moveAt: 3 },
+  { id: 'download', before: MENU_BEFORE[5], after: MENU_AFTER[3], at: 3, from: 5, to: 3 },
+  { id: 'support', before: MENU_BEFORE[6], after: MENU_AFTER[6], at: 4, from: 6, to: 6 },
+]
+const MENU_STEPS: { tag?: Tag; t: string; ids: string[] }[] = [
+  { t: 'The 2022 portal menu. Keep scrolling to see each change.', ids: [] },
+  { tag: 'Split', t: 'Dashboard was split into tabs: Account, Summary and Registration Link.', ids: ['dash'] },
+  { tag: 'Split', t: 'Inbox held registration, deposit and withdrawal in one list. Each got its own tab.', ids: ['inbox'] },
+  { tag: 'Moved', t: 'Download moved up, right after Inbox.', ids: ['download'] },
+  { tag: 'Renamed', t: 'Client Support became Contact Us.', ids: ['support'] },
+  { tag: 'New', t: 'The header got a Deposit Now button and the ETO Blog bar.', ids: ['hdr'] },
+]
+const MENU_WIDE_Q = '(min-width: 1024px) and (min-height: 720px)'
+
+function MenuSection() {
+  const [wide, setWide] = useState(() => typeof window !== 'undefined' && matchMedia(MENU_WIDE_Q).matches && !reducedMotion())
+  useEffect(() => {
+    const mq = matchMedia(MENU_WIDE_Q)
+    const set = () => setWide(mq.matches && !reducedMotion())
+    set(); mq.addEventListener('change', set)
+    return () => mq.removeEventListener('change', set)
+  }, [])
+  return wide ? <MenuScroll /> : <MenuBeforeAfter />
+}
+
+function MenuScroll() {
+  const outer = useRef<HTMLDivElement>(null)
+  const pin = useRef<HTMLDivElement>(null)
+  const N = MENU_STEPS.length
+  const [step, setStep] = useState(0)
+  useEffect(() => {
+    let raf = 0
+    const run = () => {
+      raf = 0
+      const el = outer.current, p = pin.current; if (!el || !p) return
+      const top = parseFloat(getComputedStyle(p).top) || 0
+      const travel = el.offsetHeight - p.offsetHeight
+      const f = clamp01((top - el.getBoundingClientRect().top) / Math.max(1, travel))
+      const i = Math.min(N - 1, Math.floor(f * N))
+      setStep(v => (v === i ? v : i))
+    }
+    const on = () => { if (!raf) raf = requestAnimationFrame(run) }
+    run()
+    addEventListener('scroll', on, { passive: true }); addEventListener('resize', on)
+    return () => { if (raf) cancelAnimationFrame(raf); removeEventListener('scroll', on); removeEventListener('resize', on) }
+  }, [N])
+  const now = MENU_STEPS[step]
+  const tagEl = (t: Tag) => <span className={'e5-tag t-' + t.toLowerCase()}>{t}</span>
+  const done = step === N - 1
+  return (
+    <div ref={outer} className="e5-ms-outer" style={{ height: `calc(640px + ${N * 50}vh)` }}>
+      <figure ref={pin} className="e5-ms-pin">
+        <Canvas className="e5-menu e5-ms">
+          <div className="e5-ms-top">
+            <div className={'e5-mk' + (done ? ' after' : '')}>{done ? 'AFTER · REDESIGN' : step === 0 ? 'BEFORE · 2022 PORTAL' : 'REDESIGN IN PROGRESS'}</div>
+            <div className="e5-ms-ticks" aria-hidden="true">{MENU_STEPS.slice(1).map((_, i) => <i key={i} className={i < step ? 'on' : undefined} />)}</div>
+          </div>
+          <div className="e5-mbox e5-ms-box">
+            <div className="e5-ms-cols">
+              {MENU_MOVES.map(m => {
+                const changed = step >= m.at
+                const c = changed ? m.after : m.before
+                const pos = step >= (m.moveAt ?? m.at) ? m.to : m.from
+                const hot = now.ids.includes(m.id)
+                return (
+                  <div key={m.id} className={'e5-mcol e5-ms-col' + (hot ? ' hot' : '') + (changed ? '' : ' old')} style={{ '--p': pos } as React.CSSProperties}>
+                    <div key={changed ? 'a' : 'b'} className={changed && m.at > 0 ? 'e5-ms-in' : undefined}>
+                      <div className="mh">{c.h}</div>
+                      {changed && c.tag && <div className="mt">{tagEl(c.tag)}</div>}
+                      <ul>{c.items.map(i => <li key={i.t}>{i.t}{changed && i.tag && <> {tagEl(i.tag)}</>}</li>)}</ul>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+          <div className="e5-ms-cap" aria-live="polite">
+            <span className="n">{String(step).padStart(2, '0')} / {String(N - 1).padStart(2, '0')}</span>
+            {now.tag && tagEl(now.tag)}
+            <span className="t">{now.t}</span>
+          </div>
+        </Canvas>
+        <figcaption className="e5-cap">Sub-menus that were collapsed in the 2022 screenshots are not listed.</figcaption>
+      </figure>
+    </div>
+  )
+}
+
 /** Before → After: pinned while scrolling; each scroll step moves to the next screen (Nov 19) */
 const SLIDE_WIDE_Q = '(min-width: 1024px) and (min-height: 640px)'
 function Slider() {
@@ -764,7 +865,7 @@ export function EtoV5() {
             </div>
             <h2 className="e5-h2 mt120">The menu, before and after</h2>
             <p className="e5-body w960 mt24">The dashboard sat inside a portal menu that changed too. Pages that held everything were split into tabs, and deposit got its own button in the header.</p>
-            <div className="mt64"><MenuBeforeAfter /></div>
+            <div className="mt64"><MenuSection /></div>
           </div>
         </section>
 
@@ -1106,6 +1207,25 @@ const E5_CSS = `
 .e5 .e5-lg:hover, .e5 .e5-lg.on { background: #FFFFFF; color: var(--ink); box-shadow: 0 0 0 1px #E2D3D4; }
 .e5 .e5-lg[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--ink); }
 .e5 .e5-lg:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* menu, one change per scroll step (Nov 20): the columns slide to their new places, the changed one is lit */
+.e5 .e5-ms-outer { position: relative; }
+.e5 .e5-ms-pin { position: sticky; top: max(96px, calc(50vh - 320px)); margin: 0; }
+.e5 .e5-ms-top { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.e5 .e5-ms-ticks { display: flex; gap: 8px; }
+.e5 .e5-ms-ticks i { width: 32px; height: 2px; background: var(--cline); transition: background-color .3s ease; }
+.e5 .e5-ms-ticks i.on { background: var(--ink); }
+.e5 .e5-ms-box { display: block; }
+.e5 .e5-ms-cols { position: relative; height: 376px; }
+.e5 .e5-ms-col { position: absolute; top: 0; bottom: 0; left: calc(var(--p) * ((100% - 96px) / 7 + 16px)); width: calc((100% - 96px) / 7);
+  padding: 8px; margin: -8px; transition: left .9s cubic-bezier(.22,1,.36,1), background-color .4s ease, box-shadow .4s ease; }
+.e5 .e5-ms-col.old .mh { color: var(--grey); font-weight: 500; }
+.e5 .e5-ms-col.hot { background: var(--soft); box-shadow: inset 0 0 0 1px var(--red); }
+.e5 .e5-ms-col.hot .mh { color: var(--ink); }
+.e5 .e5-ms-in { animation: e5-ms-in .7s cubic-bezier(.22,1,.36,1) both; }
+@keyframes e5-ms-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.e5 .e5-ms-cap { display: flex; align-items: center; gap: 16px; min-height: 40px; margin-top: 24px; font-size: 18px; line-height: 28px; color: var(--ink); }
+.e5 .e5-ms-cap .n { flex: none; font-size: 16px; font-weight: 500; line-height: 24px; color: var(--ash); font-variant-numeric: tabular-nums; }
 
 /* before → after (Nov 19): pinned; the rail moves one screen per scroll step */
 .e5 .e5-slider { position: relative; --gap: 40px; --sw: min(1200px, calc(100vw - 64px)); }

@@ -1,41 +1,54 @@
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 
 /**
- * GameCove "Data visuals" section (Harbor Nov 19, Figma "Section · Data visuals · Framer style", file 44기 김지현 4차
- * 랜딩페이지, node 2044:3514). Sits right under the design system (rendered at the end of DsLayers, GameCoveDS.tsx).
- * Three light cards with a soft blue glow (Framer-style bento), each holding a dark chart card from the live dashboard.
- * In Figma the chart cards are screenshots; here they are built as UI so they answer the pointer the way the
- * GameCove dashboard does (game-cove.vercel.app, checked Nov 19):
- *  - New and returning users: the pointer snaps to the nearest day, both lines get a dot, and a light tooltip shows
- *    the date with New / Returning users (the dashboard's tooltip: #F2F0EC, 8px corners, 16px padding).
- *  - Traffic sources: the row under the pointer gets the dashboard's row highlight (data/select/row, 8px corners).
- *  - Session exit rate: the bar under the pointer turns blue and the tooltip (Figma's: dark, blue edge, marker and
- *    leader) moves to it; Stage 4 is shown when nothing is pointed at, as in Figma.
- *  - Date cohort retention: a cell shows "13.5% / 13 of 96 users" in the dashboard's light tooltip.
- * Numbers: the BounceBounce dummy data v8 (whdhrrk/gamecove data/source/v8-rework/v8-review-tables.md, Last 7 days
- * Sep 16–22) and the live dashboard's own tooltips — nothing estimated. Traffic shares are the dashboard's Overview card.
- * Site rules kept: Roboto (index.css), nothing under 16px, 1440 container. The dark chart cards keep the product's
- * rounded corners (16 / 8), like the design-system outlines above them.
- * v31 (Harbor Nov 19): titles no longer break (the class "lg" clashed with a 16px legend swatch on the page, now "big"),
- * the chart cards fade out at the bottom of their light card instead of a hard cut, every row fits above the fade,
- * date labels stay on one line, and the cohort tooltip opens above its cell. Light cards are white on the section's
- * #F1F1EE so they stand out.
+ * GameCove "Data visualization" (Harbor Nov 20). Sits right under the design system (rendered at the end of DsLayers,
+ * GameCoveDS.tsx). Replaces the three Framer-style light cards of v31.
+ * What Harbor asked for (screen recording, Nov 20):
+ *  - title "Data visualization"
+ *  - every chart from the GameCove prototype (game-cove.vercel.app: Overview, Retention, Experience, Explore) as its own
+ *    card, all the same size; long charts are cut to that size and fade out at the bottom
+ *  - one-line title per card, no extra light card or description around it
+ *  - a row that keeps moving sideways by itself (slowly); page scrolling nudges it along; dragging or a sideways
+ *    swipe moves it fast; it stops under the pointer so the chart tooltips can be read
+ * Numbers: computed from the prototype's own query layer (whdhrrk/gamecove lib/dashboard/queries.ts on
+ * data/dashboard/bounce-bounce.json, default filters = Last 7 days, Sep 16–22) — nothing estimated. Labels are the
+ * prototype's (lib/i18n/messages/en.ts). Day 7 retention is left out: every day in the period is N/A.
+ * Site rules kept: Roboto, nothing under 16px. The dark chart cards keep the product's rounded corners (16 / 8).
+ * Reduced motion: no self-moving; drag and sideways swipe still work.
  */
 
-/* ---------- data ---------- */
+/* ---------- data (prototype query layer, Last 7 days) ---------- */
 
 const DAYS = ['Sep 16', 'Sep 17', 'Sep 18', 'Sep 19', 'Sep 20', 'Sep 21', 'Sep 22']
+
+type LineSpec = {
+  id: string; title: string; cap: string; head: string; legend: string
+  vals: (number | null)[]; max: number; ticks: number[]; tick: (v: number) => string; tip: (v: number) => string
+}
+const f1 = (v: number) => v.toFixed(1)
+const LINES: Record<string, LineSpec> = {
+  dau: { id: 'dau', title: 'Daily active users', cap: 'Today (Sep 22)', head: '134 users', legend: 'Daily active users',
+    vals: [277, 276, 254, 236, 227, 203, 134], max: 500, ticks: [0, 100, 200, 300, 400, 500], tick: String, tip: v => `${v} users` },
+  play: { id: 'play', title: 'Average Playtime', cap: 'Today (Sep 22)', head: '16.9 min', legend: 'Avg. playtime',
+    vals: [15.63, 16.87, 13.75, 16.73, 16.70, 15.78, 16.94], max: 25, ticks: [0, 5, 10, 15, 20, 25], tick: String, tip: v => `${f1(v)} min` },
+  sess: { id: 'sess', title: 'Sessions', cap: 'Today (Sep 22)', head: '1.3 sessions', legend: 'Sessions per user',
+    vals: [1.26, 1.29, 1.23, 1.31, 1.32, 1.27, 1.31], max: 2.5, ticks: [0, 0.5, 1, 1.5, 2, 2.5], tick: String, tip: v => `${f1(v)} sessions` },
+  stime: { id: 'stime', title: 'Average session time', cap: 'Today (Sep 22)', head: '13.0 min', legend: 'Avg. session time',
+    vals: [12.44, 13.12, 11.19, 12.82, 12.68, 12.41, 12.97], max: 25, ticks: [0, 5, 10, 15, 20, 25], tick: String, tip: v => `${f1(v)} min` },
+  d1: { id: 'd1', title: 'Day 1 retention', cap: 'Latest cohort (Sep 21)', head: '6.0%', legend: 'Day 1 retention',
+    vals: [17.74, 21.62, 11.46, 9.09, 8.11, 5.95, null], max: 50, ticks: [0, 10, 20, 30, 40, 50], tick: v => `${v}%`, tip: v => `${f1(v)}%` },
+}
+
 const NEW_USERS = [124, 111, 96, 99, 74, 84, 53]
 const RETURNING = [153, 165, 158, 137, 153, 119, 81]
-const Y_MAX = 250
 
 type Src = 'home' | 'search' | 'youtube' | 'instagram' | 'other'
-const TRAFFIC: { id: Src; t: string; v: number }[] = [
-  { id: 'home', t: 'Home recommendations', v: 63 },
-  { id: 'search', t: 'Search', v: 11 },
-  { id: 'youtube', t: 'YouTube', v: 3 },
-  { id: 'instagram', t: 'Instagram', v: 3 },
-  { id: 'other', t: 'Unattributed', v: 20 },
+const TRAFFIC: { id: Src; t: string; share: number; players: number }[] = [
+  { id: 'home', t: 'Home recommendations', share: 63, players: 404 },
+  { id: 'search', t: 'Search', share: 11, players: 71 },
+  { id: 'youtube', t: 'YouTube', share: 3, players: 21 },
+  { id: 'instagram', t: 'Instagram', share: 3, players: 18 },
+  { id: 'other', t: 'Unattributed', share: 20, players: 127 },
 ]
 
 const EXIT = [
@@ -44,6 +57,23 @@ const EXIT = [
   { t: 'Stage 2', rate: 44.3, exits: 198, visits: 447 },
   { t: 'Stage 3', rate: 52.8, exits: 230, visits: 436 },
   { t: 'Stage 4', rate: 82.2, exits: 472, visits: 574 },
+]
+const FLOW = { from: 'Stage 4', visits: 574, rows: [{ t: 'Session ended', share: 82.2, n: 472 }, { t: 'Lobby', share: 17.8, n: 102 }] }
+const TIME = [
+  { t: 'Lobby', sec: 65, n: 2055 }, { t: 'Stage 1', sec: 431, n: 641 }, { t: 'Stage 2', sec: 446, n: 447 },
+  { t: 'Stage 3', sec: 526, n: 436 }, { t: 'Stage 4', sec: 1203, n: 574 },
+]
+const mmss = (s: number) => `${Math.floor(s / 60)}m ${s % 60}s`
+
+type Funnel = { id: string; title: string; kpis: [string, string][]; label: string; steps: [string, number][] }
+const FUNNELS: Funnel[] = [
+  { id: 'nup', title: 'New user progression', label: 'First session funnel',
+    kpis: [['Avg. playtime', '6m 55s'], ['Stage 1 clear rate', '27.0%'], ['Stage 2 reach rate', '16.8%']],
+    steps: [['Lobby entered', 641], ['Stage 1 entered', 365], ['Star 1 earned', 359], ['Stage 1 cleared', 173], ['Stage 2 entered', 108]] },
+  { id: 'sp4', title: 'Stage progression · Stage 4', label: 'Progression funnel',
+    kpis: [['Clear rate', '45.4%'], ['Avg. first-clear time', '16m 24s'], ['Avg. failures to first clear', '9.7']],
+    steps: [['Stage entered', 273], ['Star 1 earned', 272], ['Star 2 earned', 272], ['Star 3 earned', 271], ['Star 4 earned', 271],
+      ['Star 5 earned', 268], ['Star 6 earned', 178], ['Star 7 earned', 149], ['Star 8 earned', 124], ['Stage cleared', 124]] },
 ]
 
 /* [percent, users] per day; null = N/A (not observable yet) */
@@ -58,18 +88,14 @@ const COHORTS: { d: string; users: number; c: Cell[] }[] = [
   { d: 'Sep 16', users: 124, c: [[17.7, 22], [13.7, 17], [13.7, 17], [8.1, 10], [7.3, 9], [4.0, 5]] },
 ]
 
-const HEAD = { eyebrow: 'DATA VISUALS', title: 'See your game in three cards' }
-const CARDS = {
-  players: { t: 'Players and sources', d: 'How many players came, who came back, and where new players found the game.' },
-  quit: { t: 'Where players quit', d: 'Session exit rate by stage. Stage 4 stands out at 82.2%.' },
-  back: { t: 'Who comes back', d: 'Retention by start date, day by day.' },
-}
+const HEAD = { eyebrow: 'CHARTS', title: 'Data visualization', body: 'Every chart in the GameCove prototype, built on the same tokens. Point at one to read its values, or drag the row to move faster.' }
 
 /* ---------- helpers ---------- */
 
-/** smooth line through the points without overshooting (monotone cubic), in a 0..W × 0..H box */
+/** smooth line through the points without overshooting (monotone cubic) */
 function monotonePath(xs: number[], ys: number[]) {
   const n = xs.length
+  if (n < 2) return ''
   const d: number[] = [], m: number[] = []
   for (let i = 0; i < n - 1; i++) d.push((ys[i + 1] - ys[i]) / (xs[i + 1] - xs[i]))
   m.push(d[0])
@@ -87,6 +113,8 @@ function monotonePath(xs: number[], ys: number[]) {
   }
   return p
 }
+
+const reducedMotion = () => typeof window !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches
 
 function Info() {
   return (
@@ -107,123 +135,220 @@ function SrcIcon({ id }: { id: Src }) {
   return <svg {...p}><path d="M11 3h6v6M17 3l-7.5 7.5M14.5 12v3.5a1.5 1.5 0 01-1.5 1.5H4.5A1.5 1.5 0 013 15.5V7a1.5 1.5 0 011.5-1.5H8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
 }
 
-/* ---------- chart cards ---------- */
+/** the dark chart card: one-line title, then the chart; anything taller than the card fades out at the bottom */
+function Card({ title, children, label }: { title: string; children: React.ReactNode; label?: string }) {
+  return (
+    <article className="dv-chart" aria-label={label || title}>
+      <div className="dv-ct">{title} <Info /></div>
+      <div className="dv-body">{children}</div>
+    </article>
+  )
+}
 
-/** New and returning users: the pointer snaps to a day; dots on both lines + the dashboard's light tooltip */
-function NewReturning() {
+/* ---------- line charts (one or two series) ---------- */
+
+type Series = { vals: (number | null)[]; tone: 'new' | 'ret'; name: string }
+
+function LinePlot({ series, max, ticks, tick, tip, legend }: {
+  series: Series[]; max: number; ticks: number[]; tick: (v: number) => string; tip: (s: Series, v: number) => string; legend: string[]
+}) {
   const W = 600, H = 200
   const plot = useRef<HTMLDivElement>(null)
   const [hi, setHi] = useState<number | null>(null)
   const xs = DAYS.map((_, i) => (i / (DAYS.length - 1)) * W)
-  const y = (v: number) => H - (v / Y_MAX) * H
-  const paths = useMemo(() => {
-    const nl = monotonePath(xs, NEW_USERS.map(y)), rl = monotonePath(xs, RETURNING.map(y))
-    return { nl, rl, na: `${nl} L${W} ${H} L0 ${H} Z`, ra: `${rl} L${W} ${H} L0 ${H} Z` }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const y = (v: number) => H - (v / max) * H
+  const paths = useMemo(() => series.map(s => {
+    const idx = s.vals.map((v, i) => (v === null ? -1 : i)).filter(i => i >= 0)
+    const line = monotonePath(idx.map(i => xs[i]), idx.map(i => y(s.vals[i] as number)))
+    const last = xs[idx[idx.length - 1]]
+    return { line, area: `${line} L${last} ${H} L0 ${H} Z`, tone: s.tone }
+  }), []) // eslint-disable-line react-hooks/exhaustive-deps
   const move = (e: React.PointerEvent) => {
     const r = plot.current?.getBoundingClientRect(); if (!r) return
     const i = Math.round(((e.clientX - r.left) / r.width) * (DAYS.length - 1))
     setHi(Math.max(0, Math.min(DAYS.length - 1, i)))
   }
   const pct = (i: number) => `${(i / (DAYS.length - 1)) * 100}%`
-  const top = (v: number) => `${(1 - v / Y_MAX) * 100}%`
+  const top = (v: number) => `${(1 - v / max) * 100}%`
+  const peak = hi === null ? 0 : Math.max(...series.map(s => s.vals[hi] ?? 0))
+  const below = peak / max > 0.62
   return (
-    <div className="dv-chart dv-nr">
-      <div className="dv-ct">New and returning users <Info /></div>
-      <div className="dv-sub">Today (Sep 22)</div>
-      <div className="dv-big">53 users</div>
-      <div className="dv-nr-body">
-        <div className="dv-yax" aria-hidden="true">{[250, 200, 150, 100, 50, 0].map(v => <span key={v}>{v}</span>)}</div>
-        <div ref={plot} className="dv-plot" onPointerMove={move} onPointerDown={move} onPointerLeave={() => setHi(null)}
-          role="img" aria-label="New and returning users, Sep 16 to Sep 22. New: 124, 111, 96, 99, 74, 84, 53. Returning: 153, 165, 158, 137, 153, 119, 81.">
+    <>
+      <div className="dv-lb">
+        <div className="dv-yax" aria-hidden="true">{[...ticks].reverse().map(v => <span key={v}>{tick(v)}</span>)}</div>
+        <div ref={plot} className="dv-plot" onPointerMove={move} onPointerLeave={() => setHi(null)}>
           <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true">
-            <defs>
-              <linearGradient id="dv-g-ret" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#F2F0EC" stopOpacity=".2" /><stop offset="1" stopColor="#F2F0EC" stopOpacity="0" /></linearGradient>
-              <linearGradient id="dv-g-new" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#4478F0" stopOpacity=".42" /><stop offset="1" stopColor="#4478F0" stopOpacity="0" /></linearGradient>
-            </defs>
-            {[50, 100, 150, 200, 250].map(v => <line key={v} x1="0" x2={W} y1={y(v)} y2={y(v)} className="dv-gl" />)}
-            <path d={paths.ra} fill="url(#dv-g-ret)" />
-            <path d={paths.na} fill="url(#dv-g-new)" />
-            <path d={paths.rl} className="dv-line ret" />
-            <path d={paths.nl} className="dv-line new" />
+            {ticks.slice(1).map(v => <line key={v} x1="0" x2={W} y1={y(v)} y2={y(v)} className="dv-gl" />)}
+            {paths.map((p, k) => <path key={'a' + k} d={p.area} className={'dv-area ' + p.tone} />)}
+            {paths.map((p, k) => <path key={'l' + k} d={p.line} className={'dv-line ' + p.tone} />)}
             <line x1="0" x2={W} y1={H} y2={H} className="dv-base" />
           </svg>
           {hi !== null && (
             <>
-              <i className="dv-dot ret" style={{ left: pct(hi), top: top(RETURNING[hi]) }} />
-              <i className="dv-dot new" style={{ left: pct(hi), top: top(NEW_USERS[hi]) }} />
-              <div className={'dv-tip light' + (hi >= DAYS.length - 2 ? ' to-left' : hi === 0 ? ' to-right' : '')}
-                style={{ left: pct(hi), top: top(Math.max(NEW_USERS[hi], RETURNING[hi])) }}>
+              {series.map(s => s.vals[hi] !== null && <i key={s.name} className={'dv-dot ' + s.tone} style={{ left: pct(hi), top: top(s.vals[hi] as number) }} />)}
+              <div className={'dv-tip light' + (below ? ' below' : '') + (hi >= DAYS.length - 2 ? ' to-left' : hi <= 1 ? ' to-right' : '')}
+                style={{ left: pct(hi), top: top(peak) }}>
                 <div className="d">{DAYS[hi]}</div>
-                <div className="r"><span>New</span><b>{NEW_USERS[hi]} users</b></div>
-                <div className="r"><span>Returning</span><b>{RETURNING[hi]} users</b></div>
+                {series.map(s => {
+                  const v = s.vals[hi]
+                  return series.length > 1
+                    ? <div className="r" key={s.name}><span>{s.name}</span><b>{v === null ? 'N/A' : tip(s, v)}</b></div>
+                    : <div className="v" key={s.name}>{v === null ? 'N/A' : tip(s, v)}</div>
+                })}
               </div>
             </>
           )}
         </div>
         <div className="dv-xax" aria-hidden="true">{DAYS.map(d => <span key={d}>{d}</span>)}</div>
       </div>
-    </div>
+      <div className="dv-legend" aria-hidden="true">{legend.map((l, i) => <span key={l} className={i ? 'ret' : 'new'}><i />{l}</span>)}</div>
+    </>
   )
 }
 
-/** Traffic sources: the row under the pointer gets the dashboard's row highlight */
-function Traffic() {
+function LineCard({ s }: { s: LineSpec }) {
   return (
-    <div className="dv-chart dv-tr">
-      <div className="dv-ct big">Traffic sources <Info /></div>
-      <ul>
-        {TRAFFIC.map((s, i) => (
-          <li key={s.id} className="dv-tr-row" style={{ '--d': `${i * 90}ms` } as React.CSSProperties}>
-            <div className="l"><SrcIcon id={s.id} /><span>{s.t}</span><b>{s.v}%</b></div>
-            <div className="dv-track"><i style={{ width: `${s.v}%` }} /></div>
+    <Card title={s.title} label={`${s.title}, Sep 16 to Sep 22: ${s.vals.map(v => (v === null ? 'N/A' : s.tip(v))).join(', ')}`}>
+      <div className="dv-sub">{s.cap}</div>
+      <div className="dv-big">{s.head}</div>
+      <LinePlot series={[{ vals: s.vals, tone: 'new', name: s.legend }]} max={s.max} ticks={s.ticks} tick={s.tick} tip={(_, v) => s.tip(v)} legend={[s.legend]} />
+    </Card>
+  )
+}
+
+function NewReturningCard() {
+  return (
+    <Card title="New and returning users" label={`New and returning users, Sep 16 to Sep 22. New: ${NEW_USERS.join(', ')}. Returning: ${RETURNING.join(', ')}.`}>
+      <div className="dv-sub">Today (Sep 22)</div>
+      <div className="dv-big">53 users</div>
+      <LinePlot series={[{ vals: RETURNING, tone: 'ret', name: 'Returning' }, { vals: NEW_USERS, tone: 'new', name: 'New' }]}
+        max={250} ticks={[0, 50, 100, 150, 200, 250]} tick={String} tip={(_, v) => `${v} users`} legend={['New users', 'Returning users']} />
+    </Card>
+  )
+}
+
+/* ---------- lists and bars ---------- */
+
+function TrafficCard() {
+  return (
+    <Card title="Traffic sources" label={`Traffic sources of new users: ${TRAFFIC.map(s => `${s.t} ${s.share}%`).join(', ')}`}>
+      <div className="dv-sub">New users · Last 7 days</div>
+      <ul className="dv-tr">
+        {TRAFFIC.map(s => (
+          <li key={s.id} className="dv-row">
+            <div className="l"><SrcIcon id={s.id} /><span>{s.t}</span><b><em>{s.players} players · </em>{s.share}%</b></div>
+            <div className="dv-track"><i style={{ width: `${s.share}%` }} /></div>
           </li>
         ))}
       </ul>
+    </Card>
+  )
+}
+
+/** horizontal bars with a value on the right; the bar under the pointer turns blue and shows its tooltip */
+function Bars({ rows, start }: { rows: { t: string; w: number; v: string; tip: [string, string] }[]; start: number }) {
+  const [hot, setHot] = useState<number | null>(null)
+  const sel = hot ?? start
+  return (
+    <div className="dv-bars" onPointerLeave={() => setHot(null)}>
+      {rows.map((r, i) => (
+        <div key={r.t} className={'dv-bar-row' + (i === sel ? ' on' : '')} onPointerEnter={() => setHot(i)}>
+          <span className="t">{r.t}</span>
+          <span className="dv-bar"><i style={{ width: `${r.w}%` }} />
+            {i === sel && <span className={'dv-tip dark' + (i < 2 ? ' below' : '')} style={{ left: `${r.w}%` }}><b>{r.tip[0]}</b><span>{r.tip[1]}</span></span>}
+          </span>
+          <span className="v">{r.v}</span>
+        </div>
+      ))}
     </div>
   )
 }
 
-/** Session exit rate: the hovered bar turns blue and the tooltip moves to it (Stage 4 by default, as in Figma) */
-function ExitRate() {
-  const [hot, setHot] = useState<number | null>(null)
-  const sel = hot ?? EXIT.length - 1
-  const s = EXIT[sel]
-  const below = sel < 2 // the top rows open their tooltip underneath, so it stays inside the card
+function ExitCard() {
   return (
-    <div className="dv-chart dv-ex">
-      <div className="dv-ex-head"><span className="dv-ct">Session exit rate <Info /></span><span className="dv-pill">Last 7 days <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M3 4.5l3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg></span></div>
-      <div className="dv-ex-rows" onPointerLeave={() => setHot(null)}>
-        {EXIT.map((r, i) => (
-          <div key={r.t} className={'dv-ex-row' + (i === sel ? ' on' : '')} onPointerEnter={() => setHot(i)} onFocus={() => setHot(i)} onBlur={() => setHot(null)} tabIndex={0}
-            aria-label={`${r.t}: ${r.rate}% exit rate, ${r.exits} of ${r.visits} sessions`}>
-            <span className="t">{r.t}</span>
-            <span className="dv-ex-bar"><i style={{ width: `${r.rate}%` }} /></span>
-          </div>
-        ))}
-        <div className={'dv-ex-pin' + (below ? ' below' : '')} style={{ '--row': sel, '--wf': s.rate / 100 } as React.CSSProperties} aria-hidden="true">
-          <i className="mk" /><i className="ld" />
-          <div className="dv-tip dark">
-            <div className="h"><i />{s.t}</div>
-            <div className="v">{s.rate}% exit rate</div>
-            <div className="s">{s.exits} of {s.visits} sessions</div>
-          </div>
+    <Card title="Session exit rate" label={`Session exit rate: ${EXIT.map(r => `${r.t} ${r.rate}%`).join(', ')}`}>
+      <div className="dv-sub">Last 7 days</div>
+      <Bars start={EXIT.length - 1} rows={EXIT.map(r => ({ t: r.t, w: r.rate, v: `${r.rate}%`, tip: [`${r.rate}% exit rate`, `${r.exits} of ${r.visits} sessions`] }))} />
+    </Card>
+  )
+}
+
+function FlowCard() {
+  return (
+    <Card title={`Session flow · ${FLOW.from}`} label={`Session flow after Stage 4: ${FLOW.rows.map(r => `${r.t} ${r.share}%`).join(', ')}`}>
+      <div className="dv-sub">Sessions visiting {FLOW.from} · {FLOW.visits}</div>
+      <div className="dv-flow-from" aria-hidden="true"><b>{FLOW.from}</b><span>{FLOW.visits} sessions</span></div>
+      <Bars start={0} rows={FLOW.rows.map(r => ({ t: r.t, w: r.share, v: `${r.share}%`, tip: [`${r.share}%`, `${r.n} of ${FLOW.visits} sessions`] }))} />
+    </Card>
+  )
+}
+
+function TimeCard() {
+  const max = 25 * 60
+  const [hot, setHot] = useState<number | null>(null)
+  const sel = hot ?? TIME.length - 1
+  return (
+    <Card title="Average time spent" label={`Average time spent: ${TIME.map(r => `${r.t} ${mmss(r.sec)}`).join(', ')}`}>
+      <div className="dv-sub">Last 7 days</div>
+      <div className="dv-cols">
+        <div className="dv-yax" aria-hidden="true">{['25m', '20m', '15m', '10m', '5m', '0'].map(v => <span key={v}>{v}</span>)}</div>
+        <div className="dv-colplot" onPointerLeave={() => setHot(null)}>
+          {[1, 2, 3, 4, 5].map(k => <i key={k} className="gl" style={{ bottom: `${k * 20}%` }} />)}
+          {TIME.map((r, i) => (
+            <div key={r.t} className={'dv-col' + (i === sel ? ' on' : '')} onPointerEnter={() => setHot(i)}>
+              <i style={{ height: `${(r.sec / max) * 100}%` }}>
+                {i === sel && <span className={'dv-tip dark up' + (i >= TIME.length - 1 ? ' to-left' : i === 0 ? ' to-right' : '')}><b>{mmss(r.sec)}</b><span>{r.n} sessions</span></span>}
+              </i>
+            </div>
+          ))}
         </div>
+        <div className="dv-xax cols" aria-hidden="true">{TIME.map(r => <span key={r.t}>{r.t}</span>)}</div>
       </div>
-    </div>
+    </Card>
+  )
+}
+
+/** funnel rows the way the prototype draws them: reached bar, hatched drop, users, drop-off (largest drop in red) */
+function FunnelCard({ fu }: { fu: Funnel }) {
+  const first = fu.steps[0][1]
+  const rows = fu.steps.map(([t, u], i) => ({ t, u, reach: (u / first) * 100, prev: i ? (fu.steps[i - 1][1] / first) * 100 : 100, drop: i ? ((fu.steps[i - 1][1] - u) / first) * 100 : null }))
+  const maxDrop = Math.max(...rows.map(r => r.drop ?? -1))
+  const [hot, setHot] = useState<number | null>(null)
+  return (
+    <Card title={fu.title} label={`${fu.title}: ${rows.map(r => `${r.t} ${r.u} users`).join(', ')}`}>
+      <div className="dv-kpis">{fu.kpis.map(([k, v]) => <div key={k}><span>{k}</span><b>{v}</b></div>)}</div>
+      <div className="dv-fu-h"><b>{fu.label}</b><span className="dv-key"><i className="re" />Reached</span><span className="dv-key"><i className="dr" />Dropped</span></div>
+      <div className="dv-fu" onPointerLeave={() => setHot(null)}>
+        <div className="dv-fu-row hd"><span>Step</span><span /><span className="n">Users</span><span className="n">Drop-off</span></div>
+        {rows.map((r, i) => {
+          const worst = r.drop !== null && r.drop === maxDrop && maxDrop > 0
+          return (
+            <div key={r.t} className={'dv-fu-row' + (worst ? ' worst' : '') + (hot === i ? ' on' : '')} onPointerEnter={() => setHot(i)}>
+              <span className="t">{r.t}</span>
+              <span className="dv-fbar">
+                <i className={'re' + (r.reach < 20 ? ' out' : '')} style={{ width: `${r.reach}%` }}><em style={r.reach < 20 ? { left: `calc(${100 + ((r.prev - r.reach) / r.reach) * 100}% + 8px)` } : undefined}>{f1(r.reach)}%</em></i>
+                {r.drop !== null && r.drop > 0 && <i className="dr" style={{ left: `${r.reach}%`, width: `${r.prev - r.reach}%` }} />}
+                {hot === i && <span className={'dv-tip dark' + (i < 2 ? ' below' : '')}><b>{r.u} users · {f1(r.reach)}% reached</b><span>{r.drop === null ? 'Start of the funnel' : `Dropped ${f1(r.drop)}% here`}</span></span>}
+              </span>
+              <span className="n">{r.u}</span>
+              <span className="n dp">{r.drop === null ? '–' : <>{worst && <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M7 2l5.5 9.5h-11z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" /><path d="M7 6v2.6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" /></svg>}{f1(r.drop)}%</>}</span>
+            </div>
+          )
+        })}
+      </div>
+    </Card>
   )
 }
 
 /** Date cohort retention: a cell shows its share and head count in the dashboard's light tooltip */
-function Cohort() {
+function CohortCard() {
   const vals = COHORTS.flatMap(r => r.c.filter((c): c is [number, number] => !!c).map(c => c[0]))
   const lo = Math.min(...vals), hi = Math.max(...vals)
   const alpha = (v: number) => 0.24 + ((v - lo) / (hi - lo)) * (0.7 - 0.24)
   const [tip, setTip] = useState<{ r: number; c: number } | null>(null)
   return (
-    <div className="dv-chart dv-co">
-      <div className="dv-ct big">Date cohort retention <Info /></div>
-      <table onPointerLeave={() => setTip(null)}>
+    <Card title="Date cohort retention">
+      <table className="dv-co" onPointerLeave={() => setTip(null)}>
         <thead><tr><th className="dc">Date cohort</th><th className="u">Users</th>{[1, 2, 3, 4, 5, 6].map(n => <th key={n}>D{n}</th>)}</tr></thead>
         <tbody>
           {COHORTS.map((row, r) => (
@@ -234,11 +359,10 @@ function Cohort() {
                 <td key={k}>
                   {c ? (
                     <span className={'dv-cell' + (tip && tip.r === r && tip.c === k ? ' on' : '')} style={{ '--a': alpha(c[0]).toFixed(3) } as React.CSSProperties}
-                      tabIndex={0} onPointerEnter={() => setTip({ r, c: k })} onFocus={() => setTip({ r, c: k })} onBlur={() => setTip(null)}
-                      aria-label={`${row.d}, day ${k + 1}: ${c[0].toFixed(1)}%, ${c[1]} of ${row.users} users`}>
+                      onPointerEnter={() => setTip({ r, c: k })} aria-label={`${row.d}, day ${k + 1}: ${c[0].toFixed(1)}%, ${c[1]} of ${row.users} users`}>
                       {c[0].toFixed(1)}%
                       {tip && tip.r === r && tip.c === k && (
-                        <span className={'dv-tip light cell' + (k >= 4 ? ' to-left' : '')}><b>{c[0].toFixed(1)}%</b><span>{c[1]} of {row.users} users</span></span>
+                        <span className={'dv-tip light cell' + (r < 3 ? ' below' : '') + (k >= 4 ? ' to-left' : '')}><b>{c[0].toFixed(1)}%</b><span>{c[1]} of {row.users} users</span></span>
                       )}
                     </span>
                   ) : <span className="na">N/A</span>}
@@ -248,6 +372,119 @@ function Cohort() {
           ))}
         </tbody>
       </table>
+    </Card>
+  )
+}
+
+/* ---------- the moving row ---------- */
+
+/** order: Overview → Retention → Experience, the way the prototype's pages run */
+function Cards() {
+  return (
+    <>
+      <LineCard s={LINES.dau} />
+      <LineCard s={LINES.play} />
+      <LineCard s={LINES.sess} />
+      <LineCard s={LINES.stime} />
+      <NewReturningCard />
+      <TrafficCard />
+      <LineCard s={LINES.d1} />
+      <CohortCard />
+      <ExitCard />
+      <FlowCard />
+      <TimeCard />
+      <FunnelCard fu={FUNNELS[1]} />
+      <FunnelCard fu={FUNNELS[0]} />
+    </>
+  )
+}
+
+const SPEED = 36 // px per second, slow
+
+/**
+ * The row moves left by itself, stops while the pointer is on it (so tooltips can be read), moves with page scrolling,
+ * and can be dragged or swiped sideways to move fast (with a little glide after letting go). It loops: the cards are
+ * drawn twice and the offset wraps at one set's width.
+ */
+function Marquee() {
+  const vp = useRef<HTMLDivElement>(null)
+  const rail = useRef<HTMLDivElement>(null)
+  const set = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const v = vp.current, r = rail.current, s = set.current
+    if (!v || !r || !s) return
+    const still = reducedMotion()
+    let x = 0, glide = 0, last = performance.now(), raf = 0, seen = false, over = false
+    let drag: { id: number; x0: number; xl: number; tl: number; on: boolean } | null = null
+    let lastY = scrollY
+    const width = () => s.offsetWidth + parseFloat(getComputedStyle(r).columnGap || '0')
+    const draw = () => {
+      const w = width(); if (!w) return
+      x = ((x % w) - w) % w // keep it in (-w, 0]
+      r.style.transform = `translate3d(${x.toFixed(2)}px, 0, 0)`
+    }
+    const tick = (t: number) => {
+      const dt = Math.min(0.05, (t - last) / 1000); last = t
+      if (!drag?.on) {
+        if (!still && !over) x -= SPEED * dt
+        if (Math.abs(glide) > 1) { x += glide * dt; glide *= Math.pow(0.04, dt) } else glide = 0
+      }
+      draw()
+      raf = seen ? requestAnimationFrame(tick) : 0
+    }
+    const start = () => { if (!raf) { last = performance.now(); raf = requestAnimationFrame(tick) } }
+    const io = new IntersectionObserver(([e]) => { seen = e.isIntersecting; if (seen) { lastY = scrollY; start() } }, { threshold: 0 })
+    io.observe(v)
+    // page scroll nudges the row: down = left, up = right
+    const onScroll = () => { const dy = scrollY - lastY; lastY = scrollY; if (seen && !still) { x -= dy * 0.4; if (!raf) draw() } }
+    // sideways swipe on a trackpad moves it fast; vertical wheel is left to the page
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return
+      e.preventDefault(); x -= e.deltaX; glide = 0; if (!raf) draw()
+    }
+    const down = (e: PointerEvent) => {
+      if (e.button !== 0) return
+      drag = { id: e.pointerId, x0: e.clientX, xl: e.clientX, tl: performance.now(), on: false }; glide = 0
+    }
+    const move = (e: PointerEvent) => {
+      if (!drag || e.pointerId !== drag.id) return
+      if (!drag.on && Math.abs(e.clientX - drag.x0) > 6) { drag.on = true; v.setPointerCapture(e.pointerId); v.classList.add('dragging') }
+      if (!drag.on) return
+      const now = performance.now(), dx = e.clientX - drag.xl, dtt = Math.max(1, now - drag.tl) / 1000
+      x += dx; glide = glide * 0.5 + (dx / dtt) * 0.5; drag.xl = e.clientX; drag.tl = now
+      if (!raf) draw()
+    }
+    const up = (e: PointerEvent) => {
+      if (!drag || e.pointerId !== drag.id) return
+      if (drag.on) { v.classList.remove('dragging'); try { v.releasePointerCapture(e.pointerId) } catch { /* not captured */ } }
+      else glide = 0
+      if (performance.now() - drag.tl > 120) glide = 0
+      drag = null
+    }
+    const enter = (e: PointerEvent) => { if (e.pointerType === 'mouse') over = true }
+    const leave = () => { over = false }
+    addEventListener('scroll', onScroll, { passive: true })
+    v.addEventListener('wheel', onWheel, { passive: false })
+    v.addEventListener('pointerdown', down)
+    v.addEventListener('pointermove', move)
+    v.addEventListener('pointerup', up)
+    v.addEventListener('pointercancel', up)
+    v.addEventListener('pointerenter', enter)
+    v.addEventListener('pointerleave', leave)
+    draw()
+    return () => {
+      cancelAnimationFrame(raf); io.disconnect(); removeEventListener('scroll', onScroll)
+      v.removeEventListener('wheel', onWheel); v.removeEventListener('pointerdown', down); v.removeEventListener('pointermove', move)
+      v.removeEventListener('pointerup', up); v.removeEventListener('pointercancel', up)
+      v.removeEventListener('pointerenter', enter); v.removeEventListener('pointerleave', leave)
+    }
+  }, [])
+  return (
+    <div ref={vp} className="dv-vp" role="region" aria-label="GameCove charts, a moving row. Drag sideways to move it.">
+      <div ref={rail} className="dv-rail">
+        <div ref={set} className="dv-set"><Cards /></div>
+        <div className="dv-set" aria-hidden="true"><Cards /></div>
+      </div>
     </div>
   )
 }
@@ -261,169 +498,188 @@ export function DataVisuals() {
       <div className="dv-head" data-r>
         <div className="g-eyebrow sq-blue"><i aria-hidden="true" />{HEAD.eyebrow}</div>
         <h2 id="dv-title" className="g-h2 mt-40">{HEAD.title}</h2>
+        <p className="dv-lead">{HEAD.body}</p>
       </div>
-      <div className="dv-grid">
-        <article className="dv-card tall g1" data-r>
-          <div className="dv-tx"><h3>{CARDS.players.t}</h3><p>{CARDS.players.d}</p></div>
-          <div className="dv-clip">
-            <div className="dv-slot nr"><NewReturning /></div>
-            <div className="dv-slot tr"><Traffic /></div>
-          </div>
-        </article>
-        <article className="dv-card g2" data-r>
-          <div className="dv-tx"><h3>{CARDS.quit.t}</h3><p>{CARDS.quit.d}</p></div>
-          <div className="dv-clip"><div className="dv-slot ex"><ExitRate /></div></div>
-        </article>
-        <article className="dv-card g3" data-r>
-          <div className="dv-tx"><h3>{CARDS.back.t}</h3><p>{CARDS.back.d}</p></div>
-          <div className="dv-clip"><div className="dv-slot co"><Cohort /></div></div>
-        </article>
-      </div>
+      <Marquee />
     </section>
   )
 }
 
-const GLOW = (x: string, y: string) => `radial-gradient(380px circle at ${x} ${y}, rgba(56,152,248,.28) 0, rgba(142,194,255,.12) 190px, rgba(255,255,255,0) 380px)`
-
 export const DV_CSS = `
 .gc4 .dv { margin-top: 160px; }
 .gc4 .dv-head { max-width: 760px; }
-.gc4 .dv-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: 492px 492px; gap: 16px; margin-top: 56px; }
+.gc4 .dv-lead { margin: 24px 0 0; font-size: 18px; line-height: 28px; color: #6E7078; }
 
-/* the light cards: Figma 712 × 1000 / 712 × 492, 40px padding, a soft blue glow from one corner */
-.gc4 .dv-card { position: relative; overflow: hidden; padding: 40px; background-color: #FFFFFF; transition: background-position .8s cubic-bezier(.22,1,.36,1); }
-.gc4 .dv-card.tall { grid-row: span 2; }
-.gc4 .dv-card.g1 { background-image: ${GLOW('95%', '102%')}; }
-.gc4 .dv-card.g2 { background-image: ${GLOW('104%', '-8%')}; }
-.gc4 .dv-card.g3 { background-image: ${GLOW('11%', '126%')}; }
-.gc4 .dv-tx { position: relative; z-index: 1; max-width: 440px; }
-.gc4 .dv-tx h3 { margin: 0; font-size: 20px; font-weight: 500; line-height: 28px; color: #111114; }
-.gc4 .dv-tx p { margin: 8px 0 0; font-size: 16px; line-height: 24px; color: #6E7078; }
+/* Nov 20 (Harbor): the design-system section is white like the sections above and below it, with no dividing line
+   (overrides GameCoveV4.tsx .g-dssec, which v31 gave a #F1F1EE background and a top border) */
+.gc .gc4 .g-final.g-dssec { --dsbg: #FFFFFF; background: #FFFFFF; border-top: 0; }
 
-/* the dark chart cards sit in the light card and run off its edge, like Figma; v31 (Harbor Nov 19): instead of a hard
-   cut at the card's edge they fade out over its last 88px */
-.gc4 .dv-clip { position: absolute; inset: 0; overflow: hidden; pointer-events: none;
-  -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 88px), transparent); mask-image: linear-gradient(180deg, #000 calc(100% - 88px), transparent); }
-.gc4 .dv-clip .dv-slot { pointer-events: auto; }
-.gc4 .dv-slot { position: absolute; z-index: 1; transition: transform .6s cubic-bezier(.22,1,.36,1); }
-.gc4 .dv-slot.nr { left: 40px; right: 40px; top: 152px; }
-.gc4 .dv-slot.tr { left: 40px; right: 56px; top: 544px; }
-.gc4 .dv-slot.ex { left: 40px; right: 40px; top: 148px; }
-.gc4 .dv-slot.co { left: 40px; right: 0; top: 128px; }
-.gc4 .dv-card:hover .dv-slot { transform: translateY(-6px); }
+/* the row starts at the text column (clear of the side contents) and runs to the window's right edge; the section clips
+   it sideways (overflow-x: clip keeps sticky working) */
+.gc .gc4 .g-final.g-dssec { overflow-x: clip; }
+.gc4 .dv-vp { position: relative; width: calc(100% + (100vw - 100%) / 2); margin: 56px 0 0; overflow: hidden; padding: 8px 0 24px;
+  cursor: grab; touch-action: pan-y; user-select: none; -webkit-user-select: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 48px); mask-image: linear-gradient(90deg, transparent, #000 48px); }
+.gc4 .dv-vp.dragging { cursor: grabbing; }
+.gc4 .dv-vp.dragging .dv-tip { display: none; }
+.gc4 .dv-rail { display: flex; column-gap: 24px; width: max-content; will-change: transform; }
+.gc4 .dv-set { display: flex; gap: 24px; }
 
-.gc4 .dv-chart { position: relative; padding: 24px; background: #17171B; color: #F2F0EC; box-shadow: inset 0 0 0 1px #2A2A30; }
+/* the chart card: every card the same size (Harbor: "사이즈 다 통일") */
+.gc4 .dv-chart { position: relative; flex: none; display: flex; flex-direction: column; width: 576px; height: 448px; box-sizing: border-box; padding: 24px;
+  overflow: hidden; background: #17171B; color: #F2F0EC; box-shadow: inset 0 0 0 1px #2A2A30; }
 .gc .gc4 .dv .dv-chart { border-radius: 16px !important; }
-.gc4 .dv-ct { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 700; line-height: 26px; color: #F2F0EC; }
-.gc4 .dv-ct.big { font-size: 24px; line-height: 32px; }
+.gc4 .dv-ct { display: flex; align-items: center; gap: 8px; flex: none; font-size: 18px; font-weight: 700; line-height: 26px; color: #F2F0EC; white-space: nowrap; }
 .gc4 .dv-info { flex: none; color: #A7A9B0; }
+/* long charts are cut at the card's height and fade out over the last 64px */
+.gc4 .dv-body { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column;
+  -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 64px), transparent); mask-image: linear-gradient(180deg, #000 calc(100% - 64px), transparent); }
 .gc4 .dv-sub { margin-top: 12px; font-size: 16px; line-height: 24px; color: #A7A9B0; }
 .gc4 .dv-big { font-size: 28px; font-weight: 700; line-height: 36px; color: #F2F0EC; }
 
-/* new and returning users */
-.gc4 .dv-nr-body { display: grid; grid-template-columns: 40px minmax(0, 1fr); grid-template-rows: 176px auto; column-gap: 8px; margin-top: 16px; }
-.gc4 .dv-yax { display: flex; flex-direction: column; justify-content: space-between; margin: -12px 0; font-size: 16px; line-height: 24px; color: #666970; text-align: right; }
-.gc4 .dv-plot { position: relative; cursor: crosshair; touch-action: pan-y; }
+/* line charts */
+.gc4 .dv-lb { display: grid; grid-template-columns: 40px minmax(0, 1fr); grid-template-rows: 184px auto; column-gap: 8px; margin-top: 16px; padding-right: 28px; }
+.gc4 .dv-yax { display: flex; flex-direction: column; justify-content: space-between; margin: -12px 0; font-size: 16px; line-height: 24px; color: #666970; text-align: right; white-space: nowrap; }
+.gc4 .dv-plot { position: relative; cursor: crosshair; }
 .gc4 .dv-plot svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .gc4 .dv-gl { stroke: #24262B; stroke-width: 1; vector-effect: non-scaling-stroke; }
 .gc4 .dv-base { stroke: #3A3D44; stroke-width: 1; vector-effect: non-scaling-stroke; }
 .gc4 .dv-line { fill: none; stroke-width: 2; vector-effect: non-scaling-stroke; }
 .gc4 .dv-line.new { stroke: #3898F8; }
 .gc4 .dv-line.ret { stroke: #8A8D96; }
+.gc4 .dv-area.new { fill: rgba(68,120,240,.28); }
+.gc4 .dv-area.ret { fill: rgba(242,240,236,.1); }
 .gc4 .dv-xax { grid-column: 2; display: flex; justify-content: space-between; margin: 8px -24px 0; font-size: 16px; line-height: 24px; color: #666970; }
 .gc4 .dv-xax span { width: 48px; text-align: center; white-space: nowrap; display: flex; justify-content: center; }
-.gc4 .dv-dot { position: absolute; z-index: 2; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; pointer-events: none; }
+.gc4 .dv-legend { display: flex; justify-content: center; gap: 24px; margin-top: 12px; font-size: 16px; line-height: 24px; color: #A7A9B0; }
+.gc4 .dv-legend span { display: inline-flex; align-items: center; gap: 8px; }
+.gc4 .dv-legend i { width: 16px; height: 2px; background: #3898F8; }
+.gc4 .dv-legend .ret i { background: #8A8D96; }
+.gc4 .dv-dot { position: absolute; z-index: 2; width: 10px; height: 10px; margin: -5px 0 0 -5px; pointer-events: none; }
+.gc .gc4 .dv .dv-dot { border-radius: 50% !important; }
 .gc4 .dv-dot.new { background: #3898F8; box-shadow: 0 0 0 4px rgba(56,152,248,.28); }
 .gc4 .dv-dot.ret { background: #8A8D96; box-shadow: 0 0 0 4px rgba(138,141,150,.28); }
 
 /* tooltips: light = the GameCove dashboard's; dark = Figma's exit-rate tooltip */
 .gc4 .dv-tip { position: absolute; z-index: 3; pointer-events: none; white-space: nowrap; font-size: 16px; line-height: 24px; }
-.gc4 .dv-tip.light { padding: 16px; background: #F2F0EC; color: #111114; box-shadow: 0 4px 12px rgba(0,0,0,.1); }
-.gc .gc4 .dv .dv-tip.light, .gc .gc4 .dv .dv-tip.dark { border-radius: 8px !important; }
-.gc4 .dv-plot .dv-tip.light { transform: translate(-50%, calc(-100% - 20px)); }
-.gc4 .dv-plot .dv-tip.light.to-left { transform: translate(calc(-100% + 24px), calc(-100% - 20px)); }
-.gc4 .dv-plot .dv-tip.light.to-right { transform: translate(-24px, calc(-100% - 20px)); }
+.gc4 .dv-tip.light { padding: 12px 16px; background: #F2F0EC; color: #111114; box-shadow: 0 4px 12px rgba(0,0,0,.1); }
+.gc4 .dv-tip.dark { display: flex; flex-direction: column; padding: 8px 12px; background: #1C1C21; color: #F2F0EC; box-shadow: inset 0 0 0 1px #3898F8, 0 16px 32px rgba(0,0,0,.35); }
+.gc4 .dv-tip.dark span { color: #8A8D96; }
+.gc .gc4 .dv .dv-tip, .gc .gc4 .dv .dv-tip.light, .gc .gc4 .dv .dv-tip.dark { border-radius: 8px !important; }
+.gc4 .dv-plot .dv-tip.light { transform: translate(-50%, calc(-100% - 16px)); }
+.gc4 .dv-plot .dv-tip.light.to-left { transform: translate(calc(-100% + 24px), calc(-100% - 16px)); }
+.gc4 .dv-plot .dv-tip.light.to-right { transform: translate(-24px, calc(-100% - 16px)); }
+.gc4 .dv-plot .dv-tip.light.below { transform: translate(-50%, 16px); }
+.gc4 .dv-plot .dv-tip.light.below.to-left { transform: translate(calc(-100% + 24px), 16px); }
+.gc4 .dv-plot .dv-tip.light.below.to-right { transform: translate(-24px, 16px); }
 .gc4 .dv-tip.light .d { color: #6B7280; }
+.gc4 .dv-tip.light .v, .gc4 .dv-tip.light b { font-weight: 700; }
 .gc4 .dv-tip.light .r { display: flex; justify-content: space-between; gap: 24px; }
-.gc4 .dv-tip.light b { font-weight: 700; }
 
-/* traffic sources (Figma shows this card zoomed in, so its type runs larger) */
-.gc4 .dv-tr { padding: 32px 32px 40px; }
-.gc4 .dv-tr ul { list-style: none; margin: 24px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-.gc4 .dv-tr-row { position: relative; padding: 10px 12px 12px; margin: 0 -12px; cursor: default; }
-.gc4 .dv-tr-row::before { content: ""; position: absolute; inset: 0; background: rgba(242,240,236,.08); opacity: 0; transition: opacity .2s ease; }
-.gc .gc4 .dv .dv-tr-row::before { border-radius: 8px !important; }
-.gc4 .dv-tr-row:hover::before { opacity: 1; }
-.gc4 .dv-tr-row .l { position: relative; display: flex; align-items: center; gap: 12px; font-size: 20px; line-height: 28px; color: #F2F0EC; }
-.gc4 .dv-tr-row .l span { flex: 1; min-width: 0; }
-.gc4 .dv-tr-row .l b { font-weight: 400; }
-.gc4 .dv-track { position: relative; height: 4px; margin-top: 10px; background: #24262B; }
-.gc4 .dv-track i { display: block; height: 100%; background: #3898F8; transform-origin: left; transform: scaleX(0); transition: transform 1s cubic-bezier(.22,1,.36,1) var(--d, 0s); }
+/* traffic sources */
+.gc4 .dv-tr { list-style: none; margin: 16px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.gc4 .dv-row { position: relative; padding: 8px 12px 12px; margin: 0 -12px; }
+.gc4 .dv-row::before { content: ""; position: absolute; inset: 0; background: rgba(242,240,236,.08); opacity: 0; transition: opacity .2s ease; }
+.gc .gc4 .dv .dv-row::before { border-radius: 8px !important; }
+.gc4 .dv-row:hover::before { opacity: 1; }
+.gc4 .dv-row .l { position: relative; display: flex; align-items: center; gap: 12px; font-size: 16px; line-height: 24px; color: #F2F0EC; }
+.gc4 .dv-row .l span { flex: 1; min-width: 0; }
+.gc4 .dv-row .l b { font-weight: 400; }
+.gc4 .dv-row .l em { font-style: normal; color: #A7A9B0; opacity: 0; transition: opacity .2s ease; }
+.gc4 .dv-row:hover .l em { opacity: 1; }
+.gc4 .dv-track { position: relative; height: 4px; margin-top: 8px; background: #24262B; }
+.gc4 .dv-track i { display: block; height: 100%; background: #3898F8; }
 .gc .gc4 .dv .dv-track, .gc .gc4 .dv .dv-track i { border-radius: 2px !important; }
-.gc4 .r-in .dv-track i { transform: none; }
 
-/* session exit rate */
-.gc4 .dv-ex-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.gc4 .dv-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 16px; line-height: 24px; color: #A7A9B0; }
-.gc4 .dv-ex-rows { position: relative; margin-top: 16px; --rh: 36px; }
-.gc4 .dv-ex-row { display: grid; grid-template-columns: 72px minmax(0, 1fr); align-items: center; height: var(--rh); cursor: default; outline: none; }
-.gc4 .dv-ex-row .t { font-size: 16px; line-height: 24px; color: #8A8D96; transition: color .2s; }
-.gc4 .dv-ex-row.on .t { color: #F2F0EC; }
-.gc4 .dv-ex-bar { position: relative; height: 20px; background: #1D1F22; }
-.gc4 .dv-ex-bar i { position: absolute; left: 0; top: 0; bottom: 0; background: #3A3D46; transition: background-color .25s ease, transform 1s cubic-bezier(.22,1,.36,1); transform-origin: left; transform: scaleX(0); }
-.gc .gc4 .dv .dv-ex-bar, .gc .gc4 .dv .dv-ex-bar i { border-radius: 4px !important; }
-.gc4 .r-in .dv-ex-bar i { transform: none; }
-.gc4 .dv-ex-row.on .dv-ex-bar i { background: #3898F8; }
-.gc4 .dv-ex-row:focus-visible .t { text-decoration: underline; text-underline-offset: 4px; }
-/* marker at the bar's end, a short leader, and the tooltip above it (below for the top two rows) */
-.gc4 .dv-ex-pin { position: absolute; left: calc(72px + (100% - 72px) * var(--wf)); top: calc(var(--rh) * var(--row) + var(--rh) / 2); width: 0; height: 0;
-  pointer-events: none; transition: left .35s cubic-bezier(.22,1,.36,1), top .35s cubic-bezier(.22,1,.36,1); }
-.gc4 .dv-ex-pin .mk { position: absolute; left: -6px; top: -6px; width: 12px; height: 12px; border-radius: 50%; background: #F2F0EC; box-shadow: 0 0 0 3px #3898F8; }
-.gc4 .dv-ex-pin .ld { position: absolute; left: 0; bottom: 6px; width: 1px; height: 22px; background: #3898F8; }
-.gc4 .dv-ex-pin.below .ld { bottom: auto; top: 6px; }
-.gc .gc4 .dv .dv-ex-pin .mk, .gc .gc4 .dv .dv-dot, .gc .gc4 .dv .dv-tip.dark .h i { border-radius: 50% !important; }
-.gc4 .dv-tip.dark { right: -24px; bottom: 28px; padding: 12px 16px; background: #1C1C21; box-shadow: inset 0 0 0 1px #3898F8, 0 24px 48px rgba(0,0,0,.35); }
-.gc4 .dv-ex-pin.below .dv-tip.dark { bottom: auto; top: 28px; }
-.gc4 .dv-tip.dark .h { display: flex; align-items: center; gap: 8px; color: #F2F0EC; }
-.gc4 .dv-tip.dark .h i { width: 8px; height: 8px; border-radius: 50%; background: #3898F8; }
-.gc4 .dv-tip.dark .v { margin-top: 4px; color: #F2F0EC; }
-.gc4 .dv-tip.dark .s { color: #8A8D96; }
+/* horizontal bars (exit rate, session flow) */
+.gc4 .dv-bars { position: relative; margin-top: 16px; display: flex; flex-direction: column; }
+.gc4 .dv-bar-row { display: grid; grid-template-columns: 112px minmax(0, 1fr) 64px; align-items: center; gap: 12px; height: 48px; cursor: default; }
+.gc4 .dv-bar-row .t { font-size: 16px; line-height: 24px; color: #8A8D96; white-space: nowrap; transition: color .2s; }
+.gc4 .dv-bar-row .v { font-size: 16px; line-height: 24px; color: #A7A9B0; text-align: right; }
+.gc4 .dv-bar-row.on .t, .gc4 .dv-bar-row.on .v { color: #F2F0EC; }
+.gc4 .dv-bar { position: relative; height: 24px; background: #1D1F22; }
+.gc4 .dv-bar > i { position: absolute; left: 0; top: 0; bottom: 0; background: #3A3D46; transition: background-color .25s ease; }
+.gc .gc4 .dv .dv-bar, .gc .gc4 .dv .dv-bar > i { border-radius: 4px !important; }
+.gc4 .dv-bar-row.on .dv-bar > i { background: #3898F8; }
+.gc4 .dv-bar .dv-tip { bottom: calc(100% + 8px); transform: translateX(-100%); }
+.gc4 .dv-bar .dv-tip.below { bottom: auto; top: calc(100% + 8px); }
+.gc4 .dv-flow-from { display: flex; align-items: baseline; gap: 12px; margin-top: 16px; padding: 12px 16px; background: #1D1F22; font-size: 16px; line-height: 24px; }
+.gc .gc4 .dv .dv-flow-from { border-radius: 8px !important; }
+.gc4 .dv-flow-from span { color: #8A8D96; }
+
+/* columns (average time spent) */
+.gc4 .dv-cols { display: grid; grid-template-columns: 40px minmax(0, 1fr); grid-template-rows: 248px auto; column-gap: 8px; margin-top: 24px; }
+.gc4 .dv-colplot { position: relative; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; align-items: end; border-bottom: 1px solid #3A3D44; }
+.gc4 .dv-colplot .gl { position: absolute; left: 0; right: 0; height: 1px; background: #24262B; }
+.gc4 .dv-col { position: relative; height: 100%; display: flex; align-items: flex-end; justify-content: center; cursor: default; }
+.gc4 .dv-col > i { position: relative; display: block; width: 48px; font-style: normal; background: #3A3D46; transition: background-color .25s ease; }
+.gc .gc4 .dv .dv-col > i { border-radius: 4px 4px 0 0 !important; }
+.gc4 .dv-col.on > i { background: #3898F8; }
+.gc4 .dv-col .dv-tip.up { left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%); }
+.gc4 .dv-col .dv-tip.up.to-left { left: auto; right: 0; transform: none; }
+.gc4 .dv-col .dv-tip.up.to-right { left: 0; transform: none; }
+.gc4 .dv-xax.cols { margin: 8px 0 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; }
+.gc4 .dv-xax.cols span { width: auto; }
+
+/* funnels (stage progression, new user progression) */
+.gc4 .dv-kpis { display: flex; gap: 16px; margin-top: 16px; }
+.gc4 .dv-kpis > div { display: flex; flex-direction: column; padding-right: 16px; border-right: 1px solid #2A2A30; }
+.gc4 .dv-kpis > div:last-child { border-right: 0; }
+.gc4 .dv-kpis span { font-size: 16px; line-height: 24px; color: #A7A9B0; white-space: nowrap; }
+.gc4 .dv-kpis b { font-size: 28px; font-weight: 700; line-height: 36px; }
+.gc4 .dv-fu-h { display: flex; align-items: center; gap: 16px; margin-top: 24px; font-size: 16px; line-height: 24px; color: #A7A9B0; }
+.gc4 .dv-fu-h b { color: #F2F0EC; font-weight: 700; }
+/* "dv-key", not "lg" or "fl": the GameCove page already styles those (a 16px swatch, a 56px top margin) */
+.gc4 .dv-fu-h .dv-key { display: inline-flex; align-items: center; gap: 8px; margin: 0; }
+.gc4 .dv-fu-h .dv-key i { display: block; width: 10px; height: 10px; background: #3A3D46; }
+.gc4 .dv-fu-h .dv-key i.dr { background: repeating-linear-gradient(135deg, #8A93A6 0 2px, #3A3D46 2px 4px); }
+.gc .gc4 .dv .dv-fu-h .dv-key i { border-radius: 2px !important; }
+.gc4 .dv-fu { margin-top: 8px; }
+.gc4 .dv-fu-row { position: relative; display: grid; grid-template-columns: 136px minmax(0, 1fr) 48px 72px; align-items: center; gap: 12px; height: 36px; font-size: 16px; line-height: 24px; cursor: default; }
+.gc4 .dv-fu-row.hd { height: 32px; color: #8A8D96; border-bottom: 1px solid #2A2A30; }
+.gc4 .dv-fu-row .t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gc4 .dv-fu-row .n { text-align: right; color: #A7A9B0; }
+.gc4 .dv-fu-row .dp { display: inline-flex; align-items: center; justify-content: flex-end; gap: 4px; }
+.gc4 .dv-fu-row.worst .t, .gc4 .dv-fu-row.worst .n:not(.dp) { font-weight: 700; color: #F2F0EC; }
+.gc4 .dv-fu-row.worst .dp { color: #E28B8B; }
+.gc4 .dv-fu-row.on::before { content: ""; position: absolute; inset: 2px -12px; background: rgba(242,240,236,.08); }
+.gc .gc4 .dv .dv-fu-row.on::before { border-radius: 8px !important; }
+.gc4 .dv-fbar { position: relative; height: 24px; background: #1D1F22; }
+.gc4 .dv-fbar > i { position: absolute; top: 0; bottom: 0; }
+.gc4 .dv-fbar .re { left: 0; display: flex; align-items: center; justify-content: flex-end; background: #3A3D46; }
+.gc4 .dv-fbar .re em { padding-right: 6px; font-style: normal; font-size: 16px; color: #C9CAD0; white-space: nowrap; }
+/* short bars put their share just outside, after the dropped part (left set inline) */
+.gc4 .dv-fbar .re.out { z-index: 1; }
+.gc4 .dv-fbar .re.out em { position: absolute; padding: 0; }
+.gc4 .dv-fbar .dr { background: repeating-linear-gradient(135deg, rgba(138,147,166,.75) 0 2px, rgba(58,61,70,.6) 2px 6px); }
+.gc4 .dv-fu-row.worst .dv-fbar .dr { background: repeating-linear-gradient(135deg, rgba(226,139,139,.7) 0 2px, rgba(58,40,44,.6) 2px 6px); }
+.gc .gc4 .dv .dv-fbar, .gc .gc4 .dv .dv-fbar .re { border-radius: 4px !important; }
+.gc4 .dv-fbar .dv-tip { left: 0; bottom: calc(100% + 8px); }
+.gc4 .dv-fbar .dv-tip.below { bottom: auto; top: calc(100% + 8px); }
 
 /* date cohort retention */
-.gc4 .dv-co { padding: 24px 24px 24px 24px; }
-.gc4 .dv-co table { width: 100%; margin-top: 12px; border-collapse: separate; border-spacing: 0 4px; font-size: 16px; line-height: 24px; }
-.gc4 .dv-co th { padding: 0 4px 2px; font-weight: 400; color: #8A8D96; text-align: center; }
+.gc4 .dv-co { width: 100%; margin-top: 16px; border-collapse: separate; border-spacing: 0 4px; font-size: 16px; line-height: 24px; }
+.gc4 .dv-co th { padding: 0 2px 2px; font-weight: 400; color: #8A8D96; text-align: center; white-space: nowrap; }
 .gc4 .dv-co th.dc, .gc4 .dv-co td.dc { text-align: left; padding-left: 0; }
-.gc4 .dv-co th.u, .gc4 .dv-co td.u { text-align: right; padding-right: 16px; }
-.gc4 .dv-co td { padding: 0 3px; color: #C9CAD0; text-align: center; white-space: nowrap; }
-.gc4 .dv-cell { position: relative; display: flex; align-items: center; justify-content: center; height: 28px; color: #F2F0EC; cursor: default; outline: none;
+.gc4 .dv-co th.u, .gc4 .dv-co td.u { text-align: right; padding-right: 12px; }
+.gc4 .dv-co td { padding: 0 2px; color: #C9CAD0; text-align: center; white-space: nowrap; }
+.gc4 .dv-cell { position: relative; display: flex; align-items: center; justify-content: center; height: 36px; color: #F2F0EC; cursor: default;
   background: rgba(56,152,248,var(--a)); transition: box-shadow .15s ease, filter .15s ease; }
 .gc .gc4 .dv .dv-cell { border-radius: 6px !important; }
-.gc4 .dv-cell.on, .gc4 .dv-cell:focus-visible { box-shadow: inset 0 0 0 1px rgba(242,240,236,.7); filter: brightness(1.15); }
+.gc4 .dv-cell.on { box-shadow: inset 0 0 0 1px rgba(242,240,236,.7); filter: brightness(1.15); }
 .gc4 .dv-co .na { color: #666970; }
-.gc4 .dv-tip.light.cell { left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%); display: flex; flex-direction: column; text-align: left; filter: none; }
+.gc4 .dv-tip.light.cell { left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%); display: flex; flex-direction: column; text-align: left; }
+.gc4 .dv-tip.light.cell.below { bottom: auto; top: calc(100% + 8px); }
 .gc4 .dv-tip.light.cell.to-left { left: auto; right: 0; transform: none; }
 
-@media (max-width: 1280px) {
-  .gc4 .dv-ct.big { font-size: 20px; line-height: 28px; }
-  .gc4 .dv-tr-row .l { font-size: 18px; }
-}
 @media (max-width: 1023px) {
   .gc4 .dv { margin-top: 120px; }
-  .gc4 .dv-grid { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
-  .gc4 .dv-card, .gc4 .dv-card.tall { grid-row: auto; padding: 24px; }
-  .gc4 .dv-clip { position: static; -webkit-mask-image: none; mask-image: none; pointer-events: auto; }
-  .gc4 .dv-slot { position: relative; left: auto !important; right: auto !important; top: auto !important; margin-top: 24px; }
-  .gc4 .dv-card:hover .dv-slot { transform: none; }
-  .gc4 .dv-co { overflow-x: auto; }
-  .gc4 .dv-co table { min-width: 560px; }
+  .gc4 .dv-vp { margin-top: 40px; }
 }
-@media (max-width: 600px) {
+@media (max-width: 700px) {
+  .gc4 .dv-chart { width: min(576px, calc(100vw - 48px)); height: 448px; }
+  .gc4 .dv-kpis b { font-size: 24px; line-height: 32px; }
+  .gc4 .dv-fu-row { grid-template-columns: 112px minmax(0, 1fr) 40px 64px; gap: 8px; }
   .gc4 .dv-xax span:nth-child(even) { visibility: hidden; }
-  .gc4 .dv-tr { padding: 24px 20px; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .gc4 .dv-track i, .gc4 .dv-ex-bar i { transform: none !important; transition: none !important; }
-  .gc4 .dv-slot, .gc4 .dv-ex-pin { transition: none !important; }
 }
 `

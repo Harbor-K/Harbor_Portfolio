@@ -28,6 +28,9 @@ import { CaseFilm, useCaseIntro } from './CaseFilm'
  * - Before → After (Nov 19, Harbor: people don't press the arrows): no buttons or dragging. The slider stays pinned
  *   while you scroll down, and each scroll step moves it on to the next screen, 01 → 04; scrolling up goes back.
  *   The slides beside the current one stay dimmed. Small or short screens: the four screens one under another.
+ *   Nov 20 (Harbor, Figma 2087:1492): each slide is a dark panel — the 2022 crop (dimmed) and the redesign crop side
+ *   by side, cut from the same part of the screen at the same scale, with leader-line notes on what changed. The scroll
+ *   interaction and the slide layout are unchanged.
  * - Prototype stills lift on hover. Takeaways: the office photo moves slower than the page (light parallax).
  * Everything is shown as-is (no motion) with prefers-reduced-motion.
  *
@@ -37,6 +40,7 @@ import { CaseFilm, useCaseIntro } from './CaseFilm'
  * title > body order reads at a glance).
  * Assets: Harbor-K/harbor-pf assets/eto/v3 (film, mark, research photos, prototype stills), v4 (architecture diagram)
  * and v5 (old portal, broker logos, the three dashboard layers, slider cards, office photo — exported from 982:162 at 2x).
+ * v6: the before/after crops (exported from 2087:1492 at 2x, corners squared).
  * Nov 19 (Harbor): TIMELINE written like the other case studies (length, then months): 3 months, November 2022 –
  * January 2023. Class names that the site's shared styles also use (card, bar, lead, arrows) were renamed e5-….
  */
@@ -221,11 +225,30 @@ const TAG_LEGEND: { tag: Tag; d: string }[] = [
   { tag: 'Renamed', d: 'Same role, new name' },
 ]
 
-const SLIDES = [
-  { n: '01', t: 'Dashboard', d: 'Its pieces now sit in tabs, with a deposit button in the header and a rebate chart.', src: A5 + 'ba-dashboard.webp', alt: 'Dashboard, as-is 2022 and to-be: the to-be screen marks the Account and Summary tabs, the Deposit Now button in the header, the leverage column, the rebate summary chart and the ETO Blog bar' },
-  { n: '02', t: 'Inbox', d: 'Registration, deposit and withdrawal were on one page. Each now has its own tab.', src: A5 + 'ba-inbox.webp', alt: 'Inbox, as-is 2022 and to-be: one mixed message list became a table with Registration, Deposit and Withdrawal tabs' },
-  { n: '03', t: 'Tablet', d: 'Payment options became buttons, and the account list became cards with the key figures on top.', src: A5 + 'ba-tablet.webp', alt: 'Tablet, as-is and to-be: deposit methods as grouped buttons by currency, and the dashboard account table as a card with balance, equity and margin level' },
-  { n: '04', t: 'Mobile', d: 'Account details and the QR code moved to their own pages. Tables became cards; a tap reveals the totals.', src: A5 + 'ba-mobile.webp', alt: 'Mobile, as-is and to-be: the dashboard as an account card, the QR code on its own page with a Copy Link button, and open positions as cards instead of a long form' },
+// Before → After slides (v6, Harbor Nov 20 — Figma 2087:1492 "Before & After — Linear style"): each slide is a dark
+// panel with the 2022 screen and the redesign cropped from the same part of the screen at the same scale (300 px wide
+// crops of a 1440 px screen), the 2022 crop dimmed, and leader-line notes on what changed. Crops: assets/eto/v6 (2x).
+// Note y = the note's centre, in Figma px from the top of the crop. h = how much of the crop is shown (Figma px).
+const BA = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/eto/v6/'
+type BANote = { y: number; t: string }
+type BASlide = { n: string; t: string; d: string; k: string; h: number; full: number; notes: BANote[]; altB: string; altA: string }
+const SLIDES: BASlide[] = [
+  { n: '01', t: 'Dashboard', d: 'Its pieces now sit in tabs, with a deposit button in the header and a rebate chart.', k: 'dash', h: 510, full: 510,
+    notes: [{ y: 36.5, t: 'Account and links split into tabs' }, { y: 290.5, t: 'Role tags: SM · TR · AM · IB' }, { y: 412.5, t: 'Rebate summary replaces the long links' }],
+    altB: 'Dashboard in 2022: the trading accounts table above a long agent registration link',
+    altA: 'Redesigned dashboard: Account and Summary tabs, a trading account table with SM, TR, AM and IB role tags, and the Rebate Summary heading' },
+  { n: '02', t: 'Inbox', d: 'Registration, deposit and withdrawal were on one page. Each now has its own tab.', k: 'inbox', h: 355, full: 355,
+    notes: [{ y: 61.5, t: 'One tab per request type' }, { y: 191.5, t: 'One table row per client, no detail pane' }],
+    altB: 'Inbox in 2022: registration and deposit messages mixed in one long list',
+    altA: 'Redesigned inbox: Registration, Deposit and Withdrawal tabs over a table with one row per client' },
+  { n: '03', t: 'Tablet', d: 'Payment options became buttons, and the account list became cards with the key figures on top.', k: 'tablet', h: 232, full: 232,
+    notes: [{ y: 19.5, t: 'Payment options as buttons' }, { y: 59.5, t: 'Internal names cleaned up' }, { y: 140.5, t: 'Grouped by currency first' }],
+    altB: 'Tablet deposit methods in 2022: large tiles for Union Pay, Union Pay Backup, SEA Internet Banking and VND Payment',
+    altA: 'Redesigned tablet deposit methods: small buttons grouped by currency (USDT, CNY, VND, THB)' },
+  { n: '04', t: 'Mobile', d: 'Account details and the QR code moved to their own pages. Tables became cards; a tap reveals the totals.', k: 'mobile', h: 480, full: 600,
+    notes: [{ y: 36.5, t: 'QR and links on their own tab' }, { y: 223.5, t: 'Account table becomes a card' }, { y: 350.5, t: 'Rebate summary in one column' }],
+    altB: 'Mobile dashboard in 2022: a cramped account table, the agent registration link and a QR code on one page',
+    altA: 'Redesigned mobile dashboard: tabs at the top, the account as a card with balance, equity and margin level, and the rebate summary in one column' },
 ]
 
 const STILLS = [
@@ -554,6 +577,38 @@ function MenuScroll() {
   )
 }
 
+/** one Before → After panel (Figma 2087:1492): BEFORE · 2022 and AFTER crops side by side, notes with leader lines */
+function BAPanel({ s, eager }: { s: BASlide; eager: boolean }) {
+  const px = (v: number) => `calc(${v} * var(--u))`
+  const crop = (w: 'before' | 'after') => (
+    <div className={'bap-cw ' + w} style={{ height: px(s.h) }}>
+      <img src={`${BA}ba-${s.k}-${w}.webp`} alt={w === 'before' ? s.altB : s.altA} width={600} height={s.full * 2}
+        loading={eager ? 'eager' : 'lazy'} decoding="async" draggable={false} />
+    </div>
+  )
+  return (
+    <div className="bap">
+      <div className="bap-row">
+        <div className="bap-col">
+          <span className="bap-tag">BEFORE · 2022</span>
+          {crop('before')}
+        </div>
+        <div className="bap-col">
+          <span className="bap-tag">AFTER</span>
+          <div className="bap-after">
+            {crop('after')}
+            <ul className="bap-notes" aria-label="What changed">
+              {s.notes.map(n => (
+                <li key={n.t} style={{ top: px(n.y) }}><i className="dot" aria-hidden="true" /><i className="ld" aria-hidden="true" /><span>{n.t}</span></li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /** Before → After: pinned while scrolling; each scroll step moves to the next screen (Nov 19) */
 const SLIDE_WIDE_Q = '(min-width: 1024px) and (min-height: 640px)'
 function Slider() {
@@ -592,7 +647,7 @@ function Slider() {
           <div className="e5-rail" style={wide ? { transform: `translate3d(calc(${-idx} * (var(--sw) + var(--gap))), 0, 0)` } : undefined}>
             {SLIDES.map((s, i) => (
               <div key={s.n} className={'e5-slide' + (!wide || i === idx ? ' on' : '')} role="group" aria-roledescription="slide" aria-label={`${s.n} of 04, ${s.t}`}>
-                <div className="e5-card"><img src={s.src} alt={s.alt} width={2400} height={1280} loading={i < 2 ? 'eager' : 'lazy'} decoding="async" draggable={false} /></div>
+                <div className="e5-card"><BAPanel s={s} eager={i < 2} /></div>
                 <div className="cap"><h3>{s.n}. {s.t}</h3><p>{s.d}</p></div>
               </div>
             ))}
@@ -1064,7 +1119,8 @@ const E5_CSS = `
 .e5 .e5-research { display: grid; grid-template-columns: 530fr 253fr 253fr 253fr; gap: 24px; padding: 40px; }
 .e5 .e5-research .k { font-size: 16px; font-weight: 700; line-height: 24px; color: var(--red); white-space: nowrap; }
 .e5 .e5-research .ph { margin-top: 16px; aspect-ratio: 253 / 192; overflow: hidden; background: #EEE; }
-.e5 .e5-research figure:first-child .ph { aspect-ratio: 530 / 192; }
+/* first-of-type: the canvas's corner handles come first, so :first-child never matched (Nov 20 fix) */
+.e5 .e5-research figure:first-of-type .ph { aspect-ratio: 530 / 192; }
 .e5 .e5-research .ph img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s cubic-bezier(.22,1,.36,1); }
 .e5 .e5-research figure:hover .ph img { transform: scale(1.05); }
 .e5 .e5-research figcaption { margin-top: 16px; font-size: 16px; line-height: 24px; color: var(--grey); }
@@ -1236,9 +1292,42 @@ const E5_CSS = `
 .e5 .e5-rail { display: flex; gap: var(--gap); padding-left: calc((100% - var(--sw)) / 2); transition: transform .9s cubic-bezier(.22,1,.36,1); will-change: transform; }
 .e5 .e5-slide { flex: none; width: var(--sw); opacity: .35; transition: opacity .5s ease; }
 .e5 .e5-slide.on { opacity: 1; }
-.e5 .e5-slide .e5-card { box-shadow: 0 0 0 1px var(--cline); background: var(--canvas); overflow: hidden; }
-.e5 .e5-slide .e5-card img { display: block; width: 100%; height: auto; pointer-events: none; transform: scale(.98); transition: transform .6s cubic-bezier(.22,1,.36,1); }
-.e5 .e5-slide.on .e5-card img { transform: none; }
+/* v6 (Nov 20, Figma 2087:1492): each card is a dark panel; sizes follow the 1200 px frame (--u = 1 Figma px), type stays
+   at the site's 16px minimum. Small cards: the two crops side by side, the notes as a list under them. */
+.e5 .e5-slide .e5-card { container: bap / inline-size; overflow: hidden; }
+.e5 .bap { --u: calc(100cqw / 1200); position: relative; aspect-ratio: 1200 / 640; background: #111113; color: #D4D4D8;
+  display: flex; align-items: center; transform: scale(.98); transition: transform .6s cubic-bezier(.22,1,.36,1); }
+.e5 .e5-slide.on .bap { transform: none; }
+.e5 .bap-row { display: flex; align-items: flex-start; gap: calc(32 * var(--u)); padding: 24px 0 24px calc(56 * var(--u)); }
+.e5 .bap-col { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; width: calc(300 * var(--u)); }
+.e5 .bap-tag { display: inline-flex; align-items: center; height: 32px; padding: 0 10px; border: 1px solid rgba(255,255,255,.12); border-radius: 6px;
+  background: rgba(255,255,255,.06); color: #A1A1AA; font-size: 16px; font-weight: 500; line-height: 24px; letter-spacing: .06em; white-space: nowrap; }
+.e5 .bap-after { position: relative; width: 100%; }
+.e5 .bap-cw { position: relative; width: 100%; overflow: hidden; background: #FFFFFF; }
+.e5 .bap-cw img { display: block; width: 100%; height: auto; pointer-events: none; }
+.e5 .bap-cw.before::after { content: ""; position: absolute; inset: 0; background: rgba(17,17,19,.28); }
+.e5 .bap-notes { list-style: none; margin: 0; padding: 0; }
+.e5 .bap-notes li { position: absolute; left: calc(100% + 10 * var(--u)); display: flex; align-items: center; transform: translateY(-50%);
+  width: calc(464 * var(--u)); }
+.e5 .bap-notes .dot { flex: none; position: relative; z-index: 1; width: 9px; height: 9px; margin: 0 -4.5px; border-radius: 50%; background: var(--red); box-shadow: 0 0 0 2px rgba(227,30,36,.32); }
+.e5 .bap-notes .ld { flex: none; width: calc(46 * var(--u)); height: 1px; background: rgba(138,138,147,.9); }
+.e5 .bap-notes span { padding-left: calc(16 * var(--u)); font-size: 16px; font-weight: 500; line-height: 24px; letter-spacing: .06em; text-transform: uppercase; color: #D4D4D8; }
+@container bap (max-width: 760px) {
+  .e5 .bap { --u: 1px; aspect-ratio: auto; display: block; padding: 20px; }
+  .e5 .bap-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 12px; row-gap: 12px; padding: 0; }
+  .e5 .bap-col, .e5 .bap-after { display: contents; }
+  .e5 .bap-col:first-child .bap-tag { grid-area: 1 / 1; justify-self: start; }
+  .e5 .bap-col:first-child .bap-cw { grid-area: 2 / 1; }
+  .e5 .bap-col:last-child .bap-tag { grid-area: 1 / 2; justify-self: start; }
+  .e5 .bap-col:last-child .bap-cw { grid-area: 2 / 2; }
+  .e5 .bap-cw { height: auto !important; max-height: 420px; }
+  .e5 .bap-notes { grid-area: 3 / 1 / 4 / 3; margin-top: 8px; }
+  .e5 .bap-notes li { position: static; transform: none; width: auto; align-items: flex-start; gap: 12px; margin-top: 12px; }
+  .e5 .bap-notes .dot { margin: 7px 0 0; }
+  .e5 .bap-notes .ld { display: none; }
+  .e5 .bap-notes span { padding: 0; }
+}
+
 .e5 .e5-slide .cap { margin-top: 24px; padding-right: 200px; }
 .e5 .e5-slide .cap h3 { font-size: 20px; font-weight: 700; line-height: 28px; }
 .e5 .e5-slide .cap p { margin-top: 4px; font-size: 16px; line-height: 24px; color: var(--grey); }
@@ -1251,7 +1340,7 @@ const E5_CSS = `
 /* small or short screens: the four screens one under another */
 .e5 .e5-slider:not(.pinned) .e5-rail { flex-direction: column; gap: 56px; width: var(--sw); margin: 0 auto; padding-left: 0; transition: none; }
 .e5 .e5-slider:not(.pinned) .e5-slide { opacity: 1; }
-.e5 .e5-slider:not(.pinned) .e5-slide .e5-card img { transform: none; }
+.e5 .e5-slider:not(.pinned) .e5-slide .bap { transform: none; }
 .e5 .e5-slider:not(.pinned) .e5-slide .cap { padding-right: 0; }
 
 /* prototype */
@@ -1330,7 +1419,7 @@ const E5_CSS = `
   .e5 .e5-dash .d-row.r4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .e5 .e5-cols3 { grid-template-columns: minmax(0, 1fr); row-gap: 32px; }
   .e5 .e5-research { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 24px; }
-  .e5 .e5-research figure:first-child { grid-column: 1 / -1; }
+  .e5 .e5-research figure:first-of-type { grid-column: 1 / -1; }
   .e5 .e5-stills { grid-template-columns: minmax(0, 1fr); max-width: 464px; }
   .e5 .e5-results { grid-template-columns: minmax(0, 1fr); }
   .e5 .e5-arch { width: 100%; overflow-x: auto; }

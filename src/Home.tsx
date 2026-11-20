@@ -10,12 +10,18 @@ import { GIFS, useGifSrc } from './gifPlay'
 //
 // Header: the shared site header (SiteHeaderB.tsx, mode 'overlay').
 // Intro (Harbor, Nov 20 — Figma "Intro" frames on the Main page):
-// - White page; her crash-zoom clip (office wide shot → close-up, 4.3s) plays in a portrait box centred in the hero,
+// - White page; her crash-zoom clip (v2, Nov 20: office wide shot, zooming in at the end, 3s) plays in a portrait box centred in the hero,
 //   sized like the Figma frame (499×887 in 1920×1080, so 82% of the height).
-// - When the clip ends, the box snaps open (0.6s, quick start) to the full hero, and what's inside is already the hero
-//   typing video (it keeps playing). The headline, quote and buttons then come in as before; the header fades in.
-// - Plays once per page load (not again when coming back from a case study), never with reduced motion, and any
-//   scroll, key, tap or click skips straight to the opening. Scrolling is held while the intro runs.
+// - Match cut (v3, Nov 20): the clip's last frame is a centre crop of the hero video's first frame (measured: the
+//   1080-wide clip = 693 px of the 1920-wide hero, centred). At the cut the hero video inside the box is shrunk to that
+//   same framing (and blurred like the crash zoom's last frame), then the box opens and the video settles to full size
+//   in one quick ease-out move (0.8s, most of it in the first 0.3s) — the zoom carries straight on into the main hero.
+//   The headline, quote and buttons come in during the move; the header fades in.
+// - When it plays (Harbor, Nov 20): every time someone opens the site fresh on the main page (typing harborkim.com,
+//   a bookmark, browser history, a refresh) — even if they've been before. Not when moving around inside the site:
+//   the logo / Home link, coming back from a case study, or starting on a case-study link and then going Home.
+//   Never with reduced motion; any scroll, key, tap or click skips straight to the main hero. Scrolling is held while
+//   the intro runs.
 // Hero (1080 at 1920×1080):
 // - Harbor's typing video, same slow zoom-in, parallax and gradient as before; #0F0F0F behind it.
 // - Copy 80px from the bottom: quote ticker (20/32, 90%), 16px, headline (64/72, -2%; two 68px
@@ -55,18 +61,24 @@ const HERO_L2 = 'from Data to Impact'
 const HERO_VIDEO = IMG3 + 'hero-typing.mp4'
 const HERO_POSTER = IMG3 + 'hero-typing-poster.jpg'
 
-// intro clip: Harbor's crash_zoom_closeup_v3.mp4 (1080×1920, 4.3s), saved for the web at 720×1280 without sound
+// intro clip: Harbor's crash_zoom_closeup_v3.mp4 (v2 of Nov 20, 1080×1920, 3s), saved for the web at 720×1280 without sound
 const INTRO = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/main-intro/'
-const INTRO_VIDEO = INTRO + 'intro-crash-zoom.mp4'
-const INTRO_POSTER = INTRO + 'intro-crash-zoom-poster.jpg'
+const INTRO_VIDEO = INTRO + 'intro-crash-zoom-v2.mp4'
+const INTRO_POSTER = INTRO + 'intro-crash-zoom-v2-poster.jpg'
 // Figma Intro frame: a 499×887 box in a 1920×1080 frame
 const BOX_W = 499
 const BOX_H = 887
 const FRAME_H = 1080
 const INTRO_WAIT_MS = 4000 // the clip hasn't started by then (slow network) → open straight to the hero
 const INTRO_SAFETY_MS = 6500 // the clip started but never reported its end → open anyway
-const GROW_MS = 600 // the box opening to the full hero (Harbor, Nov 20: fast, straight onto her face)
-const COPY_AT_MS = 350 // the headline starts coming in while the box finishes opening
+const GROW_MS = 800 // the box opening to the full hero: fast start, soft landing (ease-out)
+const GROW_EASE = 'cubic-bezier(.16,1,.3,1)'
+const COPY_AT_MS = 300 // the headline starts coming in while the move settles
+// match cut: the clip's last frame shows 693 px of the hero video's 1920 px width, centred (SIFT match, Nov 20)
+const CLIP_IN_HERO_W = 693
+const HERO_VW = 1920
+const HERO_VH = 1080
+const KB_START = 1.1 // the hero video's slow zoom (kb) starts at scale 1.1
 
 const TB = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/trust-bank/'
 const ETO = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/eto/'
@@ -105,7 +117,13 @@ const PAGE_CSS = `
 .hb .hero.hx { background: #0F0F0F; min-height: 720px; }
 .hb .hero.hx::after { display: none; }
 .hb .hx-stage { position: absolute; inset: 0; }
-.hb .hx-vid { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%; }
+/* the hero video is sized like object-fit: cover, but as a whole 16:9 frame (cropped by the hero, not by itself), so
+   the intro can shrink it to the clip's framing without showing an edge. max-width: none — the base style's
+   img, video { max-width: 100% } capped it and left a black strip on the right in windows narrower than 16:9 */
+.hb .hx-zoom { position: absolute; inset: 0; container-type: size; transform-origin: var(--ox, 50%) var(--oy, 50%); }
+.hb .hx-vid { display: block; position: absolute; inset: auto; left: 0; top: 0; width: 100%; height: 100%; max-width: none; max-height: none; object-fit: cover; object-position: 50% 50%;
+  width: max(100cqw, 177.7778cqh); height: max(56.25cqw, 100cqh);
+  left: calc((100cqw - max(100cqw, 177.7778cqh)) / 2); top: calc((100cqh - max(56.25cqw, 100cqh)) / 2); }
 .hb .hx-shade { position: absolute; inset: 0; z-index: 1; pointer-events: none; transition: opacity .9s ease;
   background: linear-gradient(180deg, rgba(0,0,0,.45) 0%, rgba(0,0,0,.2) 25%, rgba(0,0,0,.3) 55%, rgba(0,0,0,.72) 100%); }
 .hb .hx-intro { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: #000000; opacity: 0; animation: hx-lift 1.2s ease-out both; }
@@ -114,12 +132,15 @@ const PAGE_CSS = `
 /* ---- intro (Figma "Intro" frames): white page, portrait box → the box opens to the full hero ---- */
 .hb .hero.hx.intro { background: #FFFFFF; }
 .hb .hx.intro .hx-stage { clip-path: inset(var(--it, 0px) var(--ix, 0px) var(--ib, 0px) var(--ix, 0px)); }
-.hb .hx.intro.grow .hx-stage { clip-path: inset(0px 0px 0px 0px); transition: clip-path ${GROW_MS}ms cubic-bezier(.5,0,.15,1); }
+.hb .hx.intro.grow .hx-stage { clip-path: inset(0px 0px 0px 0px); transition: clip-path ${GROW_MS}ms ${GROW_EASE}; }
+/* match cut: before the box opens, the hero video sits at the clip's last framing, soft like the crash zoom's blur */
+.hb .hx.intro .hx-zoom { transform: scale(var(--f, 1)); filter: blur(8px); }
+.hb .hx.intro.grow .hx-zoom { transform: none; filter: blur(0px); transition: transform ${GROW_MS}ms ${GROW_EASE}, filter 450ms ease-out; }
 .hb .hx-crash { position: absolute; z-index: 1; top: var(--it, 0px); left: var(--ix, 0px);
   width: calc(100% - 2 * var(--ix, 0px)); height: calc(100% - var(--it, 0px) - var(--ib, 0px));
   display: block; object-fit: cover; object-position: 50% 50%; background: #F0F0EE; pointer-events: none; }
-/* a cut, not a cross-fade: the close-up and the wider hero framing would double up */
-.hb .hx.grow .hx-crash { opacity: 0; transition: opacity .12s linear; }
+/* a quick dissolve: the two frames line up, so a short overlap reads as one shot */
+.hb .hx.grow .hx-crash { opacity: 0; transition: opacity .1s linear; }
 /* the hero waits until the box has opened: no shade, no zoom, copy held at its first frame */
 .hb .hx.hold .hx-shade { opacity: 0; }
 .hb .hx.hold .hx-vid, .hb .hx.hold .w, .hb .hx.hold .hx-quote, .hb .hx.hold .hx-btn { animation-play-state: paused; }
@@ -320,9 +341,13 @@ function ProjectRow({ p, i }: { p: Project; i: number }) {
 // 'grow' = the box opening onto the hero video; 'done' / 'off' = the normal hero.
 type IntroPhase = 'off' | 'wait' | 'play' | 'grow' | 'done'
 let INTRO_SEEN = false // once per page load: coming back from a case study goes straight to the hero
+// The page this visit started on (read once, when the site loads). Only a fresh start on the main page itself plays
+// the intro; starting on a case study (#/utrada …) or a section link (#projects) doesn't, nor does going Home later.
+const START_HASH = typeof window === 'undefined' ? '' : window.location.hash
+const STARTED_ON_MAIN = ['', '#', '#/', '#top'].includes(START_HASH)
 
 function firstIntroPhase(): IntroPhase {
-  if (INTRO_SEEN || typeof window === 'undefined') return 'off'
+  if (INTRO_SEEN || typeof window === 'undefined' || !STARTED_ON_MAIN) return 'off'
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return 'off'
   // the Screens preview jumps to a section: no intro there
   if (/[?&]section=/.test(location.search) || /[?&]section=/.test(location.hash)) return 'off'
@@ -361,6 +386,12 @@ export function Home() {
       el.style.setProperty('--ix', `${Math.round((W - w) / 2)}px`)
       el.style.setProperty('--it', `${top}px`)
       el.style.setProperty('--ib', `${Math.round(full - top - h)}px`)
+      // match cut: the scale that makes the hero video show the clip's last framing in the box (covering it)
+      const k = Math.max(W / HERO_VW, full / HERO_VH) * KB_START
+      const want = Math.max(w / CLIP_IN_HERO_W, h / HERO_VH)
+      el.style.setProperty('--f', Math.min(1, want / k).toFixed(4))
+      el.style.setProperty('--ox', `${Math.round(W / 2)}px`)
+      el.style.setProperty('--oy', `${Math.round(top + h / 2)}px`)
     }
     fit()
     addEventListener('resize', fit)
@@ -468,7 +499,7 @@ export function Home() {
       {/* ===== Hero (with the intro on first load) ===== */}
       <section className={heroCls} aria-label="Intro" ref={heroSec}>
         <div className="hx-stage">
-          <div className="hero-bg" ref={heroBg}><HeroVideo vref={heroVid} hold={played} /></div>
+          <div className="hero-bg" ref={heroBg}><div className="hx-zoom"><HeroVideo vref={heroVid} hold={played} /></div></div>
           <div className="hx-shade" aria-hidden="true" />
         </div>
         {introOn && (

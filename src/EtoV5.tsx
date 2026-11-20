@@ -1059,7 +1059,8 @@ const E5_CSS = `
 .e5 .e5-hero { padding: 120px 0; }
 .e5 .e5-brand { display: flex; align-items: center; gap: 16px; font-size: 24px; font-weight: 700; line-height: 32px; }
 .e5 .e5-brand img { display: block; width: 48px; height: 48px; }
-.e5 .e5-h1 { margin-top: 32px; max-width: 960px; font-size: 64px; font-weight: 700; line-height: 72px; letter-spacing: -0.01em; }
+/* Nov 20 (Harbor): same title weight and spacing as Trust Bank (Roboto Regular 64/72, -0.02em) */
+.e5 .e5-h1 { margin-top: 32px; max-width: 960px; font-size: 64px; font-weight: 400; line-height: 72px; letter-spacing: -0.02em; }
 .e5 .e5-sub { margin-top: 24px; max-width: 960px; font-size: 18px; line-height: 28px; }
 .e5 .e5-slot { position: relative; margin-top: 32px; aspect-ratio: 16 / 9; }
 .e5 .e5-box { position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: 40; overflow: hidden; background: ${DARK}; border-radius: 0; }
@@ -1075,7 +1076,8 @@ const E5_CSS = `
 
 /* overview impact */
 .e5 .e5-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.e5 .e5-stats > div { padding: 8px 24px; border-left: 1px solid var(--line); }
+/* Nov 20 (Harbor): no grey divider lines; numbers line up with the note below */
+.e5 .e5-stats > div { padding: 8px 24px 8px 0; }
 .e5 .e5-stats .n { display: block; font-size: 48px; font-weight: 700; line-height: 56px; color: var(--red); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .e5 .e5-stats p { margin-top: 8px; font-size: 16px; line-height: 24px; color: var(--grey); }
 .e5 .e5-note { margin-top: 16px; font-size: 16px; line-height: 24px; color: var(--grey); }

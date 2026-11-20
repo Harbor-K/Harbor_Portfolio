@@ -28,6 +28,7 @@ import { GIFS, useGifSrc } from './gifPlay'
 //   lines, words 16px apart, 8px between the lines (v93, Harbor), second line 60%), 32px, two 192×48 buttons 8px apart
 //   (16/24). The copy is pinned to the bottom, so the line gap pushes the first line and the quote up;
 //   the second line and the buttons stay where they were.
+// - Buttons (Nov 20, Harbor): "See all works" and "Book a meeting" (was "Say hello"; same cal.com link).
 // - Interactions: quote ticker every 2.5s, words rise in one by one, buttons fade in, dark layer lifts.
 // Selected work (#FBFAF9, 160px top and bottom):
 // - "Selected work" 48/56 -2%, 64px above the list.
@@ -97,11 +98,11 @@ const PROJECTS: Project[] = [
   },
   {
     title: 'UTrada', sub: 'Helping first-time traders trust a new broker.', href: '#/utrada',
-    logo: svgUri(UTRADA_LOGO_SVG), gif: GIFS.utradaRow, wip: true,
+    logo: svgUri(UTRADA_LOGO_SVG), gif: GIFS.utradaRow, // Nov 20 (Harbor): no longer "Coming soon"
   },
   {
     title: 'ETO Markets', sub: 'A CRM dashboard for a Sydney-based trading broker.', href: '#/eto-markets',
-    logo: ETO + 'v3/logo-home.svg', logoRaw: true, gif: GIFS.etoRow, wip: true,
+    logo: ETO + 'v3/logo-home.svg', logoRaw: true, gif: GIFS.etoRow, // Nov 20 (Harbor): no longer "Coming soon"
   },
 ]
 const WIP = 'Coming soon'
@@ -519,7 +520,7 @@ export function Home() {
           </div>
           <div className="hx-ctas">
             <a className="hx-btn ghost" href="#projects" tabIndex={hold ? -1 : undefined} style={{ '--wd': '0.7s' } as React.CSSProperties}>See all works</a>
-            <a className="hx-btn solid" href={LINKS.cal} target="_blank" rel="noreferrer" tabIndex={hold ? -1 : undefined} style={{ '--wd': '0.8s' } as React.CSSProperties}>Say hello</a>
+            <a className="hx-btn solid" href={LINKS.cal} target="_blank" rel="noreferrer" tabIndex={hold ? -1 : undefined} style={{ '--wd': '0.8s' } as React.CSSProperties}>Book a meeting</a>
           </div>
         </div>
       </section>

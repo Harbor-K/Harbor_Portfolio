@@ -208,12 +208,13 @@ const HDR_CSS = `
 // plain: a still that needs no dark gradient behind the white text
 // wip (v132, Harbor Nov 15): the case study is still being written — shown with a "Coming soon" tag (v138, was "In progress")
 // v28 (Harbor, Nov 19): UTrada's line now names its case study (trust before the first deposit), not a design system.
+// Nov 20 (Harbor): UTrada and ETO Markets are no longer "Coming soon" (same as the main page's Selected work).
 type MenuItem = { name: string; sub: string; href: string; gif?: string; img?: string; plain?: boolean; wip?: boolean }
 const MENU: MenuItem[] = [
   { name: 'Trust Bank', sub: 'Rewards UX revamp', href: '#/trust-bank', gif: GIFS.trustBankMenu },
   { name: 'GameCove', sub: 'AI analytics dashboard', href: '#/gamecove', gif: GIFS.gameCoveMenu }, // v146: no longer "Coming soon"
-  { name: 'UTrada', sub: 'Trust before deposit', href: '#/utrada', gif: GIFS.utradaMenu, wip: true },
-  { name: 'ETO Markets', sub: 'CRM dashboard', href: '#/eto-markets', gif: GIFS.etoMenu, wip: true },
+  { name: 'UTrada', sub: 'Trust before deposit', href: '#/utrada', gif: GIFS.utradaMenu },
+  { name: 'ETO Markets', sub: 'CRM dashboard', href: '#/eto-markets', gif: GIFS.etoMenu },
 ]
 const WIP = 'Coming soon'
 // how long each project stays up while the menu moves through them: a GIF plays to its end (plus a beat), a still 2.8s

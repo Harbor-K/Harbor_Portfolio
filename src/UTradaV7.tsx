@@ -967,7 +967,8 @@ const U7_CSS = `
 /* hero */
 .u7 .u7-hero { padding: 120px 0 160px; }
 .u7 .u7-logo { display: block; width: 160px; height: auto; }
-.u7 .u7-h1 { margin-top: 40px; max-width: 960px; font-size: 64px; font-weight: 700; line-height: 72px; letter-spacing: -0.02em; }
+/* Nov 20 (Harbor): same title weight as Trust Bank (Roboto Regular 64/72, -0.02em) */
+.u7 .u7-h1 { margin-top: 40px; max-width: 960px; font-size: 64px; font-weight: 400; line-height: 72px; letter-spacing: -0.02em; }
 .u7 .u7-sub { margin-top: 16px; max-width: 881px; font-size: 18px; line-height: 28px; }
 .u7 .u7-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 200px; height: 56px; margin-top: 40px; padding: 0 32px;
   background: #000D0F; color: #FFFFFF !important; font-size: 16px; font-weight: 500; line-height: 24px; text-decoration: none;

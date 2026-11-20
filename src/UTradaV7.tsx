@@ -11,7 +11,10 @@ import { CaseFilm, useCaseIntro } from './CaseFilm'
  * scene (story card + flow, Figma's 10s motion loop); Discover is the broker diagram, the UTrada history card, three
  * photo finding cards and the 4-broker check table; Define holds the proto-persona, the trust chart (journey map)
  * and the principles; Develop has three screen panels (Regulations, Account comparison, Help & Support) and the two
- * concept screens. Deliver, Test and Reflection are as before.
+ * concept screens. Deliver and Test are as before.
+ * Nov 20 (Harbor): the page ends on Takeaways (Figma 2078:1266, file 9eRSsfAhsJk0OmvJdrxZ6E) instead of Reflection: dark
+ * #0D0A17, one takeaway line and paragraph, and the photo of Harbor with a UTrada bag on the right, fading in from the
+ * left (the frame's mask: transparent → solid at 32%). ClosingPhoto is kept below, unused.
  * Colours (Figma): ink #000D10, grey #66666E, lines #D5D3D4 / #E5E5EB, purple #8A2BE3, deep #330099, soft #F6F5FA.
  * Type: the site's Roboto on the frame's sizes; nothing under 16px. Square corners except Figma's round pills,
  * avatars and chart dots. Layout: 1440 column, sections 160px top and bottom, 8px spacing.
@@ -35,6 +38,7 @@ const IMG = {
   video: A3 + 'intro.mp4',
   poster: A3 + 'intro-poster.jpg',
   closing: A6 + 'photo-closing.webp',
+  takeaways: A7 + 'takeaways-photo.webp',
   fca: A7 + 'logo-fca.png',
   tileLicence: A7 + 'tile-licence.webp',
   tileCysec: A7 + 'tile-cysec.webp',
@@ -52,7 +56,7 @@ const IMG = {
 const SITE = 'https://utrada.com'
 const FILM_LABEL = 'UTrada intro film: a trader at night wonders whether a new broker with no reviews is safe, checks the regulations page, the legal documents, the trading accounts and the help chat, then signs up. Ends on: UTrada, trust before the first deposit.'
 const NEXT = { name: 'ETO Markets', href: '#/eto-markets' }
-export const U7_CHAPTERS = ['Overview', 'Process', 'Discover', 'Define', 'Develop', 'Deliver', 'Test', 'Reflection']
+export const U7_CHAPTERS = ['Overview', 'Process', 'Discover', 'Define', 'Develop', 'Deliver', 'Test', 'Takeaways']
 
 const DARK = '#0B0B0D'
 
@@ -901,25 +905,16 @@ export function UTradaV7() {
           </div>
         </section>
 
-        {/* Reflection */}
-        <section className="u7-sec night" data-chapter="Reflection">
+        {/* Takeaways (Nov 20, Harbor's Figma Section / Takeaways 2078:1266): replaces Reflection */}
+        <section className="u7-take" data-chapter="Takeaways">
+          <img className="u7-take-ph" src={IMG.takeaways} width={1490} height={1986} loading="lazy" decoding="async"
+            alt="Harbor in a black UTrada T-shirt at a café table, holding up a purple UTrada bag printed with www.utrada.com" />
           <div className="u7-w">
-            <Label light>REFLECTION</Label>
-            <div className="u7-row mt64" data-r>
-              <h2 className="u7-rt">Takeaways</h2>
-              <ol className="u7-list">
-                <li><span className="n">01</span><span>What I couldn’t measure: I didn’t have sign-up data, so I can’t say how many more people signed up.</span></li>
-                <li><span className="n">02</span><span>Biggest lesson: trust isn’t one badge in the footer — it’s a clear answer at each moment someone hesitates.</span></li>
-              </ol>
+            <div className="u7-take-in" data-r>
+              <div className="u7-take-k"><i aria-hidden="true" />TAKEAWAYS</div>
+              <h2 className="t">For a new broker, trust is something you can check.</h2>
+              <p className="d">Proof beats promises. A licence number only helps when people can find it. The live site still says who regulates UTrada, but not which company your account is with. Next time I would test sign-up with five first-time traders before designing.</p>
             </div>
-            <div className="u7-row mt64" data-r>
-              <h2 className="u7-rt">Next steps</h2>
-              <ol className="u7-list">
-                <li><span className="n">01</span><span>Run the same 5-person test on the live site and on concepts A and B, and compare the results.</span></li>
-                <li><span className="n">02</span><span>Track how many people go from sign-up → ID check → first deposit.</span></li>
-              </ol>
-            </div>
-            <div className="mt64"><ClosingPhoto /></div>
           </div>
         </section>
 
@@ -1283,6 +1278,17 @@ const U7_CSS = `
 .u7 .u7-closing figcaption { margin-top: 16px; }
 .u7 .u7-cap.night { color: #B8B8C2; }
 
+/* takeaways (Nov 20, Figma 2078:1266): 1920 × 706 frame; heading at 120 from the top, the photo (745 × 993) runs off
+   the top and the right edge, fading in from the left */
+.u7 .u7-take { position: relative; overflow: hidden; min-height: 706px; box-sizing: border-box; padding: 120px 0; background: #0D0A17; color: #FFFFFF; }
+.u7 .u7-take-ph { position: absolute; top: -144px; right: -6.04vw; display: block; width: 745px; height: 993px; object-fit: cover; pointer-events: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 32%, #000 100%); mask-image: linear-gradient(90deg, transparent 0, #000 32%, #000 100%); }
+.u7 .u7-take-in { position: relative; z-index: 1; max-width: 960px; }
+.u7 .u7-take-k { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 700; line-height: 24px; letter-spacing: .04em; color: #99999E; }
+.u7 .u7-take-k i { flex: none; width: 16px; height: 16px; background: #99999E; }
+.u7 .u7-take .t { margin-top: 24px; font-size: 56px; font-weight: 700; line-height: 64px; letter-spacing: -0.02em; color: #FFFFFF; }
+.u7 .u7-take .d { margin-top: 48px; font-size: 20px; font-weight: 500; line-height: 32px; color: rgba(255, 255, 255, .72); }
+
 /* next case study */
 .u7 .u7-next { background: var(--off, #F5F5F2); }
 .u7 .u7-next .next-card { display: flex; flex-direction: column; gap: 16px; padding: 140px 0; color: var(--ink); text-decoration: none; }
@@ -1292,6 +1298,10 @@ const U7_CSS = `
 /* square corners everywhere, except the round pills, avatars and dots that set their own */
 .u7 *, .u7 *::before, .u7 *::after { border-radius: 0; }
 
+@media (max-width: 1600px) {
+  /* keep the text clear of the photo's solid part as the window narrows */
+  .u7 .u7-take-in { max-width: min(960px, calc(106vw - 660px)); }
+}
 @media (max-width: 1280px) {
   .u7 .u7-rt { width: 280px; }
   .u7 .u7-panel { grid-template-columns: minmax(0, 400fr) minmax(0, 800fr); }
@@ -1300,6 +1310,10 @@ const U7_CSS = `
   .u7 .u7-hist .steps b { font-size: 32px; line-height: 40px; }
 }
 @media (max-width: 1023px) {
+  .u7 .u7-take { display: flex; flex-direction: column; min-height: 0; padding: 88px 0 0; }
+  .u7 .u7-take-in { max-width: none; }
+  .u7 .u7-take-ph { position: relative; order: 2; top: auto; right: auto; width: 100%; max-width: 560px; height: auto; aspect-ratio: 745 / 993; margin: 48px 0 0 auto;
+    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 24%); mask-image: linear-gradient(180deg, transparent 0, #000 24%); }
   .u7 .u7-proc { height: auto; margin-top: 48px; }
   .u7 .u7-proc-cards, .u7 .u7-flow { display: none; }
   .u7 .u7-proc-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
@@ -1320,6 +1334,8 @@ const U7_CSS = `
   .u7 .u7-scroll { margin-right: calc((100vw - 100%) / -2); padding-right: 16px; }
 }
 @media (max-width: 700px) {
+  .u7 .u7-take .t { font-size: 36px; line-height: 44px; }
+  .u7 .u7-take .d { margin-top: 32px; font-size: 18px; line-height: 28px; }
   .u7 .u7-w { width: calc(100vw - 40px); }
   .u7 .u7-hero { padding: 104px 0 88px; }
   .u7 .u7-h1 { font-size: 40px; line-height: 48px; }

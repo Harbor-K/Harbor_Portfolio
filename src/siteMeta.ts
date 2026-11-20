@@ -1,8 +1,13 @@
-// Site meta (v22–v25, Harbor Nov 18–19), loaded once from index.tsx.
+// Site meta (v22–v25, Harbor Nov 18–19; v26 Nov 20), loaded once from index.tsx.
 //
-// 1) Two HTML comments at the very top of the page, as Framer sites show them in the browser's Inspect panel
-//    (Elements tab, just above <html>). The publish time is in Harbor's time zone, Korea (KST, UTC+9).
-//    It is written by hand: update PUBLISHED whenever a new version is published.
+// 1) HTML comments at the very top of the page, as Framer sites show them in the browser's Inspect panel
+//    (Elements tab, just above <html>):
+//    - (v26, Harbor Nov 20) a "HARBOR KIM" text-art banner first — the fun bit a curious recruiter finds in Inspect;
+//    - "Made in South Korea • harborkim.com";
+//    - the publish time in Harbor's time zone, Korea (KST, UTC+9). It is written by hand: update PUBLISHED whenever a
+//      new version is published.
+//    (v26) The host's own "Published <id> created by Magic Patterns" comment is taken out of the page when it loads, so
+//    Inspect shows only Harbor's lines. (The browser's "View Page Source" still shows the file as the host sent it.)
 //
 // 2) Microsoft Clarity (project zfm0kxnquy) — to see whether recruiters abroad open the portfolio, which country they
 //    come from, and where they stop scrolling or leave.
@@ -31,8 +36,18 @@
 // Note: since Oct 31, 2025 Clarity needs a consent signal for visitors from the EEA, UK and Switzerland; without one
 // it records those visits without cookies. There is no consent banner on the site.
 
+// "Harbor Kim" in the ANSI Shadow figlet letters (no backslashes, backticks or "--", so it is safe in a comment)
+const BANNER_ART = [
+  '██╗  ██╗ █████╗ ██████╗ ██████╗  ██████╗ ██████╗     ██╗  ██╗██╗███╗   ███╗',
+  '██║  ██║██╔══██╗██╔══██╗██╔══██╗██╔═══██╗██╔══██╗    ██║ ██╔╝██║████╗ ████║',
+  '███████║███████║██████╔╝██████╔╝██║   ██║██████╔╝    █████╔╝ ██║██╔████╔██║',
+  '██╔══██║██╔══██║██╔══██╗██╔══██╗██║   ██║██╔══██╗    ██╔═██╗ ██║██║╚██╔╝██║',
+  '██║  ██║██║  ██║██║  ██║██████╔╝╚██████╔╝██║  ██║    ██║  ██╗██║██║ ╚═╝ ██║',
+  '╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝  ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚═╝╚═╝     ╚═╝',
+]
+const BANNER = '\n' + BANNER_ART.map(l => '  ' + l).join('\n') + '\n'
 const MADE = ' Made in South Korea • harborkim.com '
-const PUBLISHED = ' Published Nov 19, 2026, 12:15 AM KST (UTC+9) '
+const PUBLISHED = ' Published Nov 20, 2026, 3:50 PM KST (UTC+9) '
 
 const LIVE_HOSTS = ['harborkim.com', 'www.harborkim.com']
 const CLARITY_ID = 'zfm0kxnquy'
@@ -44,8 +59,17 @@ declare global {
   interface Window { clarity?: ClarityFn; dataLayer?: unknown[]; gtag?: (...args: unknown[]) => void; __hbMeta?: boolean }
 }
 
+/** the host's "Published … created by Magic Patterns" comment(s) above <html> */
+function removeHostComments() {
+  Array.from(document.childNodes).forEach(n => {
+    if (n.nodeType === Node.COMMENT_NODE && /magic\s*patterns/i.test(n.nodeValue || '')) n.parentNode?.removeChild(n)
+  })
+}
+
 function addComments() {
+  removeHostComments()
   const html = document.documentElement
+  document.insertBefore(document.createComment(BANNER), html)
   document.insertBefore(document.createComment(MADE), html)
   document.insertBefore(document.createComment(PUBLISHED), html)
 }

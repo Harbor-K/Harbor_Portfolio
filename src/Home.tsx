@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { CSS, IMG3 } from './portfolioV74'
 import { useScreenInit } from './useScreenInit.js'
 import { SiteHeaderB } from './SiteHeaderB'
@@ -9,6 +9,13 @@ import { GIFS, useGifSrc } from './gifPlay'
 // frame's sizes and type.
 //
 // Header: the shared site header (SiteHeaderB.tsx, mode 'overlay').
+// Intro (Harbor, Nov 20 — Figma "Intro" frames on the Main page):
+// - White page; her crash-zoom clip (office wide shot → close-up, 4.3s) plays in a portrait box centred in the hero,
+//   sized like the Figma frame (499×887 in 1920×1080, so 82% of the height).
+// - When the clip ends, the box snaps open (0.6s, quick start) to the full hero, and what's inside is already the hero
+//   typing video (it keeps playing). The headline, quote and buttons then come in as before; the header fades in.
+// - Plays once per page load (not again when coming back from a case study), never with reduced motion, and any
+//   scroll, key, tap or click skips straight to the opening. Scrolling is held while the intro runs.
 // Hero (1080 at 1920×1080):
 // - Harbor's typing video, same slow zoom-in, parallax and gradient as before; #0F0F0F behind it.
 // - Copy 80px from the bottom: quote ticker (20/32, 90%), 16px, headline (64/72, -2%; two 68px
@@ -48,6 +55,19 @@ const HERO_L2 = 'from Data to Impact'
 const HERO_VIDEO = IMG3 + 'hero-typing.mp4'
 const HERO_POSTER = IMG3 + 'hero-typing-poster.jpg'
 
+// intro clip: Harbor's crash_zoom_closeup_v3.mp4 (1080×1920, 4.3s), saved for the web at 720×1280 without sound
+const INTRO = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/main-intro/'
+const INTRO_VIDEO = INTRO + 'intro-crash-zoom.mp4'
+const INTRO_POSTER = INTRO + 'intro-crash-zoom-poster.jpg'
+// Figma Intro frame: a 499×887 box in a 1920×1080 frame
+const BOX_W = 499
+const BOX_H = 887
+const FRAME_H = 1080
+const INTRO_WAIT_MS = 4000 // the clip hasn't started by then (slow network) → open straight to the hero
+const INTRO_SAFETY_MS = 6500 // the clip started but never reported its end → open anyway
+const GROW_MS = 600 // the box opening to the full hero (Harbor, Nov 20: fast, straight onto her face)
+const COPY_AT_MS = 350 // the headline starts coming in while the box finishes opening
+
 const TB = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/trust-bank/'
 const ETO = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/eto/'
 
@@ -84,11 +104,31 @@ const PAGE_CSS = `
 /* ================= Hero (Figma 530:5431) ================= */
 .hb .hero.hx { background: #0F0F0F; min-height: 720px; }
 .hb .hero.hx::after { display: none; }
+.hb .hx-stage { position: absolute; inset: 0; }
 .hb .hx-vid { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%; }
-.hb .hx-shade { position: absolute; inset: 0; z-index: 1; pointer-events: none;
+.hb .hx-shade { position: absolute; inset: 0; z-index: 1; pointer-events: none; transition: opacity .9s ease;
   background: linear-gradient(180deg, rgba(0,0,0,.45) 0%, rgba(0,0,0,.2) 25%, rgba(0,0,0,.3) 55%, rgba(0,0,0,.72) 100%); }
 .hb .hx-intro { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: #000000; opacity: 0; animation: hx-lift 1.2s ease-out both; }
 @keyframes hx-lift { from { opacity: .45; } to { opacity: 0; } }
+
+/* ---- intro (Figma "Intro" frames): white page, portrait box → the box opens to the full hero ---- */
+.hb .hero.hx.intro { background: #FFFFFF; }
+.hb .hx.intro .hx-stage { clip-path: inset(var(--it, 0px) var(--ix, 0px) var(--ib, 0px) var(--ix, 0px)); }
+.hb .hx.intro.grow .hx-stage { clip-path: inset(0px 0px 0px 0px); transition: clip-path ${GROW_MS}ms cubic-bezier(.5,0,.15,1); }
+.hb .hx-crash { position: absolute; z-index: 1; top: var(--it, 0px); left: var(--ix, 0px);
+  width: calc(100% - 2 * var(--ix, 0px)); height: calc(100% - var(--it, 0px) - var(--ib, 0px));
+  display: block; object-fit: cover; object-position: 50% 50%; background: #F0F0EE; pointer-events: none; }
+/* a cut, not a cross-fade: the close-up and the wider hero framing would double up */
+.hb .hx.grow .hx-crash { opacity: 0; transition: opacity .12s linear; }
+/* the hero waits until the box has opened: no shade, no zoom, copy held at its first frame */
+.hb .hx.hold .hx-shade { opacity: 0; }
+.hb .hx.hold .hx-vid, .hb .hx.hold .w, .hb .hx.hold .hx-quote, .hb .hx.hold .hx-btn { animation-play-state: paused; }
+.hb .hx.hold .hx-ctas { pointer-events: none; }
+/* the header stays out of the white intro, then fades in */
+html.hb-intro header { opacity: 0 !important; visibility: hidden !important; }
+html.hb-intro-end header { animation: hb-hdr-in .6s ease-out both; }
+@keyframes hb-hdr-in { from { opacity: 0; } to { opacity: 1; } }
+
 .hb .hx-copy { position: absolute; z-index: 2; left: 0; right: 0; bottom: 80px; display: flex; flex-direction: column; align-items: center; gap: 32px;
   padding: 0 16px; text-align: center; }
 .hb .hx-head { display: flex; flex-direction: column; align-items: center; gap: 16px; }
@@ -192,14 +232,14 @@ function Words({ text, start, step = 0.07 }: { text: string; start: number; step
 }
 
 /** rox.com quote ticker: one line visible; the stack slides up a line every 2.5s and loops back to the first */
-function QuoteTicker() {
+function QuoteTicker({ run }: { run: boolean }) {
   const [i, setI] = useState(0)
   const [snap, setSnap] = useState(false)
   useEffect(() => {
-    if (QUOTES.length < 2 || matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    if (!run || QUOTES.length < 2 || matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const t = window.setInterval(() => setI(v => v + 1), QUOTE_MS)
     return () => clearInterval(t)
-  }, [])
+  }, [run])
   // after sliding onto the copy of the first line at the end, jump back to the real first line without animating
   const onEnd = (e: React.TransitionEvent) => { if (e.target === e.currentTarget && i >= QUOTES.length) { setSnap(true); setI(0) } }
   useEffect(() => {
@@ -222,18 +262,18 @@ function QuoteTicker() {
   )
 }
 
-/** the hero's background: Harbor's typing video; reduced motion keeps the poster still */
-function HeroVideo() {
-  const v = useRef<HTMLVideoElement>(null)
+/** the hero's background: Harbor's typing video; reduced motion keeps the poster still.
+ *  With the intro on, it waits on its first frame until the box opens (Home starts it). */
+function HeroVideo({ vref, hold }: { vref: React.RefObject<HTMLVideoElement>; hold: boolean }) {
   useEffect(() => {
-    const el = v.current; if (!el) return
+    const el = vref.current; if (!el) return
     el.muted = true
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) { el.pause(); return }
-    el.play().catch(() => {})
-  }, [])
+    if (!hold) el.play().catch(() => {})
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
   return (
-    <video ref={v} className="hero-img hx-vid" src={HERO_VIDEO} poster={HERO_POSTER}
-      autoPlay muted loop playsInline preload="auto" aria-hidden="true" />
+    <video ref={vref} className="hero-img hx-vid" src={HERO_VIDEO} poster={HERO_POSTER}
+      autoPlay={!hold} muted loop playsInline preload="auto" aria-hidden="true" />
   )
 }
 
@@ -275,10 +315,117 @@ function ProjectRow({ p, i }: { p: Project; i: number }) {
   )
 }
 
+// ---------------- intro ----------------
+// 'wait' = white page, the clip's first frame in the box, waiting for it to start; 'play' = the clip is running;
+// 'grow' = the box opening onto the hero video; 'done' / 'off' = the normal hero.
+type IntroPhase = 'off' | 'wait' | 'play' | 'grow' | 'done'
+let INTRO_SEEN = false // once per page load: coming back from a case study goes straight to the hero
+
+function firstIntroPhase(): IntroPhase {
+  if (INTRO_SEEN || typeof window === 'undefined') return 'off'
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return 'off'
+  // the Screens preview jumps to a section: no intro there
+  if (/[?&]section=/.test(location.search) || /[?&]section=/.test(location.hash)) return 'off'
+  return 'wait'
+}
+
 export function Home() {
   const screenInit = useScreenInit() as { section?: string } | undefined
   const heroBg = useRef<HTMLDivElement>(null)
+  const heroSec = useRef<HTMLElement>(null)
+  const heroVid = useRef<HTMLVideoElement>(null)
+  const [intro, setIntro] = useState<IntroPhase>(firstIntroPhase)
+  const [played] = useState(intro !== 'off')
+  const [copyGo, setCopyGo] = useState(intro === 'off')
+  const introOn = intro === 'wait' || intro === 'play' || intro === 'grow'
+  const hold = played && !copyGo
   useReveal()
+
+  // the Screens preview asked for a section after all: drop the intro
+  useEffect(() => {
+    if (screenInit?.section && introOn) { setIntro('off'); setCopyGo(true) }
+  }, [screenInit]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // the portrait box from the Figma Intro frame (499×887 of 1920×1080), centred in the visible part of the hero
+  useLayoutEffect(() => {
+    if (!introOn) return
+    const fit = () => {
+      const el = heroSec.current; if (!el) return
+      const W = el.clientWidth
+      const full = el.clientHeight
+      const H = Math.min(full, innerHeight)
+      let h = H * BOX_H / FRAME_H
+      let w = h * BOX_W / BOX_H
+      if (w > W - 32) { w = W - 32; h = w * BOX_H / BOX_W }
+      const top = Math.round((H - h) / 2)
+      el.style.setProperty('--ix', `${Math.round((W - w) / 2)}px`)
+      el.style.setProperty('--it', `${top}px`)
+      el.style.setProperty('--ib', `${Math.round(full - top - h)}px`)
+    }
+    fit()
+    addEventListener('resize', fit)
+    return () => removeEventListener('resize', fit)
+  }, [introOn])
+
+  // while the intro runs: page held at the top, header hidden; afterwards the header fades in
+  useEffect(() => {
+    if (!introOn) return
+    INTRO_SEEN = true
+    const de = document.documentElement
+    const prevOverflow = de.style.overflow
+    de.classList.add('hb-intro')
+    de.style.overflow = 'hidden'
+    scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior })
+    let t = 0
+    return () => {
+      de.classList.remove('hb-intro')
+      de.style.overflow = prevOverflow
+      de.classList.add('hb-intro-end')
+      t = window.setTimeout(() => de.classList.remove('hb-intro-end'), 800)
+      void t
+    }
+  }, [introOn])
+
+  // waiting for the clip: if it never starts (slow network), open straight to the hero
+  useEffect(() => {
+    if (intro !== 'wait') return
+    const t = window.setTimeout(() => setIntro('grow'), INTRO_WAIT_MS)
+    return () => clearTimeout(t)
+  }, [intro])
+
+  // the clip is running: open when it ends (onEnded), or after a safety time
+  useEffect(() => {
+    if (intro !== 'play') return
+    const t = window.setTimeout(() => setIntro('grow'), INTRO_SAFETY_MS)
+    return () => clearTimeout(t)
+  }, [intro])
+
+  // any scroll, key, tap or click during the clip skips to the opening
+  useEffect(() => {
+    if (intro !== 'wait' && intro !== 'play') return
+    const skip = () => setIntro('grow')
+    const opts = { passive: true } as AddEventListenerOptions
+    addEventListener('wheel', skip, opts)
+    addEventListener('touchstart', skip, opts)
+    addEventListener('keydown', skip)
+    addEventListener('pointerdown', skip)
+    return () => {
+      removeEventListener('wheel', skip, opts)
+      removeEventListener('touchstart', skip, opts)
+      removeEventListener('keydown', skip)
+      removeEventListener('pointerdown', skip)
+    }
+  }, [intro])
+
+  // the box opens: the hero video starts from its first frame, the copy comes in near the end, then the normal hero
+  useEffect(() => {
+    if (intro !== 'grow') return
+    const v = heroVid.current
+    if (v) { try { v.currentTime = 0 } catch { /* not loaded yet */ } v.play().catch(() => {}) }
+    const t1 = window.setTimeout(() => setCopyGo(true), COPY_AT_MS)
+    const t2 = window.setTimeout(() => setIntro('done'), GROW_MS + 100)
+    return () => { clearTimeout(t1); clearTimeout(t2) }
+  }, [intro])
 
   // Hero parallax.
   useEffect(() => {
@@ -310,28 +457,38 @@ export function Home() {
   const l1Start = 0.3
   const l2Start = l1Start + HERO_L1.split(' ').length * 0.07
 
+  const heroCls = 'hero hx' + (introOn ? ' intro' : '') + (intro === 'grow' ? ' grow' : '') + (hold ? ' hold' : '')
+
   return (
     <div className="hb" id="top">
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400&display=swap" />
       <style>{CSS + PAGE_CSS}</style>
       <SiteHeaderB mode="overlay" />
 
-      {/* ===== Hero ===== */}
-      <section className="hero hx" aria-label="Intro">
-        <div className="hero-bg" ref={heroBg}><HeroVideo /></div>
-        <div className="hx-shade" aria-hidden="true" />
-        <div className="hx-intro" aria-hidden="true" />
+      {/* ===== Hero (with the intro on first load) ===== */}
+      <section className={heroCls} aria-label="Intro" ref={heroSec}>
+        <div className="hx-stage">
+          <div className="hero-bg" ref={heroBg}><HeroVideo vref={heroVid} hold={played} /></div>
+          <div className="hx-shade" aria-hidden="true" />
+        </div>
+        {introOn && (
+          <video className="hx-crash" src={INTRO_VIDEO} poster={INTRO_POSTER} autoPlay muted playsInline preload="auto"
+            aria-hidden="true"
+            onPlaying={() => setIntro(p => (p === 'wait' ? 'play' : p))}
+            onEnded={() => setIntro(p => (p === 'wait' || p === 'play' ? 'grow' : p))} />
+        )}
+        {!played && <div className="hx-intro" aria-hidden="true" />}
         <div className="hx-copy">
           <div className="hx-head">
-            <QuoteTicker />
+            <QuoteTicker run={!hold} />
             <h1 className="hx-h1 serif" aria-label={`${HERO_L1} ${HERO_L2}`}>
               <span className="ln" aria-hidden="true"><Words text={HERO_L1} start={l1Start} /></span>
               <span className="ln mute" aria-hidden="true"><Words text={HERO_L2} start={l2Start} /></span>
             </h1>
           </div>
           <div className="hx-ctas">
-            <a className="hx-btn ghost" href="#projects" style={{ '--wd': '0.7s' } as React.CSSProperties}>See all works</a>
-            <a className="hx-btn solid" href={LINKS.cal} target="_blank" rel="noreferrer" style={{ '--wd': '0.8s' } as React.CSSProperties}>Say hello</a>
+            <a className="hx-btn ghost" href="#projects" tabIndex={hold ? -1 : undefined} style={{ '--wd': '0.7s' } as React.CSSProperties}>See all works</a>
+            <a className="hx-btn solid" href={LINKS.cal} target="_blank" rel="noreferrer" tabIndex={hold ? -1 : undefined} style={{ '--wd': '0.8s' } as React.CSSProperties}>Say hello</a>
           </div>
         </div>
       </section>

@@ -13,7 +13,10 @@ import React, { useEffect, useRef } from 'react'
  *   With `data-cursor-variant="button"` (the main page's project blocks: "View project") it is a solid square button so
  *   it stands out: black with white text over the white title area, white with black text over anything marked
  *   `data-cursor-light` (the project image / video). Without the variant it is the bracketed text style.
- * Touch screens: no custom cursor. Reduced motion: no trail, the dot and label sit exactly on the pointer.
+ * Touch screens and phone-width windows (≤ 600px, Nov 21 — Harbor: "모바일은 손가락 터치라 커서 라인 없이"): no custom
+ * cursor at all — no dot, no line, no label. A tap used to leave the dot and its line at the tap point (the browser sends
+ * a mouse event after each tap), and the phone layout in a narrow desktop window should look the same as on a phone.
+ * Reduced motion: no trail, the dot and label sit exactly on the pointer.
  */
 
 const LABEL_CSS = `
@@ -34,9 +37,17 @@ html.cur-scroll, html.cur-scroll * { cursor: none !important; }
 .cur-label.btn i { display: none; }
 .cur-label.btn span { padding-left: 0; }
 .cur-label.btn.ink { background: #0F0F0F; color: #fff; box-shadow: 0 8px 24px rgba(0,0,0,.18); }
+/* touch screens and phone widths: nothing to draw (cursor.tsx also stops drawing) */
+@media (hover: none), (pointer: coarse), (max-width: 600px) {
+  .cur-canvas, .cur-label { display: none !important; }
+}
 `
 
 type Hover = { text: string; light: boolean; btn: boolean } | null
+
+// the custom cursor only makes sense for a real mouse on a layout wider than a phone
+const POINTER_Q = '(hover: hover) and (pointer: fine)'
+const PHONE_MAX = 600
 
 export function CursorTrail({ scrollLabel = false }: { scrollLabel?: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null)
@@ -48,7 +59,7 @@ export function CursorTrail({ scrollLabel = false }: { scrollLabel?: boolean }) 
   useEffect(() => {
     const canvas = ref.current; if (!canvas) return
     const ctx = canvas.getContext('2d'); if (!ctx) return
-    const fine = matchMedia('(pointer: fine)').matches
+    const pointerMq = matchMedia(POINTER_Q)
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches
     const BASE = '#ffffff', ACCENT = '#1fb6d5', TRAIL_MS = 260, SPRING = 0.14, DAMPING = 0.7
     const root = document.documentElement
@@ -64,7 +75,12 @@ export function CursorTrail({ scrollLabel = false }: { scrollLabel?: boolean }) 
       if (!z) return null
       return { text: z.getAttribute('data-cursor') || '', light: !!el.closest('[data-cursor-light]'), btn: z.getAttribute('data-cursor-variant') === 'button' }
     }
+    // on: a mouse that can hover, on a window wider than a phone; re-checked on resize / when the pointer type changes
+    let on = pointerMq.matches && innerWidth > PHONE_MAX
+    const recheck = () => { on = pointerMq.matches && innerWidth > PHONE_MAX }
+    pointerMq.addEventListener('change', recheck)
     const size = () => {
+      recheck()
       const dpr = Math.min(2, devicePixelRatio || 1)
       canvas.width = Math.round(innerWidth * dpr); canvas.height = Math.round(innerHeight * dpr)
       canvas.style.width = innerWidth + 'px'; canvas.style.height = innerHeight + 'px'
@@ -73,10 +89,11 @@ export function CursorTrail({ scrollLabel = false }: { scrollLabel?: boolean }) 
     size(); addEventListener('resize', size)
     const mouse = { x: -100, y: -100 }, dot = { x: -100, y: -100, vx: 0, vy: 0 }
     const tail: { x: number; y: number; t: number }[] = []
-    let visible = 0, present = false, first = true, accent = false, grow = 0, raf = 0
+    let visible = 0, present = false, first = true, accent = false, grow = 0, raf = 0, drawn = false
     let lab = 0, hideNative = false, hover: Hover = null, shownText = 'Scroll', ink = false, btn = false
     const onPoint = (e: MouseEvent) => {
-      if ((e as PointerEvent).pointerType === 'touch') { present = false; return }
+      if (!on) { present = false; return }
+      if ((e as PointerEvent).pointerType === 'touch' || (e as PointerEvent).pointerType === 'pen') { present = false; return }
       if (!Number.isFinite(e.clientX) || (e.clientX === 0 && e.clientY === 0 && e.type === 'wheel')) { present = true; return }
       mouse.x = e.clientX; mouse.y = e.clientY; present = true
       if (first) { dot.x = mouse.x; dot.y = mouse.y; first = false }
@@ -84,13 +101,21 @@ export function CursorTrail({ scrollLabel = false }: { scrollLabel?: boolean }) 
       hover = hoverOf(e.target as Element)
     }
     const onScroll = () => {
-      if (!present || first) return
+      if (!on || !present || first) return
       const el = document.elementFromPoint(mouse.x, mouse.y)
       accent = isInteractive(el)
       hover = hoverOf(el)
     }
     const onOut = (e: MouseEvent) => { if (!e.relatedTarget) { present = false; hover = null } }
+    const off = () => {
+      // phone / touch: nothing drawn, the normal pointer back, the label hidden
+      if (drawn) { ctx.clearRect(0, 0, innerWidth, innerHeight); drawn = false }
+      if (hideNative) { hideNative = false; root.classList.remove('cur-scroll') }
+      if (labelRef.current) labelRef.current.style.opacity = '0'
+      tail.length = 0; visible = 0; lab = 0; present = false; first = true; hover = null
+    }
     const tick = (now: number) => {
+      if (!on) { off(); raf = requestAnimationFrame(tick); return }
       if (reduce) { dot.x = mouse.x; dot.y = mouse.y }
       else {
         dot.vx = (dot.vx + (mouse.x - dot.x) * SPRING) * DAMPING; dot.vy = (dot.vy + (mouse.y - dot.y) * SPRING) * DAMPING
@@ -102,7 +127,7 @@ export function CursorTrail({ scrollLabel = false }: { scrollLabel?: boolean }) 
       // label: a hovered [data-cursor] block first, then [SCROLL] at the top of a case page; the line cursor otherwise
       const hovering = !!hover && !first
       const text = hovering ? hover!.text : (labelOn.current && scrollY < 8 ? 'Scroll' : '')
-      const want = fine && text ? 1 : 0
+      const want = text ? 1 : 0
       lab += (want - lab) * (reduce ? 1 : 0.18)
       if (lab < 0.002) lab = 0
       const native = want === 1 && present
@@ -128,6 +153,7 @@ export function CursorTrail({ scrollLabel = false }: { scrollLabel?: boolean }) 
       ctx.clearRect(0, 0, innerWidth, innerHeight)
       const v = visible * (1 - lab)
       if (v > 0.01) {
+        drawn = true
         const color = accent ? ACCENT : BASE
         ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineCap = 'round'
         if (!reduce) for (let i = 1; i < tail.length; i++) {
@@ -149,7 +175,7 @@ export function CursorTrail({ scrollLabel = false }: { scrollLabel?: boolean }) 
     types.forEach(t => addEventListener(t, onPoint as EventListener, opts))
     addEventListener('scroll', onScroll, opts); document.addEventListener('mouseout', onOut, opts)
     return () => {
-      cancelAnimationFrame(raf); removeEventListener('resize', size)
+      cancelAnimationFrame(raf); removeEventListener('resize', size); pointerMq.removeEventListener('change', recheck)
       types.forEach(t => removeEventListener(t, onPoint as EventListener, opts))
       removeEventListener('scroll', onScroll, opts); document.removeEventListener('mouseout', onOut, opts)
       root.classList.remove('cur-scroll')
@@ -161,6 +187,7 @@ export function CursorTrail({ scrollLabel = false }: { scrollLabel?: boolean }) 
       <style>{LABEL_CSS}</style>
       <canvas
         ref={ref}
+        className="cur-canvas"
         aria-hidden="true"
         style={{ position: 'fixed', inset: 0, zIndex: 2147483000, pointerEvents: 'none', mixBlendMode: 'difference' }}
       />

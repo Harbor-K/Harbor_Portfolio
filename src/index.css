@@ -1,6 +1,8 @@
 /* @import url() FONT IMPORTS MUST ALWAYS BE AT THE VERY TOP OF THIS FILE, ABOVE THE TAILWIND IMPORTS — DO NOT DELETE THIS COMMENT */
 /* v109 (Harbor, Nov 12): one typeface for the whole site — Roboto (Google Fonts, variable 100–900, with italics). */
 @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+/* Caveat 600: the handwritten "co-researcher" note on GameCove's interview calls (Nov 21) */
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap');
 
 /* CRITICAL: THE FOLLOWING TAILWIND IMPORTS MUST NEVER BE DELETED OR REORDERED — DO NOT DELETE THIS COMMENT */
 @import 'tailwindcss/base';
@@ -17,6 +19,7 @@
    Weights stay as they were (Regular 400 for the former serif headings, Medium 500 where Geist Medium was used).
    Kept on purpose, because they show something rather than set text:
    - the handwriting on the Trust Bank Define whiteboard (Caveat / Kalam), which imitates handwritten sticky notes;
+   - the handwritten "co-researcher" note on GameCove's interview calls (Caveat, Nov 21);
    - the Lato specimen in GameCove's design-system section, which shows that product's typeface by name.
    The Harbor logos are drawn shapes (SVG paths), not text; their wordmark is outlined Roboto since v110. */
 html, body, button, input, select, textarea,
@@ -119,4 +122,118 @@ footer.ft { border-top: 0; box-shadow: inset 0 1px 0 rgba(255,255,255,.08); }
 }
 @media (max-width: 900px) {
   .hb.tb .hmw-cards, .hb.tb .ideas, .hb.tb .patterns { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ================= Phones: one type scale, bigger media, no hover (Nov 21, Harbor) =================
+   Harbor, on the phone layout: "모바일 전용 폰트로 — 너무 커", "영상이 너무 작아", "모바일은 호버가 없잖아".
+   One type scale for phones (≤ 600px wide), on the 8-grid, used by every page (it overrides each page's own phone sizes):
+   - Display (page titles, main hero)                     32/40, -2%
+   - Section heading (h2)                                 28/36, -1%
+   - Statement (HMW, research question, insight, takeaway) 24/32
+   - Sub-heading / card title (h3, h4)                    20/28
+   - Big number                                           40/48, -2%
+   - Lead 18/28 · Body 16/26 (nothing under 16px)
+   - Project name in Selected work 40/48 · Next case study 32/40 · Mobile menu 24/32
+   Kept as designed: text inside product mock-ups and charts (ETO's dashboard concept, GameCove's data cards, UTrada's trust
+   chart), Trust Bank's affinity-board notes (drawn to scale) and the Selected work GIFs' own type.
+   Media: the hero films (Trust Bank, GameCove, UTrada, ETO Markets) and the Selected work GIFs run edge to edge on phones
+   (393 instead of 329–353 px on an iPhone 16: 11–19% bigger); GameCove's interview pictures too (see the note below).
+   Touch: hover effects are off on touch screens and phone widths, so a tap no longer leaves a row grey and the others
+   faded; the line cursor is off there too (cursor.tsx). */
+@media (max-width: 600px) {
+  /* ---- Display 32/40 ---- */
+  .hb .hx-h1 { font-size: 32px !important; line-height: 40px !important; }
+  .hb .hx-h1 .ln { gap: 8px !important; }
+  .hb .hx .w { line-height: 40px !important; }
+  .hb.tb main h1, .hb.gc .gc4 .g-h1, .hb.u7 .u7-h1, .hb.e5 .e5-h1,
+  .hb .abk-h1, .hb .abk-h1 .ln, .hb .abk-h1 .w {
+    font-size: 32px !important; line-height: 40px !important; letter-spacing: -0.02em !important; }
+
+  /* ---- Section heading 28/36 ---- */
+  .hb .pl-title, .hb.tb main h2, .hb.gc .gc4 .g-h2, .hb.gc .gc4 .ts-h2, .hb.u7 .u7-h2, .hb.e5 .e5-h2, .hb .abk-h2 {
+    font-size: 28px !important; line-height: 36px !important; letter-spacing: -0.01em !important; }
+
+  /* ---- Statement 24/32 ---- */
+  .hb.tb main [class*="md:text-[50px]"], .hb.tb main [class*="md:text-[50px]"] span,
+  .hb.tb main p[class^="text-[32px]"]:not(.absolute), .hb.tb main p[class*=" text-[32px]"]:not(.absolute),
+  .hb.gc .gc4 .rq-q, .hb.gc .gc4 .hmw5-q, .hb.gc .gc4 .ts-qt,
+  .hb.u7 .u7-hmw, .hb.u7 .u7-insight, .hb.u7 .u7-take .t, .hb.e5 .e5-take .t, .hb.e5 .e5-quote p, .hb .abk-cap .ln {
+    font-size: 24px !important; line-height: 32px !important; letter-spacing: -0.01em !important; }
+
+  /* ---- Sub-heading / card title 20/28 ---- */
+  .hb.tb main h3, .hb.tb main [class*="text-[23px]"], .hb.tb main p[class^="text-[25px]"], .hb.tb main p[class*=" text-[25px]"],
+  .hb.tb main [class*=" text-[22px]"], .hb.tb main [class^="text-[22px]"],
+  .hb.gc .gc4 .g-h3, .hb.gc .gc4 .g-h4, .hb.gc .gc4 .g-ov-k, .hb.gc .gc4 .g-h3l, .hb.gc .gc4 .emp-h, .hb.gc .gc4 .insc-t, .hb.gc .gc4 .rf-nh,
+  .hb.gc .gc4 .emp-head .n, .hb.gc .gc4 .emp-head .t,
+  .hb.u7 .u7-h3, .hb.u7 .u7-rt, .hb.u7 .u7-story h3, .hb.u7 .u7-persona h3, .hb.u7 .u7-princ b,
+  .hb.e5 .e5-rt, .hb.e5 .e5-rlist h3, .hb.e5 .e5-tierlist h3, .hb.e5 .e5-cols4 h3, .hb.e5 .e5-cols3 h3, .hb .abk-tp {
+    font-size: 20px !important; line-height: 28px !important; letter-spacing: -0.005em !important; }
+
+  /* ---- Big number 40/48 ---- */
+  .hb.tb main [class*="text-[52px]"], .hb.gc .gc4 .g-num, .hb.gc .gc4 .ts-big, .hb.gc .gc4 .ts-counts b, .hb.u7 .u7-stats .n, .hb.e5 .e5-rcard .big {
+    font-size: 40px !important; line-height: 48px !important; letter-spacing: -0.02em !important; }
+
+  /* ---- Lead 18/28 · body 16/26 ---- */
+  .hb.tb main p[class^="text-[24px]"]:not(.absolute), .hb.tb main p[class*=" text-[24px]"]:not(.absolute),
+  .hb.tb main [class^="text-[20px]"], .hb.tb main [class*=" text-[20px]"], .hb.gc .gc4 .g-lead {
+    font-size: 18px !important; line-height: 28px !important; }
+  .hb .pl-desc p,
+  .hb.tb main [class^="text-[18px]"]:not(.absolute), .hb.tb main [class*=" text-[18px]"]:not(.absolute),
+  .hb.gc .gc4 .g-body, .hb.gc .gc4 .emp-p, .hb.gc .gc4 .emp-lead, .hb.gc .gc4 .insc-q, .hb.gc .gc4 .ts-sub, .hb.gc .gc4 .rq-origin,
+  .hb.u7 .u7-body, .hb.u7 .u7-sub, .hb.u7 .u7-meta p, .hb.u7 .u7-find .lead, .hb.u7 .u7-find .meant p, .hb.u7 .u7-goals p,
+  .hb.u7 .u7-princ p, .hb.u7 .u7-gaps p, .hb.u7 .u7-steps p, .hb.u7 .u7-tasks p, .hb.u7 .u7-log li, .hb.u7 .u7-story ul li,
+  .hb.u7 .u7-persona .hd p, .hb.u7 .u7-take .d,
+  .hb.e5 .e5-body, .hb.e5 .e5-sub, .hb.e5 .e5-meta p, .hb.e5 .e5-rlist p, .hb.e5 .e5-nextq, .hb.e5 .e5-ms-cap, .hb.e5 .e5-take .d {
+    font-size: 16px !important; line-height: 26px !important; }
+
+  /* ---- Selected work, next case study, mobile menu ---- */
+  .hb .pl-name { font-size: 40px !important; line-height: 48px !important; letter-spacing: -0.02em !important; }
+  .hb.tb .next-name, .hb.gc .next-name, .hb.ut .next-name, .hb.e5 .e5-next .next-name {
+    font-size: 32px !important; line-height: 40px !important; letter-spacing: -0.02em !important; }
+  .hdrb .mnav .nm { font-size: 24px !important; line-height: 32px !important; }
+
+  /* ---- Media edge to edge (the page's side margin pulled back) ---- */
+  .hb .pl-media { width: auto !important; margin-left: -32px; margin-right: -32px; }
+  .hb.tb main section:first-of-type .mt-10.relative { margin-left: -24px; margin-right: -24px; }
+  .hb.tb main section:first-of-type .mt-10.relative > div { border-radius: 0 !important; }
+  .hb.gc .gc4 .g-hero .g-banner.g-video { width: auto !important; margin-left: -20px; margin-right: -20px; }
+  .hb.u7 .u7-slot, .hb.e5 .e5-slot { margin-left: -20px; margin-right: -20px; }
+}
+
+/* ---- no hover on touch screens or phone widths: a tap shouldn't leave hover looks behind ---- */
+@media (hover: none), (max-width: 600px) {
+  .pl-list:hover .pl-item:not(:hover) .pl-desc p, .pl-list:focus-within .pl-item:not(:focus-within) .pl-desc p,
+  .pl-list:hover .pl-item:not(:hover) .pl-name, .pl-list:focus-within .pl-item:not(:focus-within) .pl-name { opacity: 1 !important; }
+  .hb a.pl-link:hover { background: transparent !important; }
+  .pl-item + .pl-item .pl-row { box-shadow: inset 0 1px 0 #DBDBD9 !important; }
+  .hb .pl-shot { opacity: 1 !important; transform: none !important; }
+  .hb .pl-logo { display: none !important; }
+  .hb .next-card:hover .next-name, .hb .next-card:hover .go { transform: none !important; }
+  .hb.e5 .e5-stills figure:hover .fr { transform: none !important; box-shadow: inset 0 0 0 1px var(--cline) !important; }
+  .hb.e5 .e5-research figure:hover .ph img, .hb.u7 .u7-find:hover .tile > img:first-child { transform: none !important; }
+  .hb.u7 .u7-btn:hover { transform: none !important; }
+}
+
+/* ================= GameCove: "co-researcher" on the interview calls (Nov 21, Harbor) =================
+   Harbor: in "03 What interviews showed", the woman in the left tile of all three calls is her co-researcher. Circle
+   her by hand and write "co-researcher" in sky-blue handwriting over a black strip (like the notes on
+   benji.org/stageshow, but kept close to what they point at).
+   It is drawn on the picture itself (GameCove's emp-3b.webp, 1216 x 616), so it shows in the desktop pinned panel and
+   in the phone list alike:
+   - ::after = three loose loops around her face plus short leader lines, drawn in the picture's own units so they stay
+     on her at every size;
+   - ::before = the handwritten label (Caveat, 30px; 22px on phones).
+   The label is a CSS pseudo-element, so screen readers skip it; the picture's alt text already describes the calls. */
+.hb.gc .gc4 .emp-vis:has(> img[src*="emp-3b"]) { position: relative; }
+.hb.gc .gc4 .emp-vis:has(> img[src*="emp-3b"]) > img { display: block; }
+.hb.gc .gc4 .emp-vis:has(> img[src*="emp-3b"])::after { content: ""; position: absolute; z-index: 1; left: 0; top: 0; width: 100%;
+  aspect-ratio: 1216 / 616; pointer-events: none; background: no-repeat 0 0 / 100% 100%
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1216 616' preserveAspectRatio='none' fill='none' stroke='%237DD3FC' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg stroke-width='6'%3E%3Cpath d='M82 67 C85 66 96 59 103 59 C110 58 118 60 125 64 C131 67 137 73 143 78 C149 83 155 87 160 93 C165 98 170 104 175 111 C179 118 184 125 187 134 C191 142 194 152 195 161 C196 170 194 181 192 190 C190 199 187 208 184 216 C180 225 177 234 172 240 C167 246 159 250 153 254 C146 258 141 264 134 266 C128 269 120 268 113 269 C106 270 99 273 92 273 C84 273 76 272 69 268 C63 264 57 256 51 250 C46 243 39 236 36 228 C32 219 30 209 29 199 C28 190 31 180 32 170 C33 161 34 153 35 144 C36 135 36 126 39 117 C41 107 43 97 48 89 C52 82 59 76 66 70 C72 65 79 61 87 58 C94 56 102 54 110 55 C117 57 128 64 131 65'/%3E%3Cpath d='M703 95 C707 95 719 95 726 97 C733 99 739 105 745 109 C752 112 758 115 764 119 C771 123 779 126 785 131 C790 137 795 145 799 153 C803 161 806 170 807 179 C808 189 807 199 805 208 C804 217 801 226 798 234 C795 242 790 249 785 255 C780 262 774 268 769 273 C763 278 756 281 750 286 C743 290 737 295 730 298 C722 300 714 301 706 301 C699 301 690 300 683 297 C675 294 667 289 662 282 C656 276 651 268 647 259 C643 251 642 242 640 233 C638 224 636 216 636 207 C635 199 635 190 635 181 C636 172 637 163 639 154 C641 146 644 137 649 129 C653 121 658 112 664 107 C670 101 679 98 686 95 C694 93 702 93 710 92 C718 92 725 92 733 94 C740 96 750 103 754 105'/%3E%3Cpath d='M74 415 C77 414 88 410 95 409 C101 408 108 409 115 410 C122 410 129 410 136 412 C143 414 151 416 157 421 C163 425 169 432 174 439 C178 446 183 454 186 462 C189 470 194 479 194 488 C195 497 191 507 189 515 C187 524 184 532 181 540 C179 548 177 557 173 564 C170 571 164 576 158 583 C153 589 148 597 141 602 C135 606 127 609 119 610 C112 612 103 614 96 612 C89 610 81 604 75 600 C68 596 61 591 56 585 C50 579 45 572 41 565 C38 557 35 549 32 540 C29 532 26 524 24 515 C22 507 21 497 21 488 C22 478 25 469 28 460 C30 451 32 441 37 434 C42 426 50 420 56 416 C63 412 71 410 79 408 C86 406 93 407 101 406 C108 405 119 403 123 403'/%3E%3C/g%3E%3Cg stroke-width='3.5'%3E%3Cpath d='M262 312 C222 300 200 286 182 262'/%3E%3Cpath d='M262 326 C224 344 202 372 184 418'/%3E%3Cpath d='M470 314 C540 304 600 300 646 286'/%3E%3C/g%3E%3C/svg%3E"); }
+.hb.gc .gc4 .emp-vis:has(> img[src*="emp-3b"])::before { content: "co-researcher"; position: absolute; z-index: 2; left: 30%; top: 51.6%;
+  transform: translate(-50%, -50%) rotate(-3deg); padding: 0 10px; background: #0B0B0D; pointer-events: none; white-space: nowrap;
+  font-family: "Caveat", cursive !important; font-size: 30px; font-weight: 600; line-height: 34px; color: #7DD3FC; }
+@media (max-width: 600px) {
+  .hb.gc .gc4 .emp-vis:has(> img[src*="emp-3b"])::before { font-size: 22px; line-height: 26px; padding: 0 6px; }
+  /* phones: the interview pictures run edge to edge (the page's 20px side margin pulled back) so the calls read bigger */
+  .hb.gc .gc4 .emp-narrow .emp-panel { margin-left: -20px; margin-right: -20px; padding: 24px 12px !important; }
 }

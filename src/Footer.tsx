@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { FOOTER_LOGO_SVG } from './harborLogo'
 import { AI_ICONS } from './aiIcons'
-import { RESUME_URL } from './resumeLink'
+import { RESUME_URL, RESUME_FILE, downloadResume } from './resumeLink'
 
 // Site footer — Harbor's Figma "footer.ft" in the main page frame (44기 김지현 4차 PF, node 538:6543 / 671:1071), built to the
 // frame exactly. index.tsx renders it under every page (main, About, Trust Bank, GameCove, UTrada, ETO Markets); the
@@ -28,8 +28,8 @@ import { RESUME_URL } from './resumeLink'
 //   All rights reserved." on the left and "Back to top ↑" on the right, 16/24 #8C8C8C.
 // Lines are drawn inside boxes (inset shadows), like Figma's inside strokes, so no line adds to a size.
 // Interactions: links and the logo brighten on hover; the logo and "Home" go to the top of the main page;
-// "Resume" opens her CV in a new tab, like the header's Resume button (v108; v114: the PDF on Google Drive; Nov 19: the
-// latest CV PDF, from resumeLink.ts);
+// "Resume" downloads her CV PDF straight away, like the header's Resume button (Nov 21; before: opened it on Google Drive —
+// see resumeLink.ts);
 // "Back to top ↑" scrolls this page to the top (its arrow nudges up on hover).
 
 const MAIL = 'harborkim0328@gmail.com'
@@ -192,7 +192,7 @@ export function Footer() {
               <li><a href="#" onClick={goHome}>Home</a></li>
               <li><a href="#projects">Projects</a></li>
               <li><a href="#/about">About me</a></li>
-              <li><a href={F.resume} target="_blank" rel="noreferrer" aria-label="Resume (opens in a new tab)">Resume</a></li>
+              <li><a href={F.resume} download={RESUME_FILE} onClick={downloadResume} aria-label="Resume (downloads a PDF)">Resume</a></li>
             </ul>
           </nav>
           <nav className="ft-col c2" aria-label="Projects">

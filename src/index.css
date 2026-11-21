@@ -215,20 +215,20 @@ footer.ft { border-top: 0; box-shadow: inset 0 1px 0 rgba(255,255,255,.08); }
 }
 
 /* ================= GameCove: "co-researcher" on the interview calls (Nov 21, Harbor) =================
-   Harbor: in "03 What interviews showed", the woman in the left tile of all three calls is her co-researcher. Circle
+   Harbor: in "03 What interviews showed", the woman in the left tile of all three calls is her co-researcher. Point at
    her by hand and write "co-researcher" in sky-blue handwriting over a black strip (like the notes on
    benji.org/stageshow, but kept close to what they point at).
    It is drawn on the picture itself (GameCove's emp-3b.webp, 1216 x 616), so it shows in the desktop pinned panel and
    in the phone list alike:
-   - ::after = three loose loops around her face plus short leader lines, drawn in the picture's own units so they stay
-     on her at every size;
+   - ::after = three hand-drawn arrows from the label to her in each call (Nov 21, Harbor: no circles, just the three
+     lines as arrows), drawn in the picture's own units so they stay on her at every size;
    - ::before = the handwritten label (Caveat, 30px; 22px on phones).
    The label is a CSS pseudo-element, so screen readers skip it; the picture's alt text already describes the calls. */
 .hb.gc .gc4 .emp-vis:has(> img[src*="emp-3b"]) { position: relative; }
 .hb.gc .gc4 .emp-vis:has(> img[src*="emp-3b"]) > img { display: block; }
 .hb.gc .gc4 .emp-vis:has(> img[src*="emp-3b"])::after { content: ""; position: absolute; z-index: 1; left: 0; top: 0; width: 100%;
   aspect-ratio: 1216 / 616; pointer-events: none; background: no-repeat 0 0 / 100% 100%
-  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1216 616' preserveAspectRatio='none' fill='none' stroke='%237DD3FC' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg stroke-width='6'%3E%3Cpath d='M82 67 C85 66 96 59 103 59 C110 58 118 60 125 64 C131 67 137 73 143 78 C149 83 155 87 160 93 C165 98 170 104 175 111 C179 118 184 125 187 134 C191 142 194 152 195 161 C196 170 194 181 192 190 C190 199 187 208 184 216 C180 225 177 234 172 240 C167 246 159 250 153 254 C146 258 141 264 134 266 C128 269 120 268 113 269 C106 270 99 273 92 273 C84 273 76 272 69 268 C63 264 57 256 51 250 C46 243 39 236 36 228 C32 219 30 209 29 199 C28 190 31 180 32 170 C33 161 34 153 35 144 C36 135 36 126 39 117 C41 107 43 97 48 89 C52 82 59 76 66 70 C72 65 79 61 87 58 C94 56 102 54 110 55 C117 57 128 64 131 65'/%3E%3Cpath d='M703 95 C707 95 719 95 726 97 C733 99 739 105 745 109 C752 112 758 115 764 119 C771 123 779 126 785 131 C790 137 795 145 799 153 C803 161 806 170 807 179 C808 189 807 199 805 208 C804 217 801 226 798 234 C795 242 790 249 785 255 C780 262 774 268 769 273 C763 278 756 281 750 286 C743 290 737 295 730 298 C722 300 714 301 706 301 C699 301 690 300 683 297 C675 294 667 289 662 282 C656 276 651 268 647 259 C643 251 642 242 640 233 C638 224 636 216 636 207 C635 199 635 190 635 181 C636 172 637 163 639 154 C641 146 644 137 649 129 C653 121 658 112 664 107 C670 101 679 98 686 95 C694 93 702 93 710 92 C718 92 725 92 733 94 C740 96 750 103 754 105'/%3E%3Cpath d='M74 415 C77 414 88 410 95 409 C101 408 108 409 115 410 C122 410 129 410 136 412 C143 414 151 416 157 421 C163 425 169 432 174 439 C178 446 183 454 186 462 C189 470 194 479 194 488 C195 497 191 507 189 515 C187 524 184 532 181 540 C179 548 177 557 173 564 C170 571 164 576 158 583 C153 589 148 597 141 602 C135 606 127 609 119 610 C112 612 103 614 96 612 C89 610 81 604 75 600 C68 596 61 591 56 585 C50 579 45 572 41 565 C38 557 35 549 32 540 C29 532 26 524 24 515 C22 507 21 497 21 488 C22 478 25 469 28 460 C30 451 32 441 37 434 C42 426 50 420 56 416 C63 412 71 410 79 408 C86 406 93 407 101 406 C108 405 119 403 123 403'/%3E%3C/g%3E%3Cg stroke-width='3.5'%3E%3Cpath d='M262 312 C222 300 200 286 182 262'/%3E%3Cpath d='M262 326 C224 344 202 372 184 418'/%3E%3Cpath d='M470 314 C540 304 600 300 646 286'/%3E%3C/g%3E%3C/svg%3E"); }
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1216 616' preserveAspectRatio='none' fill='none' stroke='%237DD3FC' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M262 312 C225 298 192 276 172 244'/%3E%3Cpath d='M173 268 L172 244 L193 255'/%3E%3Cpath d='M262 328 C226 346 190 400 174 438'/%3E%3Cpath d='M193 424 L174 438 L171 414'/%3E%3Cpath d='M470 316 C540 306 612 296 652 266'/%3E%3Cpath d='M628 269 L652 266 L643 288'/%3E%3C/svg%3E"); }
 .hb.gc .gc4 .emp-vis:has(> img[src*="emp-3b"])::before { content: "co-researcher"; position: absolute; z-index: 2; left: 30%; top: 51.6%;
   transform: translate(-50%, -50%) rotate(-3deg); padding: 0 10px; background: #0B0B0D; pointer-events: none; white-space: nowrap;
   font-family: "Caveat", cursive !important; font-size: 30px; font-weight: 600; line-height: 34px; color: #7DD3FC; }
@@ -236,4 +236,52 @@ footer.ft { border-top: 0; box-shadow: inset 0 1px 0 rgba(255,255,255,.08); }
   .hb.gc .gc4 .emp-vis:has(> img[src*="emp-3b"])::before { font-size: 22px; line-height: 26px; padding: 0 6px; }
   /* phones: the interview pictures run edge to edge (the page's 20px side margin pulled back) so the calls read bigger */
   .hb.gc .gc4 .emp-narrow .emp-panel { margin-left: -20px; margin-right: -20px; padding: 24px 12px !important; }
+}
+
+/* ================= Phones: tighter vertical rhythm (Nov 21, Harbor: "스크롤할 때 간격이 너무 크면 안 돼") =================
+   On a phone every empty 120px is a thumb-scroll with nothing new on screen, so at ≤ 600px:
+   - sections 64px top and bottom (page heroes 96px on top to clear the 64px header bar);
+   - big gaps inside a section (80–160px) → 40–56px; "Next case study" 140px → 64px;
+   - Trust Bank's affinity board no longer pins for a long scroll on phones: it shows its finished 3-pattern board in
+     place (AffinityScroll.tsx), which removed about 1,000px of scrolling past a board too small to read. */
+@media (max-width: 600px) {
+  /* main page */
+  .hb .pl-sec { padding-top: 64px !important; padding-bottom: 64px !important; }
+  .hb .pl-title { margin-bottom: 32px !important; }
+  .hb .pl-row { padding-top: 32px !important; padding-bottom: 32px !important; gap: 16px !important; }
+  .hb .next-card { padding-top: 64px !important; padding-bottom: 64px !important; }
+
+  /* Trust Bank (Tailwind values in the class names) */
+  .hb.tb main section[class*="pt-["], .hb.tb main section[class*="py-["], .hb.tb main div[class*="pt-[120px]"] { padding-top: 64px !important; }
+  .hb.tb main section[class*="pb-["], .hb.tb main section[class*="py-["], .hb.tb main div[class*="pb-[120px]"], .hb.tb main div[class*="pb-[80px]"] { padding-bottom: 64px !important; }
+  .hb.tb main section:first-of-type { padding-top: 96px !important; padding-bottom: 48px !important; }
+  .hb.tb main [class^="mt-[160px]"], .hb.tb main [class*=" mt-[160px]"], .hb.tb main [class^="mt-[120px]"], .hb.tb main [class*=" mt-[120px]"],
+  .hb.tb main [class^="mt-[100px]"], .hb.tb main [class*=" mt-[100px]"] { margin-top: 56px !important; }
+  .hb.tb main [class^="mt-[80px]"], .hb.tb main [class*=" mt-[80px]"], .hb.tb main [class^="mt-[70px]"], .hb.tb main [class*=" mt-[70px]"] { margin-top: 40px !important; }
+  .hb.tb main [class^="mt-[60px]"], .hb.tb main [class*=" mt-[60px]"], .hb.tb main [class^="mt-[64px]"], .hb.tb main [class*=" mt-[64px]"] { margin-top: 32px !important; }
+  .hb.tb main [class^="gap-[60px]"], .hb.tb main [class*=" gap-[60px]"] { gap: 40px !important; }
+
+  /* GameCove */
+  .hb.gc .gc4 .g-hero { padding-top: 96px !important; }
+  .hb.gc .gc4 .g-sec { padding-top: 64px !important; }
+  .hb.gc .gc4 .g-sec.g-final, .hb.gc .gc4 .g-sec.it, .hb.gc .gc4 .g-sec.last { padding-bottom: 64px !important; }
+  .hb.gc .gc4 .g-sec.last { padding-top: 64px !important; }
+  .hb.gc .gc4 .dv { margin-top: 56px !important; }
+  .hb.gc .gc4 .mt-80, .hb.gc .gc4 .ts-q, .hb.gc .gc4 .ts-stack, .hb.gc .gc4 .ts-nums, .hb.gc .gc4 .ts-iter, .hb.gc .gc4 .ts-follow { margin-top: 48px !important; }
+  .hb.gc .gc4 .mt-56, .hb.gc .gc4 .g-ov, .hb.gc .gc4 .g-meta, .hb.gc .gc4 .g-hero .g-banner.g-video { margin-top: 40px !important; }
+
+  /* UTrada */
+  .hb.u7 .u7-hero { padding-top: 96px !important; padding-bottom: 56px !important; }
+  .hb.u7 .u7-sec, .hb.u7 .u7-pr { padding-top: 64px !important; padding-bottom: 64px !important; }
+  .hb.u7 .u7-take { padding-top: 64px !important; }
+  .hb.u7 .mt96, .hb.u7 .mt120 { margin-top: 48px !important; }
+  .hb.u7 .mt64 { margin-top: 40px !important; }
+  .hb.u7 .u7-rows { gap: 40px !important; }
+
+  /* ETO Markets */
+  .hb.e5 .e5-hero { padding-top: 96px !important; padding-bottom: 56px !important; }
+  .hb.e5 .e5-sec { padding-top: 64px !important; padding-bottom: 64px !important; }
+  .hb.e5 .mt120 { margin-top: 56px !important; }
+  .hb.e5 .mt64, .hb.e5 .e5-meta { margin-top: 40px !important; }
+  .hb.e5 .e5-stack64 { gap: 40px !important; }
 }

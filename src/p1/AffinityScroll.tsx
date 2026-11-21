@@ -6,8 +6,10 @@ import React, { useEffect, useRef, useState } from 'react';
  * Built from Figma "Whiteboard · Affinity (designed)" (1072:165) and the 3-pattern board (1068:16738).
  * Scroll: the board pins, the 5 group headings and unrelated notes fade out,
  * 12 notes slide into the 3 circles, the circles are drawn, then the captions are written in.
- * v119 (responsive): on phones (≤ 760px) the board is only ~350px wide, so the pinned stretch is 120vh instead of
- * 300vh — the same story in less than half the scrolling, instead of three screens of empty space around a small board.
+ * v119 (responsive): on phones (≤ 760px) the board is only ~350px wide, so the pinned stretch was cut to 120vh.
+ * Nov 21 (Harbor: "정말 모바일에 넣어도 되는 애니메이션 스크롤인지", "스크롤할 때 간격이 너무 크면 안 돼"): on phones the
+ * board doesn't pin or animate at all — it sits in place showing the finished 3-pattern board and its caption. The
+ * scroll story needs a board big enough to read; at ~350px it only added about 1,000px of scrolling past it.
  */
 
 const FRAME_W = 1440;
@@ -87,6 +89,9 @@ const LASSO =
 const UNDERLINE = 'M1.10156 4.09961C39.1016 -0.900391 79.1016 7.09961 147.102 1.09961';
 const SCRIBBLE = 'M1.10156 9.20048C191.102 -4.79952 411.102 21.2005 631.102 3.20048C751.102 -4.79952 831.102 13.2005 881.102 5.20048';
 
+// phones: no pinned scroll story, the finished board in place (Nov 21)
+const PHONE_MAX = 600;
+
 const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 const seg = (p: number, from: number, to: number) => clamp((p - from) / (to - from));
 const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
@@ -102,9 +107,10 @@ function Written({ p, children, style }: { p: number; children: React.ReactNode;
 export function AffinityScroll() {
   const outer = useRef<HTMLDivElement>(null);
   const box = useRef<HTMLDivElement>(null);
-  const [p, setP] = useState(0);
+  const [scrollP, setP] = useState(0);
   const [scale, setScale] = useState(1);
   const [narrow, setNarrow] = useState(false);
+  const [phone, setPhone] = useState(() => typeof window !== 'undefined' && window.innerWidth <= PHONE_MAX);
 
   // scale the 1440 frame to the column, and to the viewport height while pinned
   useEffect(() => {
@@ -112,8 +118,11 @@ export function AffinityScroll() {
       const w = box.current?.clientWidth ?? FRAME_W;
       const byWidth = w / FRAME_W;
       const byHeight = (window.innerHeight - 120) / 1000;
-      setScale(Math.min(1, byWidth, Math.max(byHeight, 0.4)));
+      const isPhone = window.innerWidth <= PHONE_MAX;
+      // on phones the board isn't pinned, so only the column width limits it
+      setScale(isPhone ? Math.min(1, byWidth) : Math.min(1, byWidth, Math.max(byHeight, 0.4)));
       setNarrow(window.innerWidth <= 760);
+      setPhone(isPhone);
     };
     fit();
     const ro = new ResizeObserver(fit);
@@ -149,6 +158,9 @@ export function AffinityScroll() {
     };
   }, []);
 
+  // phones show the end of the story
+  const p = phone ? 1 : scrollP;
+
   // timeline (0–1 of the pinned scroll)
   const fade = ease(seg(p, 0.1, 0.3)); // headings, other notes, dots out
   const move = (i: number) => ease(seg(p, 0.18 + (i % 4) * 0.03, 0.5 + (i % 4) * 0.03)); // notes into circles
@@ -165,8 +177,8 @@ export function AffinityScroll() {
   const done = p > 0.5;
 
   return (
-    <div ref={outer} className="relative" style={{ height: `calc(${Math.round(943 * scale)}px + ${narrow ? 120 : 300}vh)` }}>
-      <div className="sticky" style={{ top: `max(80px, calc(50vh - ${Math.round((943 * scale) / 2 + 20)}px))` }}>
+    <div ref={outer} className="relative" style={phone ? undefined : { height: `calc(${Math.round(943 * scale)}px + ${narrow ? 120 : 300}vh)` }}>
+      <div className={phone ? undefined : 'sticky'} style={phone ? undefined : { top: `max(80px, calc(50vh - ${Math.round((943 * scale) / 2 + 20)}px))` }}>
         <div ref={box} className="relative w-full bg-white overflow-hidden rounded-[20px]" style={{ height: Math.round(frameH * scale) }}>
           <div
             className="absolute top-0 left-1/2"

@@ -1,14 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { HEADER_LOGO_SVG } from './harborLogo'
 import { GIFS, gifMs, useGifSrc } from './gifPlay'
-import { RESUME_URL } from './resumeLink'
+import { RESUME_URL, RESUME_FILE, downloadResume } from './resumeLink'
 
 // The site header, shared by every page (main, About, Trust Bank, GameCove, UTrada, ETO Markets).
 //
 // Layout (Figma main frame 530:5259, header.hdrb): 1440 container, 64px tall, three columns — Harbor logo (78×19) |
 // Projects ▾ (96×24, 8px side padding) · 40px · About me | LinkedIn ↗ (8px to the arrow) · 32px · Resume (40px, 16px
-// side padding). 16/24. v108 (Harbor): Resume opens her CV in a new tab — v114: the PDF on Google Drive; Nov 19: the
-// latest CV PDF, from resumeLink.ts.
+// side padding). 16/24. Resume downloads her CV PDF straight away (Nov 21, Harbor; before: opened it on Google Drive —
+// see resumeLink.ts).
 //
 // Projects menu (Harbor's Figma "Main · Projects menu open" 538:9995; with ETO Markets 776:92): one compact panel,
 // 652×360, centred under the Projects trigger, 8px below the header —
@@ -387,7 +387,7 @@ export function SiteHeaderB({ mode = 'overlay', current, hidden = false, away = 
           </nav>
           <div className="hd-right">
             <a className="hd-link" href={LINKS.linkedin} target="_blank" rel="noreferrer">LinkedIn <ArrowUpRight /></a>
-            <a className="hd-cta" href={LINKS.resume} target="_blank" rel="noreferrer" aria-label="Resume (opens in a new tab)">Resume</a>
+            <a className="hd-cta" href={LINKS.resume} download={RESUME_FILE} onClick={downloadResume} aria-label="Resume (downloads a PDF)">Resume</a>
             <button type="button" className="hd-burger" aria-label={menu ? 'Close menu' : 'Open menu'} aria-expanded={menu} aria-controls="hd-mnav"
               onClick={() => setMenu(v => !v)}>
               <i aria-hidden="true" /><i aria-hidden="true" />

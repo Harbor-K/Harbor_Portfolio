@@ -285,3 +285,37 @@ footer.ft { border-top: 0; box-shadow: inset 0 1px 0 rgba(255,255,255,.08); }
   .hb.e5 .mt64, .hb.e5 .e5-meta { margin-top: 40px !important; }
   .hb.e5 .e5-stack64 { gap: 40px !important; }
 }
+
+/* ================= Laptop and tablet widths (Nov 21, Harbor: "responsive 오류 안 나게 — 채용자들은 데스크탑으로 봐") =================
+   Checked every page at 1920 / 1600 / 1440 / 1280 / 1180 / 1024 / 900 / 768 / 600 / 393 for text running off the screen,
+   text over text, and numbers spilling out of their cards. What was wrong, and the fix:
+   - The chapter rail on the left of the case studies (.stoc, the short dashes) is fixed 16-64px from the screen's edge.
+     The pages' text starts at the 1440 column's edge, which is only clear of the rail from 1600px wide; on 1440 / 1366 /
+     1280 laptops the dashes sat on top of the headings ("Impact", "View Website", "TAKEAWAYS"). It now shows only
+     where it has its own margin (1600px and wider). The chapter meter in the header still gives the contents.
+   - Trust Bank's Impact row (23/30 · 85 · 6/6) had fixed 355 + 356px columns, so under ~1200px it ran off the right edge.
+     Its columns now share the space, and the 370px label column lets its right side shrink; from 768 to 1023px the
+     label sits above its text (as on phones) so the three numbers keep their room.
+   - ETO Markets' result cards: at 901-1279px the 56px number ("77% fewer") filled the whole card and the 9 red squares
+     ran 33px out of it. The number is 44/52 there, and the squares narrow to fit (never wider than their 20px). */
+@media (max-width: 1599px) {
+  .hb .stoc { display: none !important; }
+}
+
+/* Trust Bank: label | text rows and the Impact numbers */
+@media (min-width: 640px) {
+  .hb.tb main [class*="sm:grid-cols-[355px_356px_1fr]"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 768px) {
+  .hb.tb main [class*="md:grid-cols-[370px_1fr]"] { grid-template-columns: 370px minmax(0, 1fr); }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  .hb.tb main [class*="md:grid-cols-[370px_1fr]"] { grid-template-columns: minmax(0, 1fr); row-gap: 16px; }
+}
+
+/* ETO Markets: result cards */
+.hb.e5 .e5-rcard .sq { flex: 0 1 auto; min-width: 0; }
+.hb.e5 .e5-rcard .sq i { flex: 0 1 20px; min-width: 4px; }
+@media (min-width: 901px) and (max-width: 1279px) {
+  .hb.e5 .e5-rcard .big { font-size: 44px; line-height: 52px; }
+}

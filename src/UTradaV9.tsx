@@ -3,6 +3,7 @@ import { CSS } from './portfolio'
 import { SideToc, useHeadroom } from './CaseNav'
 import { SiteHeaderB } from './SiteHeaderB'
 import { CaseFilm, useCaseIntro } from './CaseFilm'
+import { StakeholderCheck } from './UTradaCheck'
 
 /**
  * UTrada case study v9 (Nov 21, Harbor: "이 디자인으로 수정해줘, 인터렉션도 좀 넣고").
@@ -26,12 +27,13 @@ import { CaseFilm, useCaseIntro } from './CaseFilm'
  *   (click in to scroll them; "Open ↗" opens the real page); 03 is a working copy of the help chat (nothing is sent).
  * - Documentation: static cards. Decorative hover lifts and zooms were removed site-wide on this page (Nov 22).
  * - Deliver: the bars grow and count, "13" counts up; pointing at a month dims the others.
- * - Test: the action line draws, then "Today" moves across the line to "Redesign".
+ * - Test: the stakeholder check (UTradaCheck.tsx: who replied, the questions, what I heard); the action line draws, then
+ *   "Today" moves across the line to "Redesign".
  * Small screens: ≤ 1023px stacks the two-column blocks; the network and charts scale or scroll sideways; ≤ 600px uses the
  * site's phone type scale.
  * Assets: Harbor-K/harbor-pf assets/utrada/v3 (logo, film), v7 (exported from the earlier Figma frame at 2x) and v9 (the
- * Documentation pictures and stakeholder photos, Figma 2139:544 / 2133:17788). If a DOC_IMG / PEOPLE_IMG entry is empty,
- * the card shows its plain panel and the chip a person icon.
+ * Documentation pictures and stakeholder photos, Figma 2139:544 / 2133:17788). If a DOC_IMG entry is empty, the card
+ * shows its plain panel.
  */
 
 const A3 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/utrada/v3/'
@@ -55,8 +57,7 @@ const IMG = {
 const A9 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/utrada/v9/'
 // new in v9 (Figma 2139:544): Brand guide, Developer spec, Language sheet
 const DOC_IMG: string[] = [A9 + 'doc-brand.webp', A9 + 'doc-spec.webp', A9 + 'doc-language.webp']
-// new in v9 (Figma 2133:17788): the four stakeholder photos — named "Photo (illustrative)" in the frame
-const PEOPLE_IMG: string[] = [1, 2, 3, 4].map(n => A9 + `person-${n}.webp`)
+// the stakeholder check (people, questions, replies) lives in UTradaCheck.tsx (Nov 22)
 
 const SITE = 'https://utrada.com'
 const FILM_LABEL = 'UTrada intro film: a trader at night wonders whether a new broker with no reviews is safe, checks the regulations page, the legal documents, the trading accounts and the help chat, then signs up. Ends on: UTrada, trust before the first deposit.'
@@ -195,8 +196,6 @@ const RELEASES = [
   { m: 'Mar 2025', n: 1, items: ['Account page fix'] },
   { m: 'Oct 2025', n: 2, items: ['Legal documents fix', 'Contact button'] },
 ]
-const PEOPLE = ['Business Operations · UTrada', 'Marketing · UTrada', 'Marketing · UTrada', 'Customer support · another broker']
-const ASKED = ['1. What do new traders ask before their first deposit?', '2. Where do they stop?', '3. Do my 5 moments match what you see?']
 const TASKS = [
   { k: 'Task 1 · Easy to verify', t: 'Find who regulates UTrada and its licence number.' },
   { k: 'Task 2 · A real company behind it', t: 'Find the company you’d actually sign with.' },
@@ -796,21 +795,7 @@ export function UTradaV9() {
               <h3 className="u9-h2">Checked with people who hear traders every day</h3>
               <p className="u9-body w760">I asked four stakeholders who work closely with new traders every day: three of my UTrada colleagues and a support agent at another broker.</p>
             </div>
-            <div className="u9-check mt96">
-              <div className="sh" data-r><h4>Stakeholder check · Nov 2026</h4><span className="pill pu">In progress</span></div>
-              <ul className="who" data-r>
-                {PEOPLE.map((p, i) => (
-                  <li key={i} style={d(i)}>
-                    <span className="ph">{PEOPLE_IMG[i] ? <img src={PEOPLE_IMG[i]} alt="" width={48} height={48} loading="lazy" decoding="async" /> : <PersonIcon />}</span>
-                    <span>{p}</span>
-                  </li>
-                ))}
-              </ul>
-              <div className="asked" data-r>
-                <p className="k">What I asked</p>
-                {ASKED.map(a => <p key={a}>{a}</p>)}
-              </div>
-            </div>
+            <StakeholderCheck />
             <div className="u9-check mt96">
               <div className="sh" data-r><h4>Next: test with first-time traders</h4><span className="pill grey">Planned</span></div>
               <p className="u9-body mute" data-r>5 first-time traders · 3 tasks · trust score before and after (1 to 5)</p>

@@ -17,15 +17,14 @@ import { CaseFilm, useCaseIntro } from './CaseFilm'
  *
  * Interactions:
  * - Hero: the opening film fills the screen, then settles under the headline (CaseFilm.tsx; skipped on phones).
- * - Overview: the three numbers count up.
- * - Process: Figma's motion (2133:17058–17076) — the four steps rise one after another (0.5s apart), then their bars
- *   grow; pointing at a step lifts it.
- * - Discover: the network builds node by node and its dotted lines flow; pointing at the Regulator lights the licensed
- *   company and dims the unlicensed one. "2024" counts up from 2018. Research photos drift on hover. The check table's
+ * - Overview: the three Impact numbers are static.
+ * - Process: Figma's motion (2133:17058–17076) — the four steps rise one after another (0.5s apart), then their bars grow.
+ * - Discover: the network builds node by node and its dotted lines flow. "2024" counts up from 2018. The check table's
  *   marks pop in row by row.
  * - Define: the HMW highlight sweeps in; the trust line draws; point at (or tap) a stage to read its moment.
- * - Develop: screens slide in from alternating sides; hover magnifier on the screenshots; the help chat opens.
- * - Documentation: cards lift and their pictures zoom on hover.
+ * - Develop: screens slide in from alternating sides. 01 and 02 show captures of the live UTrada pages in a browser frame
+ *   (click in to scroll them; "Open ↗" opens the real page); 03 is a working copy of the help chat (nothing is sent).
+ * - Documentation: static cards. Decorative hover lifts and zooms were removed site-wide on this page (Nov 22).
  * - Deliver: the bars grow and count, "13" counts up; pointing at a month dims the others.
  * - Test: the action line draws, then "Today" moves across the line to "Redesign".
  * Small screens: ≤ 1023px stacks the two-column blocks; the network and charts scale or scroll sideways; ≤ 600px uses the
@@ -48,7 +47,7 @@ const IMG = {
   ig: A7 + 'logo-ig.png',
   pepperstone: A7 + 'logo-pepperstone.svg',
   utradaLogo: A7 + 'logo-utrada.svg',
-  persona: A7 + 'persona-trader.webp',
+  persona: 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/utrada/v9/persona-trader.webp', // still from the intro film (920 × 591)
   regulations: A7 + 'screen-regulations.webp',
   accounts: A7 + 'screen-accounts.webp',
   takeaways: A7 + 'takeaways-photo.webp',
@@ -119,49 +118,6 @@ function useFit<T extends HTMLElement>(base: number) {
   return [ref, s] as const
 }
 
-/** hover magnifier for images marked data-gzoom (same feel as Trust Bank / GameCove) */
-function useMagnifier(rootRef: React.RefObject<HTMLElement>) {
-  useEffect(() => {
-    const root = rootRef.current
-    if (!root || !matchMedia('(pointer: fine)').matches || reducedMotion()) return
-    type Z = { s: number; ts: number; ox: number; oy: number; tox: number; toy: number }
-    const HOVER_SCALE = 1.8
-    const zooms = new Map<HTMLImageElement, Z>()
-    let active: HTMLImageElement | null = null, raf = 0
-    const local = (img: HTMLImageElement, z: Z | undefined, cx: number, cy: number) => {
-      const r = img.getBoundingClientRect(), s = z?.s ?? 1, ox = z?.ox ?? 0, oy = z?.oy ?? 0
-      const bl = r.left - ox * (1 - s), bt = r.top - oy * (1 - s)
-      return { x: clamp(cx - bl, 0, img.offsetWidth), y: clamp(cy - bt, 0, img.offsetHeight) }
-    }
-    const release = () => { if (active) { const z = zooms.get(active); if (z) z.ts = 1 } active = null }
-    const onMove = (e: PointerEvent) => {
-      const img = (e.target as HTMLElement)?.closest?.('img') as HTMLImageElement | null
-      if (img && root.contains(img) && img.dataset.gzoom === 'true') {
-        if (active !== img) { release(); active = img }
-        let z = zooms.get(img)
-        const p = local(img, z, e.clientX, e.clientY)
-        if (!z) { z = { s: 1, ts: HOVER_SCALE, ox: p.x, oy: p.y, tox: p.x, toy: p.y }; zooms.set(img, z); img.style.transition = 'none'; img.style.willChange = 'transform, clip-path' }
-        z.ts = HOVER_SCALE; z.tox = p.x; z.toy = p.y
-      } else release()
-    }
-    const clear = (img: HTMLImageElement) => { img.style.transform = ''; img.style.transformOrigin = ''; img.style.clipPath = ''; img.style.transition = ''; img.style.willChange = '' }
-    const tick = () => {
-      zooms.forEach((z, img) => {
-        z.s += (z.ts - z.s) * 0.14; z.ox += (z.tox - z.ox) * 0.2; z.oy += (z.toy - z.oy) * 0.2
-        if (z.ts === 1 && z.s < 1.002) { clear(img); zooms.delete(img); return }
-        const w = img.offsetWidth, h = img.offsetHeight, k = 1 - 1 / z.s
-        img.style.transformOrigin = `${z.ox}px ${z.oy}px`
-        img.style.transform = `scale(${z.s})`
-        img.style.clipPath = `inset(${z.oy * k}px ${(w - z.ox) * k}px ${(h - z.oy) * k}px ${z.ox * k}px)`
-      })
-      raf = requestAnimationFrame(tick)
-    }
-    raf = requestAnimationFrame(tick)
-    addEventListener('pointermove', onMove, { passive: true }); document.addEventListener('mouseleave', release)
-    return () => { cancelAnimationFrame(raf); removeEventListener('pointermove', onMove); document.removeEventListener('mouseleave', release); zooms.forEach((_, img) => clear(img)); zooms.clear() }
-  }, [rootRef])
-}
-
 function Label({ children, tone }: { children: string; tone?: 'light' | 'night' | 'dim' }) {
   return <div className={'u9-label' + (tone ? ' ' + tone : '')}><i aria-hidden="true" />{children}</div>
 }
@@ -220,9 +176,9 @@ const RISK: { r: Risk; h: number }[] = [{ r: 'high', h: 48 }, { r: 'high', h: 48
 const RISK_TAG: Record<Risk, string> = { highest: '▼ Highest risk of leaving', high: '▼ High risk of leaving', medium: 'Medium risk of leaving', low: '▲ Low risk of leaving' }
 
 const PANELS = [
-  { label: '01 · Regulations page', status: 'Live today', t: 'Licence details in one plain sentence', why: 'A new name has no track record. The licence is the proof people can check.', img: IMG.regulations,
+  { label: '01 · Regulations page', status: 'Live today', t: 'Licence details in one plain sentence', why: 'A new name has no track record. The licence is the proof people can check.', live: 'https://www.utrada.com/en/company/regulations', shot: A9 + 'live-regulations.webp', shotH: 3010, img: IMG.regulations,
     alt: 'UTrada Regulations page: Financial Services Commission, Mauritius, with its logo and one plain sentence naming UTrada Global Limited and its licence number, then Labuan Financial Services Authority' },
-  { label: '02 · Account comparison', status: 'Reworked · Mar 2025', t: 'Three accounts, same rows, price first', why: 'First-time traders can’t compare spreads and fees in their head.', img: IMG.accounts,
+  { label: '02 · Account comparison', status: 'Reworked · Mar 2025', t: 'Three accounts, same rows, price first', why: 'First-time traders can’t compare spreads and fees in their head.', live: 'https://www.utrada.com/en/accounts', shot: A9 + 'live-accounts.webp', shotH: 2731, img: IMG.accounts,
     alt: 'UTrada trading accounts page: Ultra, Premium and Standard cards side by side, each starting with its price in pips, then the same rows of commissions, minimum deposit, lot sizes and leverage' },
   { label: '03 · Help & Support', status: 'Fixed · Nov 2024', t: 'Help from every page, even offline', why: 'Before the first deposit, people want to know someone will answer.' },
 ]
@@ -274,16 +230,11 @@ const HeadsetIcon = () => (
 
 /* ---------- Overview ---------- */
 
-function Stat({ n, l, on }: { n: number; l: string; on: boolean }) {
-  const v = useCount(n, on)
-  return <div className="st"><p className="n" aria-label={String(n)}>{v}</p><p className="l">{l}</p></div>
-}
 function Impact() {
-  const [ref, on] = useShownOnce<HTMLDivElement>(0.4)
   return (
-    <div className="u9-row" ref={ref}>
+    <div className="u9-row">
       <h3 className="u9-rt">Impact</h3>
-      <div className="u9-stats">{IMPACT.map(s => <Stat key={s.l} {...s} on={on} />)}</div>
+      <div className="u9-stats">{IMPACT.map(x => <div className="st" key={x.l}><p className="n">{x.n}</p><p className="l">{x.l}</p></div>)}</div>
     </div>
   )
 }
@@ -318,10 +269,9 @@ function Process() {
 function Network() {
   const [fit, s] = useFit<HTMLDivElement>(856)
   const [ref, on] = useShownOnce<HTMLDivElement>(0.3)
-  const [reg, setReg] = useState(false)
   return (
     <div ref={fit} className="u9-netfit" style={{ height: Math.round(688 * s) }}>
-      <div ref={ref} className={'u9-net' + (on ? ' on' : '') + (reg ? ' reg' : '')} style={{ transform: `scale(${s})` }}>
+      <div ref={ref} className={'u9-net' + (on ? ' on' : '')} style={{ transform: `scale(${s})` }}>
         <svg className="lines" viewBox="0 0 402 322" aria-hidden="true">
           <path className="ln" style={d(2)} d="M1 161H121" />
           <path className="ln" style={d(2)} d="M281 161H401" />
@@ -333,9 +283,7 @@ function Network() {
         <div className="nd av" style={{ ...d(1), left: 628, top: 256 }}><PersonIcon /></div>
         <span className="lb" style={{ ...d(1), left: 180, top: 216 }}>Trader</span>
         <span className="lb" style={{ ...d(1), left: 676, top: 216 }}>Introducing Broker (IB)</span>
-        <button type="button" className="nd box regu" style={{ ...d(3), left: 380, top: 48 }} aria-pressed={reg}
-          onMouseEnter={() => setReg(true)} onMouseLeave={() => setReg(false)} onFocus={() => setReg(true)} onBlur={() => setReg(false)} onClick={() => setReg(v => !v)}
-          aria-label="Regulator: shows which of UTrada’s two companies it licenses"><BankIcon /></button>
+        <div className="nd box" style={{ ...d(3), left: 380, top: 48 }}><BankIcon /></div>
         <span className="lb left" style={{ ...d(3), left: 500, top: 72 }}>Regulator</span>
         <div className="nd box co ok" style={{ ...d(4), left: 260, top: 464 }}><BuildingIcon /></div>
         <div className="nd box co no" style={{ ...d(4), left: 500, top: 464 }}><BuildingIcon /></div>
@@ -457,21 +405,92 @@ function HmwLine() {
 
 /* ---------- Develop ---------- */
 
+/** a page of the live UTrada site in a browser frame: a top-to-bottom capture of its key part (Nov 22, 2026), scrolled
+ *  inside the frame. A capture rather than the live page, because the live page opens with a cookie notice that can't be
+ *  dismissed inside a frame. Wheel and touch stay with the case study until the visitor clicks in, so the frame never
+ *  traps page scrolling; "Open ↗" opens the real page. */
+function SiteShot({ url, src, h, alt }: { url: string; src: string; h: number; alt: string }) {
+  const [active, setActive] = useState(false)
+  const host = url.replace(/^https?:\/\/(www\.)?/, '')
+  return (
+    <div className="u9-live" onMouseLeave={() => setActive(false)}>
+      <div className="bar">
+        <span className="dots" aria-hidden="true"><i /><i /><i /></span>
+        <span className="url">{host}</span>
+        <a href={url} target="_blank" rel="noopener noreferrer">Open ↗<span className="sr-only"> (opens the live page in a new tab)</span></a>
+      </div>
+      <div className={'view' + (active ? ' on' : '')}>
+        <div className="sc" tabIndex={active ? 0 : -1} aria-label={'Capture of ' + host + ', scrollable'}>
+          <img src={src} width={1568} height={h} alt={alt} loading="lazy" decoding="async" />
+        </div>
+        {!active && (
+          <button type="button" className="cover" onClick={() => setActive(true)} aria-label={'Scroll the capture of ' + host}>
+            <span>Click to scroll the page</span>
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/** the help chat, rebuilt from the live site: it works like the real one, but nothing leaves the page */
 function HelpChat() {
   const [ref, on] = useShownOnce<HTMLDivElement>(0.4)
+  const [step, setStep] = useState<'form' | 'chat'>('form')
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [err, setErr] = useState('')
+  const [msgs, setMsgs] = useState<string[]>([])
+  const [draft, setDraft] = useState('')
+  const body = useRef<HTMLDivElement>(null)
+  const nameIn = useRef<HTMLInputElement>(null)
+  const draftIn = useRef<HTMLInputElement>(null)
+  const emailIn = useRef<HTMLInputElement>(null)
+  useEffect(() => { const b = body.current; if (b && step === 'chat') b.scrollTop = b.scrollHeight }, [msgs, step])
+  const start = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!name.trim()) { setErr('Please enter your name.'); nameIn.current?.focus(); return }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setErr('Please enter a valid e-mail.'); emailIn.current?.focus(); return }
+    setErr(''); setStep('chat'); setTimeout(() => draftIn.current?.focus({ preventScroll: true }), 50)
+  }
+  const send = (e: React.FormEvent) => {
+    e.preventDefault()
+    const t = draft.trim(); if (!t) return
+    setMsgs(m => [...m, t]); setDraft('')
+  }
+  const back = () => { setStep('form'); setMsgs([]); setDraft(''); setErr('') }
   return (
-    <div ref={ref} className={'u9-help' + (on ? ' on' : '')} role="img"
-      aria-label="UTrada help chat, rebuilt from the live site: “We're away at the moment. Leave a message, and we'll reply by email.” Then a short form for name and e-mail and a Start the chat button.">
-      <div className="w" aria-hidden="true">
-        <div className="top"><span>←</span><span>•••</span></div>
-        <div className="away"><span className="av">UT</span><p>We’re away at the moment.<br />Leave a message, and we’ll<br />reply by email.</p></div>
-        <div className="form">
-          <p>Let’s chat! Fill in a few details to get started.</p>
-          <p>Name:</p><i className="in" />
-          <p>E-mail:</p><i className="in" />
-          <span className="go">Start the chat</span>
+    <div ref={ref} className={'u9-help' + (on ? ' on' : '')} role="group" aria-label="Demo of UTrada’s help chat. Nothing you type is sent.">
+      <div className="w">
+        <div className="top">
+          <button type="button" onClick={back} disabled={step === 'form'} aria-label="Back to the form">←</button>
+          <span aria-hidden="true">•••</span>
         </div>
-        <p className="pw">Powered by Text</p>
+        <div className="body" ref={body} aria-live="polite">
+          <div className="away"><span className="av" aria-hidden="true">UT</span><p>We’re away at the moment. Leave a message, and we’ll reply by email.</p></div>
+          {step === 'form' ? (
+            <form className="form" onSubmit={start} noValidate>
+              <p>Let’s chat! Fill in a few details to get started.</p>
+              <label>Name:<input ref={nameIn} value={name} onChange={e => setName(e.target.value)} autoComplete="off" /></label>
+              <label>E-mail:<input ref={emailIn} type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="off" /></label>
+              {err && <p className="err" role="alert">{err}</p>}
+              <button type="submit" className="go">Start the chat</button>
+            </form>
+          ) : (
+            <>
+              <p className="msg them">Thanks, {name.trim()}! Leave your message here and we’ll reply to {email.trim()}.</p>
+              {msgs.map((m, i) => <p className="msg me" key={i}>{m}</p>)}
+              {msgs.length > 0 && <p className="msg them">Got it. We’ll reply by email soon.</p>}
+            </>
+          )}
+        </div>
+        {step === 'chat' && (
+          <form className="compose" onSubmit={send}>
+            <input ref={draftIn} value={draft} onChange={e => setDraft(e.target.value)} placeholder="Write a message" aria-label="Message" autoComplete="off" />
+            <button type="submit" aria-label="Send">↑</button>
+          </form>
+        )}
+        <p className="pw">Powered by Text · demo, nothing is sent</p>
       </div>
     </div>
   )
@@ -558,7 +577,6 @@ export function UTradaV9() {
   const box = useRef<HTMLDivElement>(null)
   const media = useRef<HTMLVideoElement>(null)
   useCaseIntro(introOn, slot, box, media, () => setIntro(false))
-  useMagnifier(root)
 
   // soft block reveal: blocks already on screen come in right away, the rest as they scroll in
   useEffect(() => {
@@ -734,10 +752,8 @@ export function UTradaV9() {
                     <h3>{p.t}</h3>
                     <div className="why"><p className="k">Why</p><p>{p.why}</p></div>
                   </div>
-                  <div className="scr">
-                    {p.img
-                      ? <img src={p.img} alt={p.alt} data-gzoom="true" loading="lazy" decoding="async" />
-                      : <HelpChat />}
+                  <div className={'scr' + (p.live ? ' live' : ' chat')}>
+                    {p.live && p.shot ? <SiteShot url={p.live} src={p.shot} h={p.shotH} alt={p.alt} /> : <HelpChat />}
                   </div>
                 </div>
               ))}
@@ -923,8 +939,6 @@ const U9_CSS = `
 .u9 .u9-steps .bar { display: block; width: 100%; transform: scaleY(0); transform-origin: bottom;
   transition: transform .9s var(--ease), filter .3s ease; transition-delay: calc(var(--d) * .5s + .6s); }
 .u9 .u9-steps.on .bar { transform: none; }
-.u9 .u9-steps .stp:hover .bar { filter: brightness(1.35); }
-.u9 .u9-steps .stp:hover { transform: translateY(-6px); transition-delay: 0s; }
 .u9 .u9-steps .shipped { display: flex; flex-direction: column; gap: 8px; height: 208px; box-sizing: border-box; padding: 24px 24px 0; background: #FFFFFF; white-space: nowrap; overflow: hidden; }
 .u9 .u9-steps .shipped .k { color: var(--pu); }
 .u9 .u9-steps .shipped b { font-size: 24px; font-weight: 700; line-height: 32px; color: #26096B; }
@@ -960,18 +974,12 @@ const U9_CSS = `
 .u9 .u9-net .box { width: 96px; height: 96px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; padding: 0; margin: 0;
   background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .24); color: rgba(255, 255, 255, .85); font: inherit; }
 .u9 .u9-net .box svg { width: 40px; height: 40px; }
-.u9 .u9-net .regu { cursor: pointer; }
-.u9 .u9-net .regu:hover, .u9 .u9-net .regu:focus-visible, .u9 .u9-net.reg .regu { background: rgba(255, 255, 255, .2); border-color: #FFFFFF; outline: none; }
 .u9 .u9-net .lb { white-space: nowrap; font-size: 18px; font-weight: 600; line-height: 24px; color: #FFFFFF; transform: translateX(-50%) scale(.85); }
 .u9 .u9-net.on .lb { transform: translateX(-50%); }
 .u9 .u9-net .lb.left { transform: scale(.85); } .u9 .u9-net.on .lb.left { transform: none; }
 .u9 .u9-net .lb.two { display: flex; flex-direction: column; align-items: center; text-align: center; }
 .u9 .u9-net .lb.two b { font-weight: 600; }
 .u9 .u9-net .lb.two span { font-size: 16px; font-weight: 400; color: rgba(255, 255, 255, .65); }
-/* pointing at the Regulator: the licensed company lights up, the unlicensed one dims */
-.u9 .u9-net.reg .co.ok { background: rgba(255, 255, 255, .22); border-color: #FFFFFF; box-shadow: 0 0 32px rgba(255, 255, 255, .45); }
-.u9 .u9-net.reg .co.no, .u9 .u9-net.reg .lb.no { opacity: .35; }
-.u9 .u9-net.reg .ln.up, .u9 .u9-net.reg .ln.dn { stroke: #FFFFFF; }
 .u9 .u9-netlist { display: none; }
 
 /* research tiles */
@@ -980,7 +988,6 @@ const U9_CSS = `
 .u9 .u9-dash .tile .bg { position: absolute; left: 0; top: 0; width: 100%; height: 320px; object-fit: cover; opacity: .7;
   -webkit-mask-image: linear-gradient(180deg, #000 30%, transparent 100%); mask-image: linear-gradient(180deg, #000 30%, transparent 100%);
   transition: transform 1.6s var(--ease), opacity .6s ease; }
-.u9 .u9-dash .tile:hover .bg { transform: scale(1.06); opacity: .85; }
 .u9 .u9-dash .tile figcaption { position: relative; display: flex; flex-direction: column; gap: 16px; }
 .u9 .u9-dash .tile figcaption b { font-size: 96px; font-weight: 700; line-height: 96px; letter-spacing: -0.04em; white-space: nowrap; }
 .u9 .u9-dash .tile figcaption p { font-size: 20px; line-height: 32px; color: rgba(255, 255, 255, .85); }
@@ -1018,8 +1025,7 @@ const U9_CSS = `
 .u9 .u9-board .who { display: flex; border-bottom: 1px solid rgba(0, 13, 15, .1); }
 .u9 .u9-board .persona { flex: none; width: 560px; display: flex; flex-direction: column; gap: 16px; padding-bottom: 48px; background: var(--night); color: #FFFFFF; }
 .u9 .u9-board .persona .ph { position: relative; height: 360px; overflow: hidden; }
-.u9 .u9-board .persona .ph img { position: absolute; left: 0; top: -9.33%; width: 100%; height: 155.56%; object-fit: cover; transition: transform 2s var(--ease); }
-.u9 .u9-board .persona:hover .ph img { transform: scale(1.04); }
+.u9 .u9-board .persona .ph img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; }
 .u9 .u9-board .persona .ph::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(19, 18, 26, 0) 60%, #13121A 100%); }
 .u9 .u9-board .persona .tx { display: flex; flex-direction: column; gap: 12px; padding: 0 48px; }
 .u9 .u9-board .persona h3 { font-size: 48px; font-weight: 700; line-height: 56px; letter-spacing: -0.03em; }
@@ -1089,10 +1095,8 @@ const U9_CSS = `
 .u9 .u9-board .pc .top b { font-size: 48px; font-weight: 700; line-height: 48px; letter-spacing: -0.03em; color: var(--pu); }
 .u9 .u9-board .pc .vis { flex: none; width: 200px; height: 120px; box-sizing: border-box; border: 1px solid rgba(0, 13, 15, .12); overflow: hidden; }
 .u9 .u9-board .pc .vis img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; transition: transform 1s var(--ease); }
-.u9 .u9-board .pc:hover .vis img { transform: scale(1.08); }
 .u9 .u9-board .pc .vis.ic { display: flex; align-items: center; justify-content: center; background: rgba(138, 43, 227, .06); border-color: rgba(138, 43, 227, .3); }
 .u9 .u9-board .pc .vis.ic svg { width: 48px; height: 48px; transition: transform .6s var(--pop); }
-.u9 .u9-board .pc:hover .vis.ic svg { transform: scale(1.15) rotate(-6deg); }
 .u9 .u9-board .pc h4 { font-size: 24px; font-weight: 700; line-height: 32px; letter-spacing: -0.02em; color: var(--ink2); }
 
 /* develop (2187:544): zigzag panels */
@@ -1109,35 +1113,62 @@ const U9_CSS = `
 .u9 .u9-panels .why { display: flex; flex-direction: column; gap: 8px; }
 .u9 .u9-panels .why .k { font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: rgba(255, 255, 255, .5); }
 .u9 .u9-panels .why p:not(.k) { font-size: 18px; line-height: 28px; color: rgba(255, 255, 255, .72); }
-.u9 .u9-panels .scr { flex: 1; min-width: 0; aspect-ratio: 896 / 480; border: 1px solid rgba(255, 255, 255, .12); overflow: hidden; position: relative; }
-.u9 .u9-panels .scr > img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; cursor: zoom-in; }
-/* the help chat, rebuilt from the live site (2187:593) */
+.u9 .u9-panels .scr { flex: 1; min-width: 0; border: 1px solid rgba(255, 255, 255, .12); overflow: hidden; position: relative; }
+.u9 .u9-panels .scr.chat { aspect-ratio: 896 / 600; min-height: 592px; }
+/* the live page in a frame */
+.u9 .u9-live { display: flex; flex-direction: column; background: #FFFFFF; }
+.u9 .u9-live .bar { display: flex; align-items: center; gap: 16px; height: 40px; padding: 0 16px; background: #1E1B26; border-bottom: 1px solid rgba(255, 255, 255, .12); font-size: 16px; line-height: 24px; }
+.u9 .u9-live .dots { display: flex; gap: 6px; } .u9 .u9-live .dots i { width: 10px; height: 10px; border-radius: 50% !important; background: rgba(255, 255, 255, .24); }
+.u9 .u9-live .url { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: rgba(255, 255, 255, .64); }
+.u9 .u9-live .bar a { color: var(--lav); text-decoration: none; white-space: nowrap; }
+.u9 .u9-live .bar a:hover, .u9 .u9-live .bar a:focus-visible { color: #FFFFFF; text-decoration: underline; }
+.u9 .u9-live .view { position: relative; aspect-ratio: 896 / 600; min-height: 480px; overflow: hidden; background: #0B0B0D; }
+.u9 .u9-live .sc { position: absolute; inset: 0; overflow: hidden; }
+.u9 .u9-live .view.on .sc { overflow-y: auto; }
+.u9 .u9-live .sc:focus-visible { outline: 2px solid var(--lav); outline-offset: -2px; }
+.u9 .u9-live .sc img { display: block; width: 100%; height: auto; }
+.u9 .u9-live .cover { position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: center; padding: 0 0 24px; margin: 0; border: 0; background: transparent; cursor: pointer; font: inherit; }
+.u9 .u9-live .cover span { padding: 8px 16px; border-radius: 999px !important; background: rgba(11, 11, 13, .82); color: #FFFFFF; font-size: 16px; font-weight: 600; line-height: 24px; box-shadow: 0 8px 24px rgba(0, 0, 0, .3); transition: background-color .3s ease; }
+.u9 .u9-live .cover:hover span, .u9 .u9-live .cover:focus-visible span { background: var(--pu); }
+.u9 .u9-live .cover:focus-visible { outline: 2px solid var(--lav); outline-offset: -2px; }
+/* the help chat, rebuilt from the live site (2187:593) — it works, nothing is sent */
 .u9 .u9-help { position: absolute; inset: 0; background: linear-gradient(158deg, #140F1C 7%, #4D1F8C 79%); display: flex; justify-content: center; align-items: center; }
-.u9 .u9-help .w { width: 360px; height: 448px; max-height: calc(100% - 32px); box-sizing: border-box; display: flex; flex-direction: column; gap: 16px; padding: 16px; overflow: hidden;
+.u9 .u9-help .w { flex: none; width: 360px; max-width: calc(100% - 32px); height: 560px; max-height: calc(100% - 32px); box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; padding: 16px; overflow: hidden;
   background: #F6F5FA; border-radius: 16px !important; box-shadow: 0 16px 40px rgba(0, 0, 0, .35); color: #1A1A1F; font-size: 16px; line-height: 24px;
   transform: translateY(40px) scale(.96); opacity: 0; transition: transform .9s var(--pop) .2s, opacity .5s ease .2s; }
 .u9 .u9-help.on .w { transform: none; opacity: 1; }
-.u9 .u9-help .top { display: flex; gap: 8px; }
-.u9 .u9-help .top span { padding: 8px; background: #E0E0E0; border-radius: 16px !important; font-weight: 600; }
+.u9 .u9-help .top { flex: none; display: flex; gap: 8px; }
+.u9 .u9-help .top > * { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; padding: 0; margin: 0; border: 0; background: #E0E0E0; border-radius: 50% !important; font: inherit; font-weight: 600; color: #1A1A1F; }
+.u9 .u9-help .top button { cursor: pointer; transition: background-color .2s ease; }
+.u9 .u9-help .top button:hover:not(:disabled) { background: #CFCFD6; }
+.u9 .u9-help .top button:disabled { cursor: default; color: rgba(26, 26, 31, .35); }
+.u9 .u9-help .body { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; overscroll-behavior: contain; }
 .u9 .u9-help .away, .u9 .u9-help .form { background: #FFFFFF; border: 1px solid #E0E0E0; border-radius: 16px !important; padding: 16px; }
 .u9 .u9-help .away { display: flex; align-items: center; gap: 16px; }
-.u9 .u9-help .away p { white-space: nowrap; }
 .u9 .u9-help .av { flex: none; padding: 8px; border: 1px solid #E0E0E0; border-radius: 24px !important; font-size: 18px; font-weight: 600; line-height: 32px; color: var(--pu); }
 .u9 .u9-help .form { display: flex; flex-direction: column; gap: 8px; }
-.u9 .u9-help .in { display: block; height: 32px; box-sizing: border-box; background: #EDEDED; border: 1px solid #8C8C8C; border-radius: 6px !important; }
-.u9 .u9-help .go { display: block; padding: 8px 0; background: var(--pu); border-radius: 12px !important; color: #FFFFFF; font-weight: 600; text-align: center; transition: background-color .3s ease; }
-.u9 .u9-help:hover .go { background: #7520C7; }
-.u9 .u9-help .pw { color: var(--mute); }
+.u9 .u9-help label { display: flex; flex-direction: column; gap: 4px; }
+.u9 .u9-help input { width: 100%; height: 36px; box-sizing: border-box; padding: 0 8px; background: #EDEDED; border: 1px solid #8C8C8C; border-radius: 6px !important; font: inherit; color: #1A1A1F; }
+.u9 .u9-help input:focus { outline: 2px solid var(--pu); outline-offset: 0; background: #FFFFFF; }
+.u9 .u9-help .err { color: #C62828; }
+.u9 .u9-help .go { display: block; width: 100%; margin-top: 8px; padding: 8px 0; border: 0; background: var(--pu); border-radius: 12px !important; color: #FFFFFF; font: inherit; font-weight: 600; text-align: center; cursor: pointer; transition: background-color .3s ease; }
+.u9 .u9-help .go:hover, .u9 .u9-help .go:focus-visible { background: #7520C7; }
+.u9 .u9-help .msg { max-width: 85%; padding: 8px 12px; border-radius: 16px !important; overflow-wrap: anywhere; }
+.u9 .u9-help .msg.them { align-self: flex-start; background: #FFFFFF; border: 1px solid #E0E0E0; }
+.u9 .u9-help .msg.me { align-self: flex-end; background: var(--pu); color: #FFFFFF; }
+.u9 .u9-help .compose { flex: none; display: flex; gap: 8px; }
+.u9 .u9-help .compose input { height: 40px; background: #FFFFFF; border-color: #C9C9D1; border-radius: 20px !important; padding: 0 16px; }
+.u9 .u9-help .compose button { flex: none; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50% !important; background: var(--pu); color: #FFFFFF; font: inherit; font-weight: 700; cursor: pointer; }
+.u9 .u9-help .compose button:hover { background: #7520C7; }
+.u9 .u9-help .pw { flex: none; color: var(--mute); }
 
 /* documentation (2139:544) */
 .u9 .u9-docsec { background: linear-gradient(0deg, #0D0A17 48%, #13121A 100%); color: #FFFFFF; }
 .u9 .u9-docs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; padding-top: 32px; margin-top: 32px; }
 .u9 .u9-docs .doc { display: flex; flex-direction: column; background: #161126; border: 1px solid rgba(255, 255, 255, .12);
   transition: opacity 1.2s var(--ease), transform .5s var(--ease), border-color .3s ease, box-shadow .5s ease; }
-.u9 .u9-docs .doc.r-in:hover { transform: translateY(-8px); border-color: rgba(204, 184, 250, .5); box-shadow: 0 24px 48px rgba(0, 0, 0, .4); }
 .u9 .u9-docs .vis { height: 288px; overflow: hidden; background: #1F1836; }
 .u9 .u9-docs .vis img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform 1.2s var(--ease); }
-.u9 .u9-docs .doc:hover .vis img { transform: scale(1.06); }
 .u9 .u9-docs .tx { display: flex; flex-direction: column; gap: 16px; padding: 32px; }
 .u9 .u9-docs .tx .k { color: #CCB8FA; letter-spacing: 0; }
 .u9 .u9-docs h3 { font-size: 24px; font-weight: 700; line-height: 32px; }
@@ -1177,7 +1208,6 @@ const U9_CSS = `
 .u9 .u9-check .who { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
 .u9 .u9-check .who li { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #FFFFFF; border: 1px solid var(--line);
   font-size: 16px; font-weight: 500; line-height: 24px; color: var(--ink); transition: border-color .3s ease, transform .4s var(--ease); }
-.u9 .u9-check .who li:hover { border-color: var(--pu); transform: translateY(-3px); }
 .u9 .u9-check .who .ph { flex: none; width: 48px; height: 48px; overflow: hidden; background: #EFEAFD; color: var(--pu); }
 .u9 .u9-check .who .ph img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .u9 .u9-check .who .ph svg { display: block; width: 100%; height: 100%; }
@@ -1188,7 +1218,6 @@ const U9_CSS = `
 .u9 .u9-plan > * { flex: 1; min-width: 0; }
 .u9 .u9-plan .tasks { display: flex; flex-direction: column; gap: 16px; }
 .u9 .u9-plan .tk { display: flex; flex-direction: column; gap: 8px; padding: 24px 32px; border: 1px solid var(--line); transition: background-color .3s ease, border-color .3s ease; }
-.u9 .u9-plan .tk:hover { background: #FFFFFF; border-color: var(--pu); }
 .u9 .u9-plan .tk .k { letter-spacing: .06em; }
 .u9 .u9-plan .tk p:not(.k) { font-size: 18px; line-height: 32px; color: var(--ink); }
 .u9 .u9-plan .ms { display: flex; flex-direction: column; gap: 8px; padding: 24px 32px; background: #F0EBFC; }
@@ -1267,7 +1296,6 @@ const U9_CSS = `
   .u9 .u9-board .who { flex-direction: column; }
   .u9 .u9-board .persona { width: auto; }
   .u9 .u9-board .persona .ph { height: 420px; }
-  .u9 .u9-board .persona .ph img { top: -20%; height: 140%; }
   .u9 .u9-board .pc { padding: 40px 32px; gap: 24px; }
   .u9 .u9-board .pc .vis { width: 160px; height: 96px; }
   .u9 .u9-board .pc .top b { font-size: 40px; line-height: 40px; }
@@ -1338,8 +1366,9 @@ const U9_CSS = `
   .u9 .u9-board .pc { flex-direction: column; align-items: flex-start; padding: 24px; gap: 16px; }
   .u9 .u9-board .pc .top { flex-direction: row; width: 100%; }
   .u9 .u9-board .pc .vis { width: 160px; height: 96px; }
-  .u9 .u9-panels .scr { margin-left: -20px; margin-right: -20px; width: auto; aspect-ratio: auto; height: 300px; }
-  .u9 .u9-panels .scr > img { object-fit: cover; }
+  .u9 .u9-panels .scr { align-self: stretch; margin-left: -20px; margin-right: -20px; width: auto; }
+  .u9 .u9-panels .scr.chat { aspect-ratio: auto; height: 600px; min-height: 0; }
+  .u9 .u9-live .view { aspect-ratio: auto; height: 560px; }
   .u9 .u9-help .w { width: 300px; transform-origin: center; }
   .u9 .u9-docs .vis { height: 220px; }
   .u9 .u9-docs .tx { padding: 24px; }
@@ -1355,9 +1384,6 @@ const U9_CSS = `
   .u9 .u9-take .t { font-size: 28px; line-height: 36px; }
   .u9 .u9-take .dd { margin-top: 32px; font-size: 18px; line-height: 28px; }
   .u9 .u9-next .next-card { padding: 64px 0; }
-}
-@media (hover: none) {
-  .u9 .u9-steps .stp:hover, .u9 .u9-docs .doc.r-in:hover, .u9 .u9-check .who li:hover { transform: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .u9 [data-r], .u9 .u9-steps *, .u9 .u9-net *, .u9 .u9-mx .mk, .u9 .u9-tc *, .u9 .u9-rel *, .u9 .u9-fogg *, .u9 .u9-help * { transition: none !important; animation: none !important; }

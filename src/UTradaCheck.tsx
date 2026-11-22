@@ -1,131 +1,177 @@
-import React from 'react'
+import React, { useState } from 'react'
 
 /**
- * UTrada · Test · Stakeholder check (Nov 22). Lives in its own file so new replies only touch this file.
- * Add a reply: set `replied: true` on the person and add an entry to REPLIES with the same `who` index.
- * The replies are the stakeholder's own words (quotes) and Harbor's summary of them (t / b). Names are not shown, only roles.
- * Photos: Figma's four stakeholder photos are illustrative stock photos. Next to real replies they would read as the real
- * people, so the cards show an icon instead. Set SHOW_PHOTOS to true to bring the photos back.
+ * UTrada · Test (Figma 2293:8684 "Section / Test · Option 7", Nov 22). Lives in its own file so new replies only touch this file.
+ *
+ * StakeholderCheck: one quote card (Mews-style, photo left). Each reply is a card: the stakeholder's own words (quote)
+ * and what the reply confirmed (finding, Harbor's summary). Add a reply: push a card to CARDS. The arrows only work when
+ * there is more than one card; with a single card they are shown disabled.
+ * Photo: illustrative stock photo from the Figma frame, not the real colleague (only the role is shown).
+ *
+ * NextTest: the planned test with first-time traders, as Today vs Redesign for the same three tasks. StakeholderCheck
+ * renders it too, and UC_CSS hides the page's older Fogg plan block (.u9-check in the Test section), so UTradaV9.tsx
+ * did not need to change.
+ * Type and spacing are Figma's (Inter in Figma → Roboto on the site), on the 8px grid; square corners.
  */
 
 const A9 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/utrada/v9/'
-const SHOW_PHOTOS = false
 
-const PEOPLE: { role: string; replied: boolean }[] = [
-  { role: 'Business Operations · UTrada', replied: true },
-  { role: 'Marketing · UTrada', replied: false },
-  { role: 'Marketing · UTrada', replied: false },
-  { role: 'Customer support · another broker', replied: false },
-]
-
-/* the questions as they were sent */
-const ASKED = [
-  'What did new clients ask about the most before the ID check or first deposit?',
-  'Was it mostly licence stuff, which company holds their account, withdrawals, or something else?',
-  'Where did people usually get stuck or drop off?',
-  'I picked 3 moments where people hesitate. Do they feel right to you? Anything I missed?',
-  'Would showing clients which UTrada company their account belongs to have helped? Anything unrealistic about it?',
-]
-
-type Finding = { k: string; t: string; b: string; q?: string }
-const REPLIES: { who: number; findings: Finding[]; take: string[] }[] = [
+type Card = { role: string; photo: string; quote: string; finding: string }
+const CARDS: Card[] = [
   {
-    who: 0,
-    findings: [
-      { k: 'Before the first deposit', t: 'Is my money safe?',
-        b: 'IBs asked about the licences: strong regulation protects their clients’ money and helps them sell the broker. Individual clients asked about withdrawals: how long they take and when the money arrives.',
-        q: 'Ultimately, both groups were mainly concerned about the safety of their funds.' },
-      { k: 'Where they stop', t: 'The first deposit',
-        b: 'One conversation is not enough. Account managers, demo accounts to test trading costs, promotions and a small first deposit to try a withdrawal all play a part.',
-        q: 'Trust cannot be built through just one conversation or communication channel.' },
-      { k: 'The 3 moments', t: 'They made sense, with one gap',
-        b: 'Licences, trading costs and support all came up. What was missing: a page on payment methods and how deposits and withdrawals work.' },
-      { k: 'Showing the company', t: 'Useful, if it is the real one',
-        b: 'Some brokers advertise one licence and sign clients up under an offshore company. The page has to show the company the client actually signs with, and who can sign with it.',
-        q: 'Clearly showing which legal entity holds a client’s account would help build trust and improve transparency.' },
-    ],
-    take: [
-      'Withdrawals belong in the trust story: how long they take and when the money arrives.',
-      'A fourth moment to explore: a payments page with methods and deposit and withdrawal times.',
-      'The company screen shows the company the account is really opened with, and who is eligible.',
-    ],
+    role: 'Business Operations · UTrada',
+    photo: A9 + 'person-1.webp', // 192px placeholder; swap for a 2x export of Figma 2293:8693 (stakeholder-1.webp)
+    quote: 'Trust cannot be built through just one conversation or communication channel.',
+    finding: 'It confirmed the first deposit as the biggest drop-off. The moments I picked held up, with one gap: how payments and withdrawals work.',
   },
 ]
 
-const Person = () => (
-  <svg viewBox="0 0 96 96" fill="none" aria-hidden="true">
-    <path d="M61 38C61 45.18 55.18 51 48 51C40.82 51 35 45.18 35 38C35 30.82 40.82 25 48 25C55.18 25 61 30.82 61 38Z" stroke="currentColor" strokeWidth="3" />
-    <path d="M24 74C26.5 61 36 55 48 55C60 55 69.5 61 72 74" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+const TASKS = [
+  { k: 'Task 1 · Licence', today: 'Licence shown for only one of the two companies.', redo: 'Regulator and licence number in one plain sentence.' },
+  { k: 'Task 2 · Company', today: 'Not clear which company your account is with.', redo: 'The company you sign with, named before sign-up.' },
+  { k: 'Task 3 · Help', today: 'Hard to find help before adding money.', redo: 'Help from every page, even offline.' },
+]
+
+const Chevron = ({ dir }: { dir: 'l' | 'r' }) => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+    <path d={dir === 'l' ? 'M12 15L7 10L12 5' : 'M8 5L13 10L8 15'} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 )
-const d = (n: number) => ({ '--d': n } as React.CSSProperties)
+const QuoteMark = () => (
+  <svg className="qm" width="64" height="48" viewBox="0 0 64 48" fill="none" aria-hidden="true">
+    <path d="M36 0H64V24C64 37.25 55.5 46 42 48V38C49 36.5 52 32 52 26H36V0Z" fill="currentColor" />
+    <path d="M0 0H28V24C28 37.25 19.5 46 6 48V38C13 36.5 16 32 16 26H0V0Z" fill="currentColor" />
+  </svg>
+)
 
 export function StakeholderCheck() {
-  const n = PEOPLE.filter(p => p.replied).length
+  const [i, setI] = useState(0)
+  const many = CARDS.length > 1
+  const c = CARDS[i]
+  const go = (step: number) => setI(v => (v + step + CARDS.length) % CARDS.length)
   return (
-    <div className="u9-check uc mt96">
+    <>
+    <div className="uc mt96" data-r>
       <style>{UC_CSS}</style>
-      <div className="sh" data-r><h4>Stakeholder check · Nov 2026</h4><span className="pill pu">{n} of {PEOPLE.length} replied</span></div>
-      <ul className="who" data-r>
-        {PEOPLE.map((p, i) => (
-          <li key={i} style={d(i)} className={p.replied ? 'on' : undefined}>
-            <span className="ph">{SHOW_PHOTOS ? <img src={A9 + `person-${i + 1}.webp`} alt="" width={48} height={48} loading="lazy" decoding="async" /> : <Person />}</span>
-            <span className="tx"><span>{p.role}</span><span className="st">{p.replied ? 'Replied' : 'Waiting for reply'}</span></span>
-          </li>
-        ))}
-      </ul>
-      <div className="asked" data-r>
-        <p className="k">What I asked</p>
-        <ol>{ASKED.map((a, i) => <li key={i}><b>{i + 1}.</b>{a}</li>)}</ol>
-      </div>
-      {REPLIES.map(r => (
-        <div key={r.who} className="uc-reply" data-r>
-          <p className="k">What I heard · {PEOPLE[r.who].role}</p>
-          <div className="uc-grid">
-            {r.findings.map((f, i) => (
-              <div key={f.k} className="uc-f" style={d(i)}>
-                <p className="fk">{f.k}</p>
-                <h5>{f.t}</h5>
-                <p className="fb">{f.b}</p>
-                {f.q && <blockquote>“{f.q}”</blockquote>}
-              </div>
-            ))}
+      <figure className="uc-card" aria-roledescription="carousel" aria-label="What stakeholders said">
+        <div className="uc-ph">
+          <img key={c.photo} src={c.photo} alt="" loading="lazy" decoding="async" />
+        </div>
+        <div className="uc-panel" key={i}>
+          <div className="top">
+            <blockquote>“{c.quote}”</blockquote>
+            <p className="finding">{c.finding}</p>
           </div>
-          <div className="uc-take">
-            <p className="k">What I’m taking from it</p>
-            <ul>{r.take.map(t => <li key={t}>{t}</li>)}</ul>
+          <div className="bot">
+            <div className="who">
+              <figcaption>{c.role}</figcaption>
+              <div className="uc-nav">
+                <button type="button" onClick={() => go(-1)} disabled={!many} aria-label="Previous stakeholder"><Chevron dir="l" /></button>
+                <button type="button" onClick={() => go(1)} disabled={!many} aria-label="Next stakeholder"><Chevron dir="r" /></button>
+              </div>
+            </div>
+            <QuoteMark />
           </div>
         </div>
-      ))}
+      </figure>
+    </div>
+    <NextTest />
+    </>
+  )
+}
+
+export function NextTest() {
+  return (
+    <div className="uc-next mt96">
+      <div className="sh" data-r><h4>Next: test with 5 first-time traders</h4><span className="pill grey">Planned</span></div>
+      <p className="hyp" data-r>My hypothesis (Fogg Behavior Model): the worry at the first deposit stays the same, but if checking is easy, people act.</p>
+      <div className="cmp" data-r>
+        {(['today', 'redo'] as const).map(side => (
+          <div key={side} className={'side ' + side}>
+            <div className="hd">
+              <p className="lab"><i aria-hidden="true" />{side === 'today' ? 'Today' : 'Redesign'}</p>
+              <h5>{side === 'today' ? 'Hard to check' : 'Easy to check'}</h5>
+            </div>
+            <ul>
+              {TASKS.map(t => (
+                <li key={t.k}>
+                  <span className="mk" aria-hidden="true">{side === 'today' ? '×' : '✓'}</span>
+                  <span className="tx"><span className="k">{t.k}</span><span className="v">{side === 'today' ? t.today : t.redo}</span></span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+      <p className="ms" data-r>I’ll measure: did they see it · could they do it, and how fast · trust score before and after (1 to 5)</p>
     </div>
   )
 }
 
 const UC_CSS = `
-.u9 .uc .who li { align-items: center; }
-.u9 .uc .who .tx { display: flex; flex-direction: column; min-width: 0; font-size: 16px; line-height: 24px; color: var(--ink); }
-.u9 .uc .who .st { color: var(--mute); }
-.u9 .uc .who li.on { border-color: var(--pu); }
-.u9 .uc .who li.on .st { color: var(--pu); font-weight: 500; }
-.u9 .uc .who li:not(.on) .ph { background: #F2F2F5; color: var(--mute); }
-.u9 .uc .asked ol { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.u9 .uc .asked ol li { display: flex; gap: 8px; font-size: 18px; line-height: 32px; color: var(--ink); }
-.u9 .uc .asked ol b { flex: none; width: 24px; font-weight: 500; color: var(--mute); }
-.u9 .uc-reply { display: flex; flex-direction: column; gap: 24px; padding: 32px; background: #FFFFFF; border: 1px solid var(--line); }
-.u9 .uc-reply > .k, .u9 .uc-take .k { color: var(--pu); letter-spacing: 0; }
-.u9 .uc-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-.u9 .uc-f { display: flex; flex-direction: column; gap: 8px; padding: 24px; border: 1px solid var(--line3);
-  opacity: 0; transform: translateY(16px); transition: opacity .5s ease calc(var(--d, 0) * 90ms), transform .7s cubic-bezier(.22,1,.36,1) calc(var(--d, 0) * 90ms); }
-.u9 .uc-reply.r-in .uc-f { opacity: 1; transform: none; }
-.u9 .uc-f .fk { font-size: 16px; font-weight: 500; line-height: 24px; letter-spacing: .06em; color: var(--mute); }
-.u9 .uc-f h5 { margin: 0; font-size: 24px; font-weight: 700; line-height: 32px; color: var(--ink2); }
-.u9 .uc-f .fb { font-size: 18px; line-height: 30px; color: var(--ink); }
-.u9 .uc-f blockquote { margin: 8px 0 0; padding: 4px 0 4px 16px; border-left: 2px solid var(--pu); font-size: 18px; font-style: italic; line-height: 30px; color: var(--ink2); }
-.u9 .uc-take { display: flex; flex-direction: column; gap: 8px; padding: 24px 32px; background: #F0EBFC; }
-.u9 .uc-take ul { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.u9 .uc-take li { position: relative; padding-left: 20px; font-size: 18px; font-weight: 600; line-height: 32px; color: var(--ink); }
-.u9 .uc-take li::before { content: ""; position: absolute; left: 0; top: 13px; width: 8px; height: 8px; background: var(--pu); }
-@media (max-width: 1023px) { .u9 .uc-grid { grid-template-columns: minmax(0, 1fr); } }
-@media (max-width: 700px) { .u9 .uc-reply { padding: 24px; } .u9 .uc-take { padding: 24px; } .u9 .uc-f { padding: 20px; } }
-@media (prefers-reduced-motion: reduce) { .u9 .uc-f { opacity: 1 !important; transform: none !important; transition: none !important; } }
+/* the older Fogg plan block in UTradaV9's Test section is replaced by NextTest */
+.u9 section[data-chapter="Test"] .u9-check { display: none; }
+
+/* quote card (2293:8692): photo 576 | panel, 600 tall */
+.u9 .uc-card { display: flex; min-height: 600px; margin: 0; background: linear-gradient(90deg, #330099, #8A2BE3); color: #FFFFFF; }
+.u9 .uc-ph { position: relative; flex: none; width: 40%; overflow: hidden; background: #13121A; }
+.u9 .uc-ph img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; }
+.u9 .uc-panel { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 48px; padding: 64px; animation: uc-in .6s ease; }
+@keyframes uc-in { from { opacity: 0; } }
+.u9 .uc-panel .top { display: flex; flex-direction: column; gap: 24px; }
+.u9 .uc-panel blockquote { margin: 0; font-size: 48px; font-weight: 600; line-height: 56px; letter-spacing: -0.02em; color: #FFFFFF; }
+.u9 .uc-panel .finding { font-size: 18px; line-height: 32px; color: rgba(255, 255, 255, .8); }
+.u9 .uc-panel .bot { display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; }
+.u9 .uc-panel .who { display: flex; flex-direction: column; gap: 32px; }
+.u9 .uc-panel figcaption { font-size: 18px; font-weight: 600; line-height: 24px; }
+.u9 .uc-panel .uc-nav { display: flex; gap: 16px; margin: 0; padding: 0; }
+.u9 .uc-panel .uc-nav button { display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; padding: 0; margin: 0;
+  background: transparent; border: 1.5px solid #FFFFFF; color: #FFFFFF; cursor: pointer; }
+.u9 .uc-panel .uc-nav button:disabled { opacity: .4; cursor: default; }
+.u9 .uc-panel .uc-nav button:focus-visible { outline: 2px solid #FFFFFF; outline-offset: 2px; }
+.u9 .uc-panel .qm { flex: none; color: #FFFFFF; }
+
+/* next test (2293:8807): Today vs Redesign */
+.u9 .uc-next { display: flex; flex-direction: column; gap: 32px; }
+.u9 .uc-next .sh { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.u9 .uc-next h4 { font-size: 24px; font-weight: 700; line-height: 32px; color: var(--ink); }
+.u9 .uc-next .hyp { font-size: 20px; line-height: 32px; color: var(--mute); }
+.u9 .uc-next .cmp { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px; }
+.u9 .uc-next .side { display: flex; flex-direction: column; gap: 32px; padding: 40px; }
+.u9 .uc-next .today { background: #EDEDF0; }
+.u9 .uc-next .redo { background: #F0EBFC; }
+.u9 .uc-next .hd { display: flex; flex-direction: column; gap: 8px; }
+.u9 .uc-next .lab { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 500; line-height: 24px; color: var(--mute); }
+.u9 .uc-next .lab i { flex: none; width: 10px; height: 10px; background: var(--mute); }
+.u9 .uc-next .redo .lab { color: var(--pu); } .u9 .uc-next .redo .lab i { background: var(--pu); }
+.u9 .uc-next h5 { margin: 0; font-size: 32px; font-weight: 700; line-height: 40px; color: var(--mute); }
+.u9 .uc-next .redo h5 { color: var(--ink); }
+.u9 .uc-next ul { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.u9 .uc-next li { display: flex; gap: 16px; padding: 24px; background: #FFFFFF; }
+.u9 .uc-next .mk { flex: none; width: 16px; font-size: 18px; font-weight: 700; line-height: 28px; color: #DE3345; }
+.u9 .uc-next .redo .mk { color: var(--pu); }
+.u9 .uc-next .tx { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.u9 .uc-next .k { font-size: 16px; font-weight: 500; line-height: 24px; letter-spacing: 0; color: var(--mute); }
+.u9 .uc-next .v { font-size: 18px; line-height: 28px; color: var(--mute); }
+.u9 .uc-next .redo .v { color: var(--ink); }
+.u9 .uc-next .ms { font-size: 18px; font-weight: 500; line-height: 32px; color: var(--ink); }
+
+@media (max-width: 1279px) {
+  .u9 .uc-panel blockquote { font-size: 40px; line-height: 48px; }
+}
+@media (max-width: 1023px) {
+  .u9 .uc-card { flex-direction: column; min-height: 0; }
+  .u9 .uc-ph { width: 100%; aspect-ratio: 4 / 3; }
+  .u9 .uc-panel { padding: 40px; }
+  .u9 .uc-next .cmp { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 600px) {
+  .u9 .uc-panel { padding: 24px; gap: 32px; }
+  .u9 .uc-panel blockquote { font-size: 28px; line-height: 36px; }
+  .u9 .uc-panel .qm { width: 48px; height: 36px; }
+  .u9 .uc-next .side { padding: 24px; }
+  .u9 .uc-next h5 { font-size: 24px; line-height: 32px; }
+  .u9 .uc-next .hyp { font-size: 18px; line-height: 28px; }
+}
+@media (prefers-reduced-motion: reduce) { .u9 .uc-panel { animation: none; } }
 `

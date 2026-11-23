@@ -13,7 +13,10 @@ import { CaseFilm, useCaseIntro } from './CaseFilm'
  * research photos sit on a dark board; Define shows three rule cards with small wireframes flowing into one question;
  * the IB dashboard shows the 22 redesigned pages as a moving stack and the portal menu changing from 2022 to the redesign.
  * Kept from v5 (Harbor: keep the AS-IS → TO-BE section as it was): "Same data, new order" and its pinned slider, plus the
- * old-portal pins, prototype, results, takeaways and next.
+ * old-portal pins, results, takeaways and next.
+ * Nov 23 (Harbor): no inner scrollbars (the sheet and the menu canvas scale to fit), the menu change pins and plays
+ * over a longer scroll, the CRM core shows the ETO logo with "CRM · one portal", and Prototype is the Figma's
+ * browser + phone with the live Figma prototypes (Figma 2341:527; posters in assets/eto/v8).
  *
  * Interactions: the CRM flows and Define's flows draw in when they scroll into view; the page stack pans with the scroll
  * (the Figma loops it every 16 s); the menu changes one step at a time as you scroll (before → new menu → columns move →
@@ -30,15 +33,16 @@ const IMG = {
   video: A3 + 'intro-v6.mp4',
   poster: A3 + 'intro-v6-poster.jpg',
   oldPortal: A5 + 'old-portal.webp',
-  protoDesktop: A3 + 'proto-desktop.webp',
-  protoInbox: A3 + 'proto-inbox.webp',
-  protoDeposit: A3 + 'proto-deposit.webp',
   office: A5 + 'takeaways-office.jpg',
 }
 const PROTO = {
-  desktop: 'https://www.figma.com/proto/8FyoH1wVd7m9ZBvUAKwm9o/CRMPage_coding',
-  mobile: 'https://www.figma.com/proto/Epkz6qqltBZ7Gs93TWV5nL/ETO_Application',
+  desktop: 'https://www.figma.com/proto/Vb5QlK9BmCSgonWUFqeWki/CRM-Dashboard?node-id=1386-6239&starting-point-node-id=1386%3A6239&scaling=scale-down-width',
+  mobile: 'https://www.figma.com/proto/Epkz6qqltBZ7Gs93TWV5nL/ETO_Application?node-id=1129-29114&starting-point-node-id=1129%3A29114&scaling=scale-down',
 }
+/** Figma's embed player for a prototype link (loaded only after a click, so the page stays light) */
+const embedUrl = (u: string) => 'https://www.figma.com/embed?embed_host=share&url=' + encodeURIComponent(u)
+const A8 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/eto/v8/'
+const POSTER = { desktop: A8 + 'proto-desktop-poster.jpg', mobile: A8 + 'proto-mobile-poster.jpg' }
 const NEXT = { name: 'Trust Bank', href: '#/trust-bank' }
 const FILM_LABEL = 'ETO Markets intro film: the partner CRM — every account, client, deposit and rebate in order; share a link, sign up, done; system errors down from 60% to 14%. Ends on: a CRM for partners.'
 export const E6_CHAPTERS = ['Overview', 'Context', 'Discover', 'Define', 'IB dashboard', 'Before → After', 'Prototype', 'Results', 'Takeaways']
@@ -150,12 +154,6 @@ const SLIDES: BASlide[] = [
     notes: [{ y: 36.5, t: 'QR and links on their own tab' }, { y: 223.5, t: 'Account table becomes a card' }, { y: 350.5, t: 'Rebate summary in one column' }],
     altB: 'Mobile dashboard in 2022: a cramped account table, the agent registration link and a QR code on one page',
     altA: 'Redesigned mobile dashboard: tabs at the top, the account as a card with balance, equity and margin level, and the rebate summary in one column' },
-]
-
-const STILLS = [
-  { k: 'DESKTOP · MY CLIENTS', src: IMG.protoDesktop, alt: 'Desktop prototype still: the change-leverage dialog over the dashboard' },
-  { k: 'MOBILE · INBOX', src: IMG.protoInbox, alt: 'Mobile prototype still: the inbox with Registration, Deposit and Withdrawal tabs and a client card' },
-  { k: 'MOBILE · DEPOSIT METHODS', src: IMG.protoDeposit, alt: 'Mobile prototype still: the opening screen of the deposit methods flow, a red circuit-board graphic' },
 ]
 
 const RESULTS = [
@@ -283,6 +281,29 @@ function EtoLogo({ white = false, className = '' }: { white?: boolean; className
   )
 }
 
+/** content drawn at a fixed width (w), scaled down to fit its column; the box takes the scaled height, so nothing
+ *  scrolls inside the page (Nov 23, Harbor: no inner scrollbars on the benchmark sheet or the menu canvas) */
+function ScaleW({ w, className = '', children }: { w: number; className?: string; children: React.ReactNode }) {
+  const box = useRef<HTMLDivElement>(null)
+  const inner = useRef<HTMLDivElement>(null)
+  const [k, setK] = useState(1)
+  const [h, setH] = useState<number | undefined>(undefined)
+  useEffect(() => {
+    const el = box.current, inn = inner.current
+    if (!el || !inn) return
+    const set = () => { const kk = Math.min(1, el.clientWidth / w); setK(kk); setH(inn.offsetHeight * kk) }
+    set()
+    const ro = new ResizeObserver(set)
+    ro.observe(el); ro.observe(inn)
+    return () => ro.disconnect()
+  }, [w])
+  return (
+    <div ref={box} className={'e6-scalew ' + className} style={{ height: h }}>
+      <div ref={inner} style={{ width: w, transform: `scale(${k})`, transformOrigin: '0 0' }}>{children}</div>
+    </div>
+  )
+}
+
 /** a fixed-size Figma stage (w × h) scaled down to the width it is given */
 function Fit({ w, h, className = '', children }: { w: number; h: number; className?: string; children: React.ReactNode }) {
   const box = useRef<HTMLDivElement>(null)
@@ -369,9 +390,8 @@ function CrmMap() {
             <ul className="e6-crm-box" aria-label="What the ETO CRM holds: client side, shared, and IB side">
               {CRM_OBJECTS.map(o => o.t === 'CORE' ? (
                 <li key={o.t} className="e6-core">
-                  <EtoLogo white />
-                  <b>ETO CRM</b>
-                  <span>one portal</span>
+                  <EtoLogo white className="lg" />
+                  <span>CRM · one portal</span>
                 </li>
               ) : (
                 <li key={o.t} className={'e6-obj ' + o.side}>
@@ -412,7 +432,7 @@ function Sheet() {
   const [sel, setSel] = useState(0)
   const count = (i: number) => SHEET_ROWS.filter(r => r.m[i] === 'Y').length
   return (
-    <div className="e6-sheet-wrap">
+    <ScaleW w={880} className="e6-sheet-wrap">
       <div className="e6-sheet">
         <div className="fx">
           <span className="nb">{COLS[sel]}12</span><i>fx</i><span className="sep" aria-hidden="true" />
@@ -464,7 +484,7 @@ function Sheet() {
         </table>
         <div className="tabs" aria-hidden="true"><span className="arr">‹&nbsp;&nbsp;&nbsp;›</span><span className="tab on">Benchmark</span><span className="tab">Sheet2</span><span className="plus">+</span></div>
       </div>
-    </div>
+    </ScaleW>
   )
 }
 
@@ -694,30 +714,47 @@ function ScreenStack() {
    2 the columns move to their new places · 3 items and tags come in · 4 the legend. */
 const IA_SHIFT: Record<string, number> = { Download: 378, 'My Clients': -189, 'My Account': -189 }
 
+/* Nov 23 (Harbor): the change was over before the menu was on screen. On wide screens the canvas now pins while you
+   scroll through a taller block, and the five steps are spread over that distance: the 2022 menu shows first, then the
+   new menu rises, the columns move, items and tags come in, then the legend. Narrow screens step as it scrolls past. */
+const IA_PIN_Q = '(min-width: 1024px) and (min-height: 640px)'
 function IaMotion() {
   const ref = useRef<HTMLDivElement>(null)
+  const pin = useRef<HTMLDivElement>(null)
   const [step, setStep] = useState(() => (reducedMotion() ? 4 : 0))
+  const [pinned, setPinned] = useState(false)
   useEffect(() => {
     if (reducedMotion()) return
+    const mq = matchMedia(IA_PIN_Q)
+    const sync = () => setPinned(mq.matches)
+    sync(); mq.addEventListener('change', sync)
     let raf = 0
     const run = () => {
       raf = 0
-      const el = ref.current; if (!el) return
-      const r = el.getBoundingClientRect()
-      const t = (innerHeight * 0.9 - r.top) / (innerHeight * 0.75) // 0 when its top is near the bottom of the screen
-      const s = t < 0.12 ? 0 : t < 0.34 ? 1 : t < 0.52 ? 2 : t < 0.7 ? 3 : 4
+      const outer = pin.current, el = ref.current; if (!outer || !el) return
+      let t: number
+      if (mq.matches) {
+        const r = outer.getBoundingClientRect()
+        const travel = outer.offsetHeight - innerHeight
+        t = travel > 0 ? -r.top / travel : 1 // 0 when the block pins, 1 when it lets go
+      } else {
+        const r = el.getBoundingClientRect()
+        t = (innerHeight * 0.8 - r.top) / (innerHeight * 0.9)
+      }
+      const s = t < 0.08 ? 0 : t < 0.3 ? 1 : t < 0.52 ? 2 : t < 0.74 ? 3 : 4
       setStep(v => (v === s ? v : s))
     }
     const on = () => { if (!raf) raf = requestAnimationFrame(run) }
     run()
     addEventListener('scroll', on, { passive: true }); addEventListener('resize', on)
-    return () => { if (raf) cancelAnimationFrame(raf); removeEventListener('scroll', on); removeEventListener('resize', on) }
+    return () => { if (raf) cancelAnimationFrame(raf); removeEventListener('scroll', on); removeEventListener('resize', on); mq.removeEventListener('change', sync) }
   }, [])
   const tag = (t: Tag, i: number) => <span className={'e5-tag t-' + t.toLowerCase()} style={{ '--d': `${i * 90}ms` } as React.CSSProperties}>{t}</span>
   let ti = 0
   return (
-    <div ref={ref} className={'e6-ia s' + step} data-r>
-      <div className="e6-ia-scroll">
+    <div ref={pin} className={'e6-ia-pin' + (pinned ? ' on' : '')}>
+    <div ref={ref} className={'e6-ia s' + step}>
+      <ScaleW w={1440} className="e6-ia-scroll">
         <Canvas className="e6-ia-c">
           <div className="lab before" aria-hidden={step >= 1}>BEFORE · 2022 PORTAL</div>
           <div className="lab after" aria-hidden={step < 1}>AFTER · REDESIGN</div>
@@ -740,8 +777,47 @@ function IaMotion() {
             {TAG_LEGEND.map(l => <span key={l.tag}>{tag(l.tag, 0)}{l.d}</span>)}
           </div>
         </Canvas>
-      </div>
+      </ScaleW>
     </div>
+    </div>
+  )
+}
+
+/* ---------- Prototype: live Figma prototypes in a browser and a phone (Figma 2341:527) ---------- */
+/* The poster shows until the visitor clicks; then Figma's embed player loads in its place (so the page stays light and
+   scrolling never gets caught in an iframe). If a poster file is missing, the frame stays plain behind the button. */
+function ProtoEmbed({ kind }: { kind: 'desktop' | 'mobile' }) {
+  const [on, setOn] = useState(false)
+  const [poster, setPoster] = useState(true)
+  const desk = kind === 'desktop'
+  const url = desk ? PROTO.desktop : PROTO.mobile
+  const title = desk ? 'ETO CRM desktop prototype (Figma)' : 'ETO mobile app prototype (Figma)'
+  const view = (
+    <div className="pv">
+      {on ? (
+        <iframe src={embedUrl(url + '&hide-ui=1')} title={title} allowFullScreen loading="lazy" />
+      ) : (
+        <>
+          {poster && <img src={desk ? POSTER.desktop : POSTER.mobile} alt="" loading="lazy" decoding="async" onError={() => setPoster(false)} />}
+          <button type="button" className="try" onClick={() => setOn(true)}>
+            <span aria-hidden="true">▶</span>{desk ? 'Click to try the prototype' : 'Tap to try'}
+            <span className="sr-only"> ({title}, loads here)</span>
+          </button>
+        </>
+      )}
+    </div>
+  )
+  return desk ? (
+    <div className="e7-browser">
+      <div className="bar">
+        <span className="dots" aria-hidden="true"><i /><i /><i /></span>
+        <span className="url">figma.com/proto/…/CRM-Dashboard</span>
+        <a href={url} target="_blank" rel="noreferrer">Full screen ↗<span className="sr-only"> (opens in a new tab)</span></a>
+      </div>
+      {view}
+    </div>
+  ) : (
+    <div className="e7-phone">{view}</div>
   )
 }
 
@@ -936,17 +1012,15 @@ export function EtoV6() {
             <Label>PROTOTYPE</Label>
             <h2 className="e5-h2 mt24">Try the prototype</h2>
             <p className="e5-body w960 mt24">The redesign shipped on web, tablet, iOS and Android. These are stills from the Figma prototypes.</p>
-            <div className="e5-links mt64">
-              <a href={PROTO.desktop} target="_blank" rel="noreferrer">Desktop prototype <span aria-hidden="true">↗</span><span className="sr-only"> (opens in a new tab)</span></a>
-              <a href={PROTO.mobile} target="_blank" rel="noreferrer">Mobile prototype <span aria-hidden="true">↗</span><span className="sr-only"> (opens in a new tab)</span></a>
-            </div>
-            <div className="e5-stills mt64" data-r>
-              {STILLS.map(s => (
-                <figure key={s.k}>
-                  <div className="k">{s.k}</div>
-                  <Canvas className="fr"><div className="ph"><Pic src={s.src} w={464} h={580} alt={s.alt} /></div></Canvas>
-                </figure>
-              ))}
+            <div className="e7-proto mt64" data-r>
+              <figure className="desk">
+                <figcaption className="k">DESKTOP · WEB PORTAL</figcaption>
+                <ProtoEmbed kind="desktop" />
+              </figure>
+              <figure className="mob">
+                <figcaption className="k">MOBILE · iOS / ANDROID</figcaption>
+                <ProtoEmbed kind="mobile" />
+              </figure>
             </div>
           </div>
         </section>
@@ -1054,8 +1128,8 @@ const E6_CSS = `
 .e6 .e6-obj ul li i { flex: none; width: 8px; height: 8px; border-radius: 2px; background: rgba(42,42,46,.6); }
 .e6 .e6-obj.client ul li i { background: rgba(237,28,36,.8); } .e6 .e6-obj.ib ul li i { background: rgba(124,58,237,.8); }
 .e6 .e6-obj.client::after, .e6 .e6-obj.shared::after, .e6 .e6-core::after { content: ""; position: absolute; left: 100%; top: 59px; width: 56px; height: 1px; background: rgba(42,42,46,.45); }
-.e6 .e6-core { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; height: 118px; background: #2A2A2E; color: #FFFFFF; }
-.e6 .e6-core b { font-size: 18px; font-weight: 500; letter-spacing: .04em; }
+.e6 .e6-core { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; height: 118px; background: #2A2A2E; color: #FFFFFF; }
+.e6 .e6-core .lg { width: 112px; height: auto; }
 .e6 .e6-core span { font-size: 16px; color: #BDBDBD; }
 @media (max-width: 1279px) {
   .e6 .e6-crm { width: auto; margin: 0 auto; max-width: min(1440px, calc(100vw - 64px)); }
@@ -1082,7 +1156,8 @@ const E6_CSS = `
 .e6 .e6-bench { display: grid; grid-template-columns: minmax(0, 496px) 880px; justify-content: space-between; align-items: center; gap: 48px; }
 @media (max-width: 1351px) { .e6 .e6-bench { grid-template-columns: minmax(0, 1fr); } .e6 .e6-bench > div:last-child { max-width: 880px; } }
 .e6 .e6-sheet-c { background: #FFFFFF; background-image: none; }
-.e6 .e6-sheet-wrap { overflow-x: auto; }
+.e6 .e6-scalew { position: relative; overflow: hidden; }
+.e6 .e6-sheet-wrap { overflow: hidden; }
 .e6 .e6-sheet { width: 880px; background: #FFFFFF; color: #1F1F1F; font-size: 16px; line-height: 20px; --g: #E1E1E1; --xl: #217346; }
 .e6 .e6-sheet .fx { display: flex; align-items: center; height: 32px; padding: 0 8px; border-bottom: 1px solid #D4D4D4; }
 .e6 .e6-sheet .fx .nb { display: flex; align-items: center; width: 72px; height: 22px; padding: 0 7px; box-shadow: inset 0 0 0 1px #C8C8C8; }
@@ -1217,8 +1292,9 @@ const E6_CSS = `
 }
 
 /* IB dashboard: the portal menu, before → after (1440 × 593) */
-.e6 .e6-ia-scroll { overflow-x: auto; }
-.e6 .e6-ia-c { min-width: 1200px; height: 593px; overflow: hidden; }
+.e6 .e6-ia-pin.on { height: 240vh; }
+.e6 .e6-ia-pin.on .e6-ia { position: sticky; top: max(88px, calc(50vh - 300px)); }
+.e6 .e6-ia-c { width: 1440px; height: 593px; overflow: hidden; }
 .e6 .e6-ia .lab { position: absolute; left: 40px; top: 47px; font-size: 16px; font-weight: 700; line-height: 24px; letter-spacing: .04em; transition: opacity .5s ease; }
 .e6 .e6-ia .lab.before { color: var(--ash); }
 .e6 .e6-ia .lab.after { color: var(--ink); opacity: 0; }
@@ -1389,16 +1465,29 @@ const E5_CSS = `
 .e5 .e5-slider:not(.pinned) .e5-slide .cap { padding-right: 0; }
 
 /* prototype */
-.e5 .e5-links { display: flex; flex-wrap: wrap; gap: 16px; }
-.e5 .e5-links a { display: inline-flex; align-items: center; gap: 8px; height: 48px; padding: 0 24px; background: #231F20; color: #FFFFFF; font-size: 16px; font-weight: 500; text-decoration: none; border-radius: 0; transition: background-color .3s; }
-.e5 .e5-links a:hover { background: var(--red); }
-.e5 .e5-links a:focus-visible { outline: 2px solid var(--red); outline-offset: 3px; }
-.e5 .e5-stills { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
-.e5 .e5-stills .k { font-size: 16px; font-weight: 500; line-height: 24px; color: var(--ash); letter-spacing: .02em; }
-.e5 .e5-stills .fr { margin-top: 16px; padding: 24px; transition: transform .4s cubic-bezier(.22,1,.36,1), box-shadow .4s ease; }
-.e5 .e5-stills figure:hover .fr { transform: translateY(-8px); box-shadow: inset 0 0 0 1px var(--cline), 0 24px 48px rgba(0,13,16,.10); }
-.e5 .e5-stills .ph { aspect-ratio: 414 / 532; overflow: hidden; background: #0E0E0E; }
-.e5 .e5-stills .ph img { width: 100%; height: 100%; object-fit: cover; }
+.e5 .e7-proto { display: grid; grid-template-columns: minmax(0, 1120px) 280px; justify-content: space-between; gap: 40px; align-items: start; }
+.e5 .e7-proto figure { margin: 0; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.e5 .e7-proto .k { font-size: 16px; font-weight: 700; line-height: 24px; color: #8E8E95; }
+.e5 .e7-browser { overflow: hidden; background: #FFFFFF; border: 1px solid #E4D6D7; border-radius: 12px; }
+.e5 .e7-browser .bar { position: relative; display: flex; align-items: center; justify-content: space-between; height: 40px; padding: 0 16px; background: #F4EFEF; }
+.e5 .e7-browser .dots { display: flex; gap: 8px; }
+.e5 .e7-browser .dots i { width: 12px; height: 12px; border-radius: 50%; background: #FF5F57; }
+.e5 .e7-browser .dots i:nth-child(2) { background: #FEBC2E; } .e5 .e7-browser .dots i:nth-child(3) { background: #28C840; }
+.e5 .e7-browser .url { position: absolute; left: 50%; top: 6px; transform: translateX(-50%); max-width: 40%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 2px 12px; background: #FFFFFF; border-radius: 6px; font-size: 16px; line-height: 24px; color: #6E6A6B; }
+.e5 .e7-browser .bar a { font-size: 16px; font-weight: 700; line-height: 24px; color: #E31E24; text-decoration: none; white-space: nowrap; }
+.e5 .e7-browser .bar a:focus-visible, .e5 .e7-proto .try:focus-visible { outline: 2px solid var(--red); outline-offset: 3px; }
+.e5 .e7-proto .pv { position: relative; display: flex; align-items: center; justify-content: center; background: #F7F3F3; }
+.e5 .e7-browser .pv { aspect-ratio: 16 / 9; }
+.e5 .e7-proto .pv img, .e5 .e7-proto .pv iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; object-fit: cover; object-position: top; }
+.e5 .e7-proto .try { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 8px; padding: 16px 32px; border: 0; border-radius: 999px; background: rgba(30, 30, 32, .88); color: #FFFFFF; font: inherit; font-size: 20px; font-weight: 700; line-height: 24px; cursor: pointer; }
+.e5 .e7-phone { box-sizing: border-box; width: 280px; aspect-ratio: 280 / 582; padding: 10px; background: #1E1E20; border-radius: 47px; }
+.e5 .e7-phone .pv { height: 100%; align-items: flex-end; padding-bottom: 24%; overflow: hidden; border-radius: 36px; background: #0E0E0E; }
+.e5 .e7-phone .try { padding: 12px 20px; font-size: 16px; }
+@media (max-width: 1023px) {
+  .e5 .e7-proto { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+  .e5 .e7-proto .desk { width: 100%; }
+  .e5 .e7-browser .url { display: none; }
+}
 
 /* results */
 .e5 .e5-results { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }

@@ -16,7 +16,7 @@ const A9 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/utr
 
 const REPLY = {
   role: 'Business Operations',
-  org: 'UTrada',
+  org: 'Lennon.Z',
   avatar: A9 + 'avatar-bizops.jpg', // Figma 2331:615 (112px, shown at 56)
   quote: 'Trust cannot be built through just one conversation or communication channel.',
   finding: 'It confirmed the first deposit as the biggest drop-off. The moments I picked held up, with one gap: how payments and withdrawals work.',
@@ -48,7 +48,7 @@ export function StakeholderCheck() {
       <div className="u9-label uc-label"><i aria-hidden="true" />WHAT I HEARD</div>
       <div className="u9-head uc-head g24 mt96" data-r>
         <h3 className="u9-h2">Checked with people who hear traders every day</h3>
-        <p className="u9-body w760">I asked four stakeholders who work closely with new traders every day: three of my UTrada colleagues and a support agent at another broker.</p>
+        <p className="u9-body w760">I asked stakeholders who work closely with new traders every day: three of my UTrada colleagues and a support agent at another broker.</p>
       </div>
       <figure className="uc-card mt96" data-r>
         <div className="uc-src">

@@ -6,6 +6,7 @@ import { CaseFilm, useCaseIntro } from './CaseFilm'
 import { E5_CSS, E6_CSS } from './EtoV6Css'
 import { LOGO_PATHS, FLAG_SVG, type FlagKey } from './EtoV6Data'
 import { DashTour } from './EtoTour'
+import { ProtoFrame } from './EtoProto'
 
 /**
  * ETO Markets case study (v30, Harbor Nov 22) — rebuilt from Harbor's Figma "06 ETO Markets — 1920 · v3" in file
@@ -22,6 +23,8 @@ import { DashTour } from './EtoTour'
  * browser + phone with the live Figma prototypes (Figma 2341:527; posters in assets/eto/v8). "Where it started" uses the
  * Figma's 16 photos (2319:19499) and they can be dragged around. The IB dashboard's 22-page stack is replaced by the
  * Figma's dashboard tour (2358:2059, EtoTour.tsx), four screens that change as you scroll.
+ * Nov 24 (Harbor): Prototype plays a 10 s walkthrough video in the browser and the phone (EtoProto.tsx) and links to the
+ * Figma prototypes, instead of loading Figma's embed player.
  *
  * Interactions: the CRM flows and Define's flows draw in when they scroll into view; the dashboard tour changes screen
  * as you scroll (the Figma loops it every 20 s); the menu changes one step at a time as you scroll (before → new menu → columns move →
@@ -44,10 +47,6 @@ const PROTO = {
   desktop: 'https://www.figma.com/proto/Vb5QlK9BmCSgonWUFqeWki/CRM-Dashboard?node-id=1386-6239&starting-point-node-id=1386%3A6239&scaling=scale-down-width',
   mobile: 'https://www.figma.com/proto/Epkz6qqltBZ7Gs93TWV5nL/ETO_Application?node-id=1129-29114&starting-point-node-id=1129%3A29114&scaling=scale-down',
 }
-/** Figma's embed player for a prototype link (loaded only after a click, so the page stays light) */
-const embedUrl = (u: string) => 'https://www.figma.com/embed?embed_host=share&url=' + encodeURIComponent(u)
-const A8 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/eto/v8/'
-const POSTER = { desktop: A8 + 'proto-desktop-poster.jpg', mobile: A8 + 'proto-mobile-poster.jpg' }
 const NEXT = { name: 'Trust Bank', href: '#/trust-bank' }
 const FILM_LABEL = 'ETO Markets intro film: the partner CRM — every account, client, deposit and rebate in order; share a link, sign up, done; system errors down from 60% to 14%. Ends on: a CRM for partners.'
 export const E6_CHAPTERS = ['Overview', 'Context', 'Discover', 'Define', 'IB dashboard', 'Before → After', 'Prototype', 'Results', 'Takeaways']
@@ -761,43 +760,7 @@ function IaMotion() {
   )
 }
 
-/* ---------- Prototype: live Figma prototypes in a browser and a phone (Figma 2341:527) ---------- */
-/* The poster shows until the visitor clicks; then Figma's embed player loads in its place (so the page stays light and
-   scrolling never gets caught in an iframe). If a poster file is missing, the frame stays plain behind the button. */
-function ProtoEmbed({ kind }: { kind: 'desktop' | 'mobile' }) {
-  const [on, setOn] = useState(false)
-  const [poster, setPoster] = useState(true)
-  const desk = kind === 'desktop'
-  const url = desk ? PROTO.desktop : PROTO.mobile
-  const title = desk ? 'ETO CRM desktop prototype (Figma)' : 'ETO mobile app prototype (Figma)'
-  const view = (
-    <div className="pv">
-      {on ? (
-        <iframe src={embedUrl(url + '&hide-ui=1')} title={title} allowFullScreen loading="lazy" />
-      ) : (
-        <>
-          {poster && <img src={desk ? POSTER.desktop : POSTER.mobile} alt="" loading="lazy" decoding="async" onError={() => setPoster(false)} />}
-          <button type="button" className="try" onClick={() => setOn(true)}>
-            <span aria-hidden="true">▶</span>{desk ? 'Click to try the prototype' : 'Tap to try'}
-            <span className="sr-only"> ({title}, loads here)</span>
-          </button>
-        </>
-      )}
-    </div>
-  )
-  return desk ? (
-    <div className="e7-browser">
-      <div className="bar">
-        <span className="dots" aria-hidden="true"><i /><i /><i /></span>
-        <span className="url">figma.com/proto/…/CRM-Dashboard</span>
-        <a href={url} target="_blank" rel="noreferrer">Full screen ↗<span className="sr-only"> (opens in a new tab)</span></a>
-      </div>
-      {view}
-    </div>
-  ) : (
-    <div className="e7-phone">{view}</div>
-  )
-}
+/* ---------- Prototype: short walkthrough videos + links to the Figma prototypes live in EtoProto.tsx (Nov 24) ---------- */
 
 /* ---------- page ---------- */
 
@@ -993,11 +956,11 @@ export function EtoV6() {
             <div className="e7-proto mt64" data-r>
               <figure className="desk">
                 <figcaption className="k">DESKTOP · WEB PORTAL</figcaption>
-                <ProtoEmbed kind="desktop" />
+                <ProtoFrame kind="desktop" url={PROTO.desktop} />
               </figure>
               <figure className="mob">
                 <figcaption className="k">MOBILE · iOS / ANDROID</figcaption>
-                <ProtoEmbed kind="mobile" />
+                <ProtoFrame kind="mobile" url={PROTO.mobile} />
               </figure>
             </div>
           </div>

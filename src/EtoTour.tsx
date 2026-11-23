@@ -8,6 +8,8 @@ import React, { useEffect, useRef, useState } from 'react'
  * the step label above lights up. Narrow screens show the four steps one under another. Static with reduced motion.
  * Nov 23 (later, Harbor): Inbox and My clients no longer show the ETO Blog bar and chat bubble at the bottom (images
  * tour-*-clean.jpg), and the screens fade one into the next instead of sliding, so only one screen is ever in the window.
+ * Nov 24: My clients and My account are sharp 2x exports of the CRM Dashboard Figma frames (13 and 33, wXNPL3ciw6XhyL58xAFyLI),
+ * without the blog bar (tour-*-hd.jpg); the highlight boxes were re-measured on those frames.
  */
 
 const A9 = 'https://raw.githubusercontent.com/Harbor-K/harbor-pf/main/assets/eto/v9/'
@@ -20,12 +22,12 @@ const STEPS: Step[] = [
   { nav: '02 INBOX', line: 'Sign-ups, deposits and withdrawals, one tab each.', lineTop: 344, tag: '3 tabs', tagAt: { x: 354, y: 58 },
     hl: { x: 143.43, y: 57.16, w: 202.75, h: 33.43 }, alt: 'Redesigned inbox: Registration, Deposit and Withdrawal tabs',
     shot: <img src={A9 + 'tour-inbox-clean.jpg'} alt="" style={{ width: 880, height: 558 }} loading="lazy" decoding="async" /> },
-  { nav: '03 MY CLIENTS', line: 'Every client’s status, with one Action menu.', lineTop: 368, tag: '1 Action menu', tagAt: { x: 731, y: 57 },
-    hl: { x: 795.88, y: 129.41, w: 70.1, h: 89.51 }, alt: 'Redesigned My Clients page: client list with a status and one Action menu per row',
-    shot: <img src={A9 + 'tour-clients-clean.jpg'} alt="" style={{ width: 880, height: 558 }} loading="lazy" decoding="async" /> },
-  { nav: '04 MY ACCOUNT', line: 'Currency first, then the payment method.', lineTop: 368, tag: '8 currencies', tagAt: { x: 141, y: 323 },
-    hl: { x: 141.27, y: 66.86, w: 48.53, h: 248.04 }, alt: 'Redesigned deposit page: eight currencies listed first, payment methods after',
-    shot: <img src={A9 + 'tour-account.jpg'} alt="" style={{ width: 880, height: 495 }} loading="lazy" decoding="async" /> },
+  { nav: '03 MY CLIENTS', line: 'Every client’s status, with one Action menu.', lineTop: 368, tag: '1 Action menu', tagAt: { x: 727, y: 63 },
+    hl: { x: 800.3, y: 135.2, w: 63.3, h: 84.8 }, alt: 'Redesigned My Clients page: client list with a status and one Action menu per row',
+    shot: <img src={A9 + 'tour-clients-hd.jpg'} alt="" style={{ width: 880, height: 558 }} loading="lazy" decoding="async" /> },
+  { nav: '04 MY ACCOUNT', line: 'Currency first, then the payment method.', lineTop: 368, tag: '8 currencies', tagAt: { x: 143, y: 324 },
+    hl: { x: 143.5, y: 72.4, w: 44.5, h: 243.8 }, alt: 'Redesigned deposit page: eight currencies listed first, payment methods after',
+    shot: <img src={A9 + 'tour-account-hd.jpg'} alt="" style={{ width: 880, height: 558 }} loading="lazy" decoding="async" /> },
 ]
 const NAV_W = [116, 77, 125, 125]
 

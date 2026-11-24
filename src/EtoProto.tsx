@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react'
 
 /**
  * ETO Markets · Prototype (Nov 24, Harbor): instead of loading Figma's embed player (it was slow and broke on click), each
- * frame plays a short looping walkthrough recorded from her Figma files, and a click opens the real Figma prototype in a
- * new tab.
+ * frame plays a short looping walkthrough recorded from her Figma files. The video keeps playing; a dark pill button over it
+ * ("▶ View all screens" / "▶ Tap to view", as in her screenshot) and the browser bar's "Open in Figma ↗" open the Figma
+ * design file with every screen in a new tab.
  * Desktop: eto-crm-desktop.mp4 (10.8 s, CRM Dashboard Figma wXNPL3ciw6XhyL58xAFyLI, 1920 × 1080).
  * Mobile: eto-app-mobile.mp4 (10.5 s, ETO_Application Figma UBqiuXF7C6Xsfwtb10iVFj, iOS frames at 2x, 750 × 1624),
  * inside an iPhone-style frame drawn in CSS (bezel, Dynamic Island, side buttons).
@@ -41,9 +42,10 @@ export function ProtoFrame({ kind, url }: { kind: 'desktop' | 'mobile'; url: str
   const label = desk
     ? 'Walkthrough of the CRM web portal prototype: dashboard, inbox, my clients and the Action menu, then a USDT deposit'
     : 'Walkthrough of the ETO mobile app prototype: dashboard, inbox tabs, my clients, then my account deposit'
-  const open = (
-    <a className="open" href={url} target="_blank" rel="noreferrer">
-      Open the prototype <span aria-hidden="true">↗</span><span className="sr-only"> (Figma, opens in a new tab)</span>
+  const pill = (
+    <a className="pill" href={url} target="_blank" rel="noreferrer">
+      <span aria-hidden="true">▶</span>{desk ? 'View all screens' : 'Tap to view'}
+      <span className="sr-only"> ({desk ? 'CRM web portal' : 'ETO mobile app'} in Figma, opens in a new tab)</span>
     </a>
   )
   return (
@@ -53,22 +55,21 @@ export function ProtoFrame({ kind, url }: { kind: 'desktop' | 'mobile'; url: str
         <div className="browser">
           <div className="bar">
             <span className="dots" aria-hidden="true"><i /><i /><i /></span>
-            <span className="url">figma.com/proto/…/CRM-Dashboard</span>
-            <span aria-hidden="true" />
+            <span className="url">figma.com/design/…/CRM-Dashboard</span>
+            <a href={url} target="_blank" rel="noreferrer" tabIndex={-1} aria-hidden="true">Open in Figma ↗</a>
           </div>
-          <div className="screen"><Clip kind="desktop" label={label} /></div>
+          <div className="screen"><Clip kind="desktop" label={label} />{pill}</div>
         </div>
       ) : (
         <div className="phone">
           <i className="btn mute" aria-hidden="true" /><i className="btn vu" aria-hidden="true" /><i className="btn vd" aria-hidden="true" />
           <i className="btn pw" aria-hidden="true" />
           <div className="bezel">
-            <div className="screen"><Clip kind="mobile" label={label} /></div>
+            <div className="screen"><Clip kind="mobile" label={label} />{pill}</div>
             <i className="island" aria-hidden="true" />
           </div>
         </div>
       )}
-      {open}
     </div>
   )
 }
@@ -76,10 +77,15 @@ export function ProtoFrame({ kind, url }: { kind: 'desktop' | 'mobile'; url: str
 const PROTO_CSS = `
 .e9-proto { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .e9-proto video { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; background: #FFFFFF; }
-.e9-proto .open { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 700; line-height: 24px;
-  color: #E31E24; text-decoration: none; }
-.e9-proto .open:hover { text-decoration: underline; }
-.e9-proto .open:focus-visible { outline: 2px solid #E31E24; outline-offset: 4px; }
+.e9-proto .screen { position: relative; }
+/* the pill over the video (Harbor's screenshot, Nov 24): dark, see-through, white bold label with a play mark */
+.e9-proto .pill { position: absolute; z-index: 1; left: 50%; top: 50%; transform: translate(-50%, -50%); display: inline-flex; align-items: center; gap: 12px;
+  padding: 16px 32px; border-radius: 999px; background: rgba(30, 30, 32, .88); color: #FFFFFF; font-size: 20px; font-weight: 700; line-height: 24px;
+  white-space: nowrap; text-decoration: none; box-shadow: 0 8px 24px rgba(0, 0, 0, .16); }
+.e9-proto .pill > span[aria-hidden] { font-size: 16px; }
+.e9-proto .pill:focus-visible { outline: 2px solid #E31E24; outline-offset: 4px; }
+.e9-proto.mobile .pill { top: auto; bottom: 16%; transform: translateX(-50%); padding: 16px 24px; }
+.e9-proto .browser .bar a { font-size: 16px; font-weight: 700; line-height: 24px; color: #E31E24; text-decoration: none; white-space: nowrap; }
 
 /* desktop: browser window */
 .e9-proto .browser { overflow: hidden; background: #FFFFFF; border: 1px solid #E4D6D7; border-radius: 12px; box-shadow: 0 16px 48px rgba(0,0,0,.08); }
@@ -93,7 +99,6 @@ const PROTO_CSS = `
 
 /* mobile: iPhone-style frame (titanium edge, black bezel, Dynamic Island, side buttons) */
 .e9-proto.mobile { align-items: center; }
-.e9-proto.mobile .open { align-self: center; }
 .e9-proto .phone { position: relative; box-sizing: border-box; width: 280px; aspect-ratio: 280 / 576; padding: 4px; border-radius: 52px;
   background: linear-gradient(145deg, #5C5C60 0%, #2A2A2D 30%, #1A1A1C 55%, #3A3A3E 100%);
   box-shadow: 0 0 0 1px #0C0C0D, 0 24px 56px rgba(0,0,0,.22), inset 0 0 1px rgba(255,255,255,.4); }

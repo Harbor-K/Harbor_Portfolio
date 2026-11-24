@@ -24,7 +24,7 @@ import { ProtoFrame } from './EtoProto'
  * Figma's 16 photos (2319:19499) and they can be dragged around. The IB dashboard's 22-page stack is replaced by the
  * Figma's dashboard tour (2358:2059, EtoTour.tsx), four screens that change as you scroll.
  * Nov 24 (Harbor): Prototype plays a 10 s walkthrough video in the browser and the phone (EtoProto.tsx) and links to the
- * Figma prototypes, instead of loading Figma's embed player.
+ * Figma files, instead of loading Figma's embed player. Heading "See every screen" (Harbor's copy).
  *
  * Interactions: the CRM flows and Define's flows draw in when they scroll into view; the dashboard tour changes screen
  * as you scroll (the Figma loops it every 20 s); the menu changes one step at a time as you scroll (before → new menu → columns move →
@@ -43,9 +43,10 @@ const IMG = {
   oldPortal: A5 + 'old-portal.webp',
   office: A5 + 'takeaways-office.jpg',
 }
+/* Nov 24 (Harbor): the buttons open the Figma design files with every screen */
 const PROTO = {
-  desktop: 'https://www.figma.com/proto/Vb5QlK9BmCSgonWUFqeWki/CRM-Dashboard?node-id=1386-6239&starting-point-node-id=1386%3A6239&scaling=scale-down-width',
-  mobile: 'https://www.figma.com/proto/Epkz6qqltBZ7Gs93TWV5nL/ETO_Application?node-id=1129-29114&starting-point-node-id=1129%3A29114&scaling=scale-down',
+  desktop: 'https://www.figma.com/design/wXNPL3ciw6XhyL58xAFyLI/CRM-Dashboard?node-id=0-1',
+  mobile: 'https://www.figma.com/design/UBqiuXF7C6Xsfwtb10iVFj/ETO_Application?node-id=1129-23847',
 }
 const NEXT = { name: 'Trust Bank', href: '#/trust-bank' }
 const FILM_LABEL = 'ETO Markets intro film: the partner CRM — every account, client, deposit and rebate in order; share a link, sign up, done; system errors down from 60% to 14%. Ends on: a CRM for partners.'
@@ -951,8 +952,8 @@ export function EtoV6() {
         <section className="e5-sec" data-chapter="Prototype">
           <div className="e5-w">
             <Label>PROTOTYPE</Label>
-            <h2 className="e5-h2 mt24">Try the prototype</h2>
-            <p className="e5-body w960 mt24">The redesign shipped on web, tablet, iOS and Android. These are stills from the Figma prototypes.</p>
+            <h2 className="e5-h2 mt24">See every screen</h2>
+            <p className="e5-body w960 mt24">The redesign shipped on web, tablet, iOS and Android. Open the Figma files to see every page.</p>
             <div className="e7-proto mt64" data-r>
               <figure className="desk">
                 <figcaption className="k">DESKTOP · WEB PORTAL</figcaption>

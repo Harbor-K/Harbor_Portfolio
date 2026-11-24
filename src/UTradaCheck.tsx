@@ -47,8 +47,8 @@ export function StakeholderCheck() {
       <style>{UC_CSS}</style>
       <div className="u9-label uc-label"><i aria-hidden="true" />WHAT I HEARD</div>
       <div className="u9-head uc-head g24 mt96" data-r>
-        <h3 className="u9-h2">Checked with people who hear traders every day</h3>
-        <p className="u9-body w760">I asked stakeholders who work closely with new traders every day: three of my UTrada colleagues and a support agent at another broker.</p>
+        <h3 className="u9-h2">Checked with someone who hears traders every day</h3>
+        <p className="u9-body w760">I shared my findings with a Business Operations colleague at UTrada, who talks to new traders every day.</p>
       </div>
       <figure className="uc-card mt96" data-r>
         <div className="uc-src">

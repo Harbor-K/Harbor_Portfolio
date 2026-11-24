@@ -3,6 +3,7 @@ import { AffinityScroll } from './AffinityScroll';
 import { TestTop } from './TestTop';
 import { FixBlock } from './FixBlock';
 import { HeroSection } from './TrustHero';
+import { ProblemStatement } from './ProblemStatement';
 
 /**
  * Trust Bank case-study BODY (hero → reflection), copied from Portfolio_1 (components/case/TrustBankCase.tsx):
@@ -12,6 +13,7 @@ import { HeroSection } from './TrustHero';
  * Also included from Portfolio_1: the soft per-block scroll reveal (CaseReveal) and the hover magnifier on the
  * thematic-analysis board and DVF map (ImageLightbox).
  * The hero lives in TrustHero.tsx: on this site it opens with the video full-screen and shrinks into place on scroll.
+ * The problem statement band lives in ProblemStatement.tsx (Figma 2397:423, chips + motion).
  * Each section carries data-chapter so this site's header can show the current chapter.
  */
 
@@ -383,19 +385,8 @@ function DefineSection() {
         </div>
       </Container>
 
-      {/* problem statement band */}
-      <div className="bg-[#cdeefc] py-[20px]">
-        <Container>
-          <div className="px-6 py-12 md:py-[50px] text-center" style={{ fontFamily: HELV, color: INK }}>
-            <p className="text-[16px] md:text-[17px] leading-[1.4]">PROBLEM STATEMENT</p>
-            <p className="mt-[20px] text-[28px] md:text-[50px] leading-[1.25] font-bold tracking-[-0.01em]">
-              Users are not aware of the rewards system.
-              <br />
-              So the business <span style={{ color: BLUE }}>fails to earn loyalty</span>.
-            </p>
-          </div>
-        </Container>
-      </div>
+      {/* problem statement band (Figma 2397:423: chips + motion) */}
+      <ProblemStatement />
 
       <Container className="pt-[120px] pb-[120px]">
         <H2>
